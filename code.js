@@ -1148,9 +1148,29 @@ function itemVatLabel_(
 }
 
 
+function quoteTaxModeInfo_(mode) {
+  const normalized = normalizeQuoteTaxMode_(mode);
+  const noVat = normalized === 'NO_VAT';
+  const included =
+    normalized === 'INCLUDED_8' ||
+    normalized === 'INCLUDED_10';
+  const rate = noVat
+    ? 0
+    : (normalized.indexOf('10') >= 0 ? 0.1 : 0.08);
+
+  return {
+    mode: normalized,
+    noVat: noVat,
+    included: included,
+    rate: rate,
+    ratePercent: Math.round(rate * 100)
+  };
+}
+
 function pricingEngine_() {
   return {
     normalizeMode: normalizeQuoteTaxMode_,
+    modeInfo: quoteTaxModeInfo_,
     modeLabel: quoteTaxModeLabel_,
     resolveItemTax: resolveItemTax_,
     inferSavedMode: inferSavedQuoteTaxMode_,

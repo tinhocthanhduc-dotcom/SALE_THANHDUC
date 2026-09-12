@@ -1059,8 +1059,29 @@ function clearQuoteItems(){
 
 
 
+function quoteTaxModeInfo(mode){
+  const normalized=normalizeQuoteTaxMode(mode);
+  const noVat=normalized==='NO_VAT';
+  const included=[
+    'INCLUDED_8',
+    'INCLUDED_10'
+  ].includes(normalized);
+  const ratePercent=noVat
+    ?0
+    :(normalized.includes('10')?10:8);
+
+  return {
+    mode:normalized,
+    noVat,
+    included,
+    rate:ratePercent/100,
+    ratePercent
+  };
+}
+
 const PRICING_ENGINE = Object.freeze({
   normalizeMode: normalizeQuoteTaxMode,
+  modeInfo: quoteTaxModeInfo,
   modeLabel: quoteTaxModeLabel,
   resolveItemTax: resolveItemTax,
   calculateItem: calculateItemPricing
@@ -1163,7 +1184,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=PRICING_ENGINE.resolveItemTax(
+  const tax=PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
     item,
     taxMode
   );
@@ -1359,13 +1380,10 @@ function renderQuoteCart(){
   document.getElementById('quoteCartCount').textContent=
     quoteItems.length+' dòng';
 
-  const includedMode=[
-    'INCLUDED_8',
-    'INCLUDED_10'
-  ].includes(taxMode);
-
-  const noVatMode=taxMode==='NO_VAT';
-  const vatRate=taxMode.includes('10')?10:(noVatMode?0:8);
+  const modeInfo=PRICING_ENGINE.modeInfo(taxMode);
+  const includedMode=modeInfo.included;
+  const noVatMode=modeInfo.noVat;
+  const vatRate=modeInfo.ratePercent;
 
   const displayedGross=includedMode
     ?totals.grossAmount
