@@ -22,6 +22,8 @@ const APP_LOGO_BASE64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwMDAgQDAwMEBAQFBgo
 
 
 function doGet() {
+  ensureExternalLogo_();
+
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Thành Đức Sales')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -2785,11 +2787,86 @@ function createQuotePdf(no) {
   return regenerateQuotePdf(no);
 }
 
+function ensureExternalLogo_() {
+  const properties = PropertiesService.getScriptProperties();
+  const configuredId = clean_(cfg_().LOGO_FILE_ID);
+  const storedId = clean_(
+    properties.getProperty('THANH_DUC_LOGO_FILE_ID')
+  );
+
+  const existingId = configuredId || storedId;
+
+  if (existingId) {
+    try {
+      const file = DriveApp.getFileById(existingId);
+      if (!file.isTrashed()) {
+        if (!storedId) {
+          properties.setProperty(
+            'THANH_DUC_LOGO_FILE_ID',
+            existingId
+          );
+        }
+        return existingId;
+      }
+    } catch (error) {
+      if (!configuredId) {
+        properties.deleteProperty(
+          'THANH_DUC_LOGO_FILE_ID'
+        );
+      }
+    }
+  }
+
+  if (
+    typeof APP_LOGO_BASE64 === 'undefined' ||
+    !clean_(APP_LOGO_BASE64)
+  ) {
+    throw new Error(
+      'Chưa có LOGO_FILE_ID và logo nhúng đã được loại bỏ.'
+    );
+  }
+
+  const root = getStorageRootFolder_();
+  const assets = getOrCreateChildFolder_(root, 'ASSETS');
+  const fileName = 'logo-thanh-duc.jpg';
+  const files = assets.getFilesByName(fileName);
+
+  let file;
+  if (files.hasNext()) {
+    file = files.next();
+  } else {
+    const blob = Utilities.newBlob(
+      Utilities.base64Decode(APP_LOGO_BASE64),
+      'image/jpeg',
+      fileName
+    );
+    file = assets.createFile(blob);
+  }
+
+  properties.setProperty(
+    'THANH_DUC_LOGO_FILE_ID',
+    file.getId()
+  );
+
+  return file.getId();
+}
+
 function getLogoBlob_() {
-  return Utilities.newBlob(
-    Utilities.base64Decode(APP_LOGO_BASE64),
-    'image/jpeg',
-    'logo-thanh-duc.jpg'
+  return DriveApp
+    .getFileById(ensureExternalLogo_())
+    .getBlob()
+    .setName('logo-thanh-duc.jpg');
+}
+
+function getLogoDataUrl_() {
+  const blob = getLogoBlob_();
+  const mimeType = clean_(blob.getContentType()) || 'image/jpeg';
+
+  return (
+    'data:' +
+    mimeType +
+    ';base64,' +
+    Utilities.base64Encode(blob.getBytes())
   );
 }
 
@@ -3942,9 +4019,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
       ].join('')
     : '';
 
-  const logoData =
-    'data:image/jpeg;base64,' +
-    APP_LOGO_BASE64;
+  const logoData = getLogoDataUrl_();
 
   return [
     '<!DOCTYPE html>',
@@ -4171,9 +4246,7 @@ function buildQuoteA4Html_(
 
   let displayedGoodsBeforeDiscount = 0;
 
-  const logoData =
-    'data:image/jpeg;base64,' +
-    APP_LOGO_BASE64;
+  const logoData = getLogoDataUrl_();
 
   const rowsHtml = items.map(
     (item, index) => {
