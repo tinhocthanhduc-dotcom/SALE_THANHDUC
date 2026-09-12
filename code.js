@@ -1583,11 +1583,18 @@ function allowedProductUnits_() {
 }
 
 function nextProductCode_() {
-  const products = rows_(APP.SHEETS.PRODUCTS);
+  const sh = sheet_(APP.SHEETS.PRODUCTS);
+  const meta = sheetHeaderMap_(sh);
+  const codeCol = meta.byName.MaSanPham;
+
+  if (!codeCol) {
+    throw new Error('Sheet SAN_PHAM thiếu cột MaSanPham.');
+  }
+
   let maxNumber = 0;
 
-  products.forEach(product => {
-    const code = clean_(product.MaSanPham);
+  columnValues_(sh, codeCol).forEach(value => {
+    const code = clean_(value);
     const match = code.match(/^TD-(\d{4,})$/i);
 
     if (match) {
@@ -1733,23 +1740,20 @@ function updateCustomer(c) {
   ensureAppReady_();
 
   const sh = sheet_(APP.SHEETS.CUSTOMERS);
-  const values = sh.getDataRange().getValues();
-  const headers = values[0].map(clean_);
-  const idCol = headers.indexOf('MaKhachHang');
+  const meta = sheetHeaderMap_(sh);
+  const idCol = meta.byName.MaKhachHang;
 
-  let rowIndex = -1;
-
-  for (let index = 1; index < values.length; index++) {
-    if (
-      clean_(values[index][idCol]) ===
-      clean_(c.id)
-    ) {
-      rowIndex = index;
-      break;
-    }
+  if (!idCol) {
+    throw new Error('Sheet KHACH_HANG thiếu cột MaKhachHang.');
   }
 
-  if (rowIndex < 0) {
+  const row = findDataRowByValue_(
+    sh,
+    idCol,
+    clean_(c.id)
+  );
+
+  if (!row) {
     throw new Error(
       'Không tìm thấy khách hàng ' +
       clean_(c.id)
@@ -1783,33 +1787,35 @@ function updateCustomer(c) {
     GhiChu: customer.note
   };
 
-  const updatedRow = values[rowIndex].slice();
+  const updatedRow = sh
+    .getRange(row, 1, 1, meta.headers.length)
+    .getValues()[0];
 
   Object.keys(map).forEach(key => {
-    const col = headers.indexOf(key);
-    if (col >= 0) updatedRow[col] = map[key];
+    const col = meta.byName[key];
+    if (col) updatedRow[col - 1] = map[key];
   });
 
   sh.getRange(
-    rowIndex + 1,
+    row,
     1,
     1,
-    headers.length
+    meta.headers.length
   ).setValues([updatedRow]);
 
-  const taxCol = headers.indexOf('MaSoThue');
-  const phoneCol = headers.indexOf('DienThoai');
   const textRanges = [];
+  const taxCol = meta.byName.MaSoThue;
+  const phoneCol = meta.byName.DienThoai;
 
-  if (taxCol >= 0) {
+  if (taxCol) {
     textRanges.push(
-      sh.getRange(rowIndex + 1, taxCol + 1).getA1Notation()
+      sh.getRange(row, taxCol).getA1Notation()
     );
   }
 
-  if (phoneCol >= 0) {
+  if (phoneCol) {
     textRanges.push(
-      sh.getRange(rowIndex + 1, phoneCol + 1).getA1Notation()
+      sh.getRange(row, phoneCol).getA1Notation()
     );
   }
 
@@ -1923,23 +1929,20 @@ function updateProduct(p) {
   validateProduct_(product);
 
   const sh = sheet_(APP.SHEETS.PRODUCTS);
-  const values = sh.getDataRange().getValues();
-  const headers = values[0].map(clean_);
-  const codeCol = headers.indexOf('MaSanPham');
+  const meta = sheetHeaderMap_(sh);
+  const codeCol = meta.byName.MaSanPham;
 
-  let rowIndex = -1;
-
-  for (let index = 1; index < values.length; index++) {
-    if (
-      clean_(values[index][codeCol]) ===
-      clean_(product.code)
-    ) {
-      rowIndex = index;
-      break;
-    }
+  if (!codeCol) {
+    throw new Error('Sheet SAN_PHAM thiếu cột MaSanPham.');
   }
 
-  if (rowIndex < 0) {
+  const row = findDataRowByValue_(
+    sh,
+    codeCol,
+    clean_(product.code)
+  );
+
+  if (!row) {
     throw new Error(
       'Không tìm thấy sản phẩm ' +
       clean_(product.code)
@@ -1973,18 +1976,20 @@ function updateProduct(p) {
     DaQuaSuDung: savedProduct.used
   };
 
-  const updatedRow = values[rowIndex].slice();
+  const updatedRow = sh
+    .getRange(row, 1, 1, meta.headers.length)
+    .getValues()[0];
 
   Object.keys(map).forEach(key => {
-    const col = headers.indexOf(key);
-    if (col >= 0) updatedRow[col] = map[key];
+    const col = meta.byName[key];
+    if (col) updatedRow[col - 1] = map[key];
   });
 
   sh.getRange(
-    rowIndex + 1,
+    row,
     1,
     1,
-    headers.length
+    meta.headers.length
   ).setValues([updatedRow]);
 
   return {
