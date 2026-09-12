@@ -1,0 +1,84 @@
+name: Apply Code Patches
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/patches/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sale-thanhduc-code-patches
+  cancel-in-progress: false
+
+jobs:
+  patch-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply patch scripts
+        shell: bash
+        run: |
+          set -e
+          if compgen -G "tools/patches/*.py" > /dev/null; then
+            for patch in tools/patches/*.py; do
+              echo "Running $patch"
+              python "$patch"
+            done
+          else
+            echo "No patch scripts found."
+          fi
+
+      - name: Validate JavaScript syntax
+        run: node --check code.js
+
+      - name: Commit patched source
+        shell: bash
+        run: |
+          if git diff --quiet -- code.js Index.html appsscript.json .clasp.json; then
+            echo "No source changes to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add code.js Index.html appsscript.json .clasp.json
+            git commit -m "Apply automated optimization patch"
+            git push origin main
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm install --global @google/clasp
+
+      - name: Restore clasp credentials
+        shell: bash
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo "Missing GitHub secret: CLASPRC_JSON"
+            exit 1
+          fi
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+
+      - name: Push source to Google Apps Script
+        run: clasp push --force
