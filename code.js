@@ -5669,8 +5669,11 @@ function createPrincipleContractForCustomer(customerId) {
     throw new Error('Thiếu mã khách hàng.');
   }
 
-  const customer = rows_(APP.SHEETS.CUSTOMERS)
-    .find(x => clean_(x.MaKhachHang) === id);
+  const customer = findObjectByValue_(
+    APP.SHEETS.CUSTOMERS,
+    'MaKhachHang',
+    id
+  );
 
   if (!customer) {
     throw new Error('Không tìm thấy khách hàng ' + id);
@@ -6821,13 +6824,22 @@ function fillGoodsTable_(
   const tables = body.getTables();
 
   const productMap = {};
+  const productCodes = {};
 
-  rows_(APP.SHEETS.PRODUCTS)
-    .forEach(product => {
-      productMap[
-        clean_(product.MaSanPham)
-      ] = product;
-    });
+  (items || []).forEach(item => {
+    const code = clean_(item.code);
+    if (code) productCodes[code] = true;
+  });
+
+  Object.keys(productCodes).forEach(code => {
+    const product = findObjectByValue_(
+      APP.SHEETS.PRODUCTS,
+      'MaSanPham',
+      code
+    );
+
+    if (product) productMap[code] = product;
+  });
 
   const normalizedMode =
     pricingEngine_().normalizeMode(
