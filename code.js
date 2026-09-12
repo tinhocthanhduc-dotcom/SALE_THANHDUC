@@ -893,7 +893,7 @@ function normalizeQuoteTaxMode_(mode) {
 
 function quoteTaxModeLabel_(mode) {
   const normalized =
-    normalizeQuoteTaxMode_(mode);
+    pricingEngine_().normalizeMode(mode);
 
   const labels = {
     NO_VAT: 'Không tính VAT',
@@ -911,7 +911,7 @@ function quoteTaxModeLabel_(mode) {
 }
 
 function resolveItemTax_(item, quoteTaxMode) {
-  const mode = normalizeQuoteTaxMode_(quoteTaxMode);
+  const mode = pricingEngine_().normalizeMode(quoteTaxMode);
 
   if (mode === 'NO_VAT') {
     return {
@@ -957,7 +957,7 @@ function resolveItemTax_(item, quoteTaxMode) {
 }
 
 function inferSavedQuoteTaxMode_(quote) {
-  const stored = normalizeQuoteTaxMode_(
+  const stored = pricingEngine_().normalizeMode(
     quote && quote.CheDoVAT
   );
 
@@ -1003,7 +1003,7 @@ function inferSavedQuoteTaxMode_(quote) {
 function calculateItemPricing_(item, quoteTaxMode) {
   item = item || {};
 
-  const tax = resolveItemTax_(
+  const tax = pricingEngine_().resolveItemTax(
     item,
     quoteTaxMode
   );
@@ -1070,7 +1070,7 @@ function calculateQuotePricing_(
   let grossBeforeDiscount = 0;
 
   items.forEach(item => {
-    const line = calculateItemPricing_(
+    const line = pricingEngine_().calculateItem(
       item,
       quoteTaxMode
     );
@@ -1136,7 +1136,7 @@ function itemVatLabel_(
   item,
   quoteTaxMode
 ) {
-  const mode = normalizeQuoteTaxMode_(
+  const mode = pricingEngine_().normalizeMode(
     quoteTaxMode
   );
 
@@ -1144,7 +1144,19 @@ function itemVatLabel_(
     return 'VAT 0% — giá đã gồm VAT';
   }
 
-  return quoteTaxModeLabel_(mode);
+  return pricingEngine_().modeLabel(mode);
+}
+
+
+function pricingEngine_() {
+  return {
+    normalizeMode: normalizeQuoteTaxMode_,
+    modeLabel: quoteTaxModeLabel_,
+    resolveItemTax: resolveItemTax_,
+    inferSavedMode: inferSavedQuoteTaxMode_,
+    calculateItem: calculateItemPricing_,
+    calculateQuote: calculateQuotePricing_
+  };
 }
 
 function migrateQuoteTotalsToNet_() {
@@ -1254,8 +1266,8 @@ function migrateQuoteTotalsToNet_() {
         quoteObject[header] = row[index];
       });
 
-      const taxMode = inferSavedQuoteTaxMode_(quoteObject);
-      const totals = calculateQuotePricing_(
+      const taxMode = pricingEngine_().inferSavedMode(quoteObject);
+      const totals = pricingEngine_().calculateQuote(
         items,
         discountCol >= 0 ? Number(row[discountCol] || 0) : 0,
         taxMode
@@ -2080,9 +2092,9 @@ function saveQuote(q) {
 
   const no = q.no || nextNo_('BG');
   const now = new Date();
-  const taxMode = normalizeQuoteTaxMode_(q.taxMode);
+  const taxMode = pricingEngine_().normalizeMode(q.taxMode);
 
-  const totals = calculateQuotePricing_(
+  const totals = pricingEngine_().calculateQuote(
     q.items,
     q.discount,
     taxMode
@@ -2124,7 +2136,7 @@ function saveQuote(q) {
     .setNumberFormat('@');
 
   const lines = q.items.map((item, index) => {
-    const line = calculateItemPricing_(item, taxMode);
+    const line = pricingEngine_().calculateItem(item, taxMode);
 
     return [
       no,
@@ -2377,7 +2389,7 @@ function getQuoteForEdit(no) {
     note: clean_(quote.GhiChu),
     status: clean_(quote.TrangThai) || 'NHÁP',
     pdf: clean_(quote.LinkPDF),
-    taxMode: inferSavedQuoteTaxMode_(quote),
+    taxMode: pricingEngine_().inferSavedMode(quote),
     items: data.items
   };
 }
@@ -2446,8 +2458,8 @@ function updateQuote(q) {
 
     archiveQuoteFiles_(no, oldPdfUrl, quoteDate);
 
-    const taxMode = normalizeQuoteTaxMode_(q.taxMode);
-    const totals = calculateQuotePricing_(
+    const taxMode = pricingEngine_().normalizeMode(q.taxMode);
+    const totals = pricingEngine_().calculateQuote(
       q.items,
       q.discount,
       taxMode
@@ -2523,7 +2535,7 @@ function updateQuote(q) {
     deleteRowBlocks_(lineSheet, rowsToDelete);
 
     const lines = q.items.map((item, index) => {
-      const line = calculateItemPricing_(item, taxMode);
+      const line = pricingEngine_().calculateItem(item, taxMode);
 
       return [
         no,
@@ -3670,10 +3682,10 @@ function appendQuoteTotals_(
   );
 
   const taxMode =
-    inferSavedQuoteTaxMode_(quote);
+    pricingEngine_().inferSavedMode(quote);
 
   const taxModeLabel =
-    quoteTaxModeLabel_(taxMode);
+    pricingEngine_().modeLabel(taxMode);
 
   const layoutTable = body.appendTable([[
     '',
@@ -3818,7 +3830,7 @@ function appendQuoteNotes_(
   const ACCENT = '#A12622';
 
   const taxMode =
-    inferSavedQuoteTaxMode_(quote);
+    pricingEngine_().inferSavedMode(quote);
 
   const notes = [
     quoteVatNote_(taxMode),
@@ -4035,9 +4047,9 @@ function quotePreviewData_(request) {
   });
 
   const taxMode =
-    normalizeQuoteTaxMode_(request.taxMode);
+    pricingEngine_().normalizeMode(request.taxMode);
 
-  const totals = calculateQuotePricing_(
+  const totals = pricingEngine_().calculateQuote(
     items,
     request.discount,
     taxMode
@@ -4146,7 +4158,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
 
   const customer = data.customer || {};
   const company = companyInfo_(cfg_());
-  const taxMode = inferSavedQuoteTaxMode_(quote);
+  const taxMode = pricingEngine_().inferSavedMode(quote);
   const issueDate = data.issueDate instanceof Date && !isNaN(data.issueDate)
     ? data.issueDate
     : new Date();
@@ -4159,7 +4171,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
   let netBeforeOrderDiscount = 0;
 
   const rowsHtml = items.map((item, index) => {
-    const pricing = calculateItemPricing_(item, taxMode);
+    const pricing = pricingEngine_().calculateItem(item, taxMode);
     const qty = Number(item.qty || 0);
     const netUnitPrice = qty > 0
       ? Math.round(pricing.net / qty)
@@ -4374,7 +4386,7 @@ function getQuotePreviewHtml(request) {
 
 function quoteVatNote_(mode) {
   const normalized =
-    normalizeQuoteTaxMode_(mode);
+    pricingEngine_().normalizeMode(mode);
 
   const notes = {
     NO_VAT:
@@ -4393,7 +4405,7 @@ function quoteVatNote_(mode) {
 }
 
 function quoteVatPercent_(mode) {
-  const normalized = normalizeQuoteTaxMode_(mode);
+  const normalized = pricingEngine_().normalizeMode(mode);
 
   if (
     normalized === 'INCLUDED_10' ||
@@ -4410,7 +4422,7 @@ function quoteVatPercent_(mode) {
 }
 
 function quotePriceIncludesVat_(mode) {
-  const normalized = normalizeQuoteTaxMode_(mode);
+  const normalized = pricingEngine_().normalizeMode(mode);
 
   return (
     normalized === 'INCLUDED_8' ||
@@ -4419,7 +4431,7 @@ function quotePriceIncludesVat_(mode) {
 }
 
 function quoteColumnBasisLabel_(mode) {
-  const normalized = normalizeQuoteTaxMode_(mode);
+  const normalized = pricingEngine_().normalizeMode(mode);
   const vatPercent = quoteVatPercent_(normalized);
 
   if (normalized === 'NO_VAT') {
@@ -4459,10 +4471,10 @@ function buildQuoteA4Html_(
    * Bản V1.9.3 dùng taxMode nhưng chưa khai báo.
    */
   const taxMode =
-    inferSavedQuoteTaxMode_(quote);
+    pricingEngine_().inferSavedMode(quote);
 
   const taxModeLabel =
-    quoteTaxModeLabel_(taxMode);
+    pricingEngine_().modeLabel(taxMode);
 
   const vatPercent = quoteVatPercent_(taxMode);
   const priceIncludesVat = quotePriceIncludesVat_(taxMode);
@@ -4475,7 +4487,7 @@ function buildQuoteA4Html_(
   const rowsHtml = items.map(
     (item, index) => {
       const pricing =
-        calculateItemPricing_(
+        pricingEngine_().calculateItem(
           item,
           taxMode
         );
@@ -5638,7 +5650,7 @@ function createPrincipleContractForCustomer(customerId) {
 
 function contractTaxPercent_(mode) {
   const normalized =
-    normalizeQuoteTaxMode_(mode);
+    pricingEngine_().normalizeMode(mode);
 
   if (
     normalized === 'INCLUDED_10' ||
@@ -5656,7 +5668,7 @@ function contractTaxPercent_(mode) {
 
 function contractPriceHeader_(mode) {
   const normalized =
-    normalizeQuoteTaxMode_(mode);
+    pricingEngine_().normalizeMode(mode);
 
   if (normalized === 'NO_VAT') {
     return 'ĐƠN GIÁ\n(VAT 0%)';
@@ -5682,7 +5694,7 @@ function contractPriceHeader_(mode) {
 
 function contractAmountHeader_(mode) {
   const normalized =
-    normalizeQuoteTaxMode_(mode);
+    pricingEngine_().normalizeMode(mode);
 
   if (
     normalized === 'EXCLUDED_8' ||
@@ -5917,7 +5929,7 @@ function updateContractPricingSection_(
 
     if (current.indexOf('1.3.') === 0) {
       const normalized =
-        normalizeQuoteTaxMode_(
+        pricingEngine_().normalizeMode(
           quoteTaxMode
         );
 
@@ -6473,7 +6485,7 @@ function createContract(no, type) {
 
   if (type === 'HĐMB') {
     const quoteTaxMode =
-      inferSavedQuoteTaxMode_(q);
+      pricingEngine_().inferSavedMode(q);
 
     fillGoodsTable_(
       body,
@@ -6655,7 +6667,7 @@ function fillGoodsTable_(
     });
 
   const normalizedMode =
-    normalizeQuoteTaxMode_(
+    pricingEngine_().normalizeMode(
       quoteTaxMode
     );
 
@@ -6771,7 +6783,7 @@ function fillGoodsTable_(
     items.forEach(
       (item, index) => {
         const pricing =
-          calculateItemPricing_(
+          pricingEngine_().calculateItem(
             item,
             normalizedMode
           );

@@ -1058,6 +1058,14 @@ function clearQuoteItems(){
 }
 
 
+
+const PRICING_ENGINE = Object.freeze({
+  normalizeMode: normalizeQuoteTaxMode,
+  modeLabel: quoteTaxModeLabel,
+  resolveItemTax: resolveItemTax,
+  calculateItem: calculateItemPricing
+});
+
 function normalizeQuoteTaxMode(mode){
   if(mode==='AUTO'){
     return 'INCLUDED_8';
@@ -1086,12 +1094,12 @@ function quoteTaxModeLabel(mode){
   };
 
   return labels[
-    normalizeQuoteTaxMode(mode)
+    PRICING_ENGINE.normalizeMode(mode)
   ];
 }
 
 function resolveItemTax(item,taxMode){
-  const mode=normalizeQuoteTaxMode(taxMode);
+  const mode=PRICING_ENGINE.normalizeMode(taxMode);
 
   if(mode==='NO_VAT'){
     return {
@@ -1155,7 +1163,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=resolveItemTax(
+  const tax=PRICING_ENGINE.resolveItemTax(
     item,
     taxMode
   );
@@ -1205,7 +1213,7 @@ function calculateItemPricing(
 }
 
 function itemVatLabel(item,taxMode){
-  const mode=normalizeQuoteTaxMode(
+  const mode=PRICING_ENGINE.normalizeMode(
     taxMode
   );
 
@@ -1213,11 +1221,11 @@ function itemVatLabel(item,taxMode){
     return 'VAT 0% — giá đã gồm VAT';
   }
 
-  return quoteTaxModeLabel(mode);
+  return PRICING_ENGINE.modeLabel(mode);
 }
 
 function quoteTotals(){
-  const taxMode=normalizeQuoteTaxMode(
+  const taxMode=PRICING_ENGINE.normalizeMode(
     document.getElementById(
       'quoteTaxMode'
     ).value
@@ -1228,7 +1236,7 @@ function quoteTotals(){
   let grossBeforeDiscount=0;
 
   quoteItems.forEach(item=>{
-    const pricing=calculateItemPricing(
+    const pricing=PRICING_ENGINE.calculateItem(
       item,
       taxMode
     );
@@ -1291,7 +1299,7 @@ function quoteTotals(){
 
 function renderQuoteCart(){
   const box=document.getElementById('quoteCart');
-  const taxMode=normalizeQuoteTaxMode(
+  const taxMode=PRICING_ENGINE.normalizeMode(
     document.getElementById(
       'quoteTaxMode'
     ).value
@@ -1302,7 +1310,7 @@ function renderQuoteCart(){
       '<div class="empty-cart">Chưa chọn sản phẩm</div>';
   }else{
     box.innerHTML=quoteItems.map((item,index)=>{
-      const pricing=calculateItemPricing(item,taxMode);
+      const pricing=PRICING_ENGINE.calculateItem(item,taxMode);
       const displayedLineAmount=pricing.priceIncludesVat
         ?pricing.payable
         :pricing.net;
@@ -1466,7 +1474,7 @@ function quotePayload(){
     ),
     note:
       document.getElementById('quoteNote').value,
-    taxMode:normalizeQuoteTaxMode(
+    taxMode:PRICING_ENGINE.normalizeMode(
       document.getElementById(
         'quoteTaxMode'
       ).value
@@ -2155,7 +2163,7 @@ function openQuoteForEdit(no,duplicate){
       Number(quote.discount||0);
 
     document.getElementById('quoteTaxMode').value=
-      normalizeQuoteTaxMode(
+      PRICING_ENGINE.normalizeMode(
         quote.taxMode||'INCLUDED_8'
       );
 
