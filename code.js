@@ -90,6 +90,57 @@ function columnValues_(sh, columnIndex) {
     .map(row => row[0]);
 }
 
+
+function findDataRowsByValue_(sh, columnIndex, value) {
+  const target = clean_(value);
+  const lastRow = sh.getLastRow();
+
+  if (!target || lastRow < 2 || columnIndex < 1) {
+    return [];
+  }
+
+  return sh
+    .getRange(2, columnIndex, lastRow - 1, 1)
+    .createTextFinder(target)
+    .matchEntireCell(true)
+    .findAll()
+    .map(range => range.getRow())
+    .sort((a, b) => a - b);
+}
+
+function deleteRowBlocks_(sh, rows) {
+  if (!Array.isArray(rows) || !rows.length) return 0;
+
+  const sorted = rows
+    .slice()
+    .sort((a, b) => a - b);
+
+  const blocks = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+
+    if (current === prev + 1) {
+      prev = current;
+      continue;
+    }
+
+    blocks.push([start, prev - start + 1]);
+    start = current;
+    prev = current;
+  }
+
+  blocks.push([start, prev - start + 1]);
+
+  blocks
+    .sort((a, b) => b[0] - a[0])
+    .forEach(block => sh.deleteRows(block[0], block[1]));
+
+  return sorted.length;
+}
+
 function cfg_() {
   const out = {};
   rows_(APP.SHEETS.CONFIG).forEach(x => out[clean_(x.Khoa)] = x.GiaTri);
@@ -2211,45 +2262,46 @@ function updateQuote(q) {
 
   try {
     const quoteSheet = sheet_(APP.SHEETS.QUOTES);
-    const quoteValues = quoteSheet.getDataRange().getValues();
-    const quoteHeaders = quoteValues[0].map(clean_);
-    const quoteNoCol = quoteHeaders.indexOf('SoBaoGia');
+    const quoteMeta = sheetHeaderMap_(quoteSheet);
+    const quoteNoColumn = quoteMeta.byName.SoBaoGia;
+
+    if (!quoteNoColumn) {
+      throw new Error('Sheet BAO_GIA thiếu cột SoBaoGia.');
+    }
+
+    const quoteRow = findDataRowByValue_(
+      quoteSheet,
+      quoteNoColumn,
+      no
+    );
+
+    if (!quoteRow) {
+      throw new Error('Không tìm thấy báo giá ' + no);
+    }
+
+    const quoteHeaders = quoteMeta.headers;
+    const quoteValues = quoteSheet
+      .getRange(quoteRow, 1, 1, quoteHeaders.length)
+      .getValues()[0];
+
     const quoteStatusCol = quoteHeaders.indexOf('TrangThai');
     const quotePdfCol = quoteHeaders.indexOf('LinkPDF');
     const quoteDateCol = quoteHeaders.indexOf('NgayBaoGia');
 
-    let quoteRowIndex = -1;
-    let oldStatus = '';
-    let oldPdfUrl = '';
-    let quoteDate = new Date();
+    const oldStatus = quoteStatusCol >= 0
+      ? clean_(quoteValues[quoteStatusCol]).toUpperCase()
+      : '';
 
-    for (let row = 1; row < quoteValues.length; row++) {
-      if (clean_(quoteValues[row][quoteNoCol]) === no) {
-        quoteRowIndex = row;
-        oldStatus = clean_(
-          quoteValues[row][quoteStatusCol]
-        ).toUpperCase();
+    const oldPdfUrl = quotePdfCol >= 0
+      ? clean_(quoteValues[quotePdfCol])
+      : '';
 
-        if (quotePdfCol >= 0) {
-          oldPdfUrl = clean_(
-            quoteValues[row][quotePdfCol]
-          );
-        }
-
-        if (
-          quoteDateCol >= 0 &&
-          quoteValues[row][quoteDateCol] instanceof Date
-        ) {
-          quoteDate = quoteValues[row][quoteDateCol];
-        }
-
-        break;
-      }
-    }
-
-    if (quoteRowIndex < 0) {
-      throw new Error('Không tìm thấy báo giá ' + no);
-    }
+    const quoteDate = (
+      quoteDateCol >= 0 &&
+      quoteValues[quoteDateCol] instanceof Date
+    )
+      ? quoteValues[quoteDateCol]
+      : new Date();
 
     if (oldStatus === 'HỦY') {
       throw new Error('Không thể cập nhật báo giá đã hủy.');
@@ -2290,7 +2342,7 @@ function updateQuote(q) {
       CheDoVAT: taxMode
     };
 
-    const updatedQuoteRow = quoteValues[quoteRowIndex].slice();
+    const updatedQuoteRow = quoteValues.slice();
 
     Object.keys(valuesByHeader).forEach(header => {
       const col = quoteHeaders.indexOf(header);
@@ -2301,7 +2353,7 @@ function updateQuote(q) {
 
     quoteSheet
       .getRange(
-        quoteRowIndex + 1,
+        quoteRow,
         1,
         1,
         quoteHeaders.length
@@ -2311,50 +2363,27 @@ function updateQuote(q) {
     const phoneCol = quoteHeaders.indexOf('DienThoai');
     if (phoneCol >= 0) {
       quoteSheet
-        .getRange(quoteRowIndex + 1, phoneCol + 1)
+        .getRange(quoteRow, phoneCol + 1)
         .setNumberFormat('@');
     }
 
     const lineSheet = sheet_(APP.SHEETS.QUOTE_LINES);
-    const lineValues = lineSheet.getDataRange().getValues();
-    const lineHeaders = lineValues[0].map(clean_);
-    const lineNoCol = lineHeaders.indexOf('SoBaoGia');
-    const rowsToDelete = [];
+    const lineMeta = sheetHeaderMap_(lineSheet);
+    const lineNoColumn = lineMeta.byName.SoBaoGia;
 
-    for (let row = 1; row < lineValues.length; row++) {
-      if (clean_(lineValues[row][lineNoCol]) === no) {
-        rowsToDelete.push(row + 1);
-      }
+    if (!lineNoColumn) {
+      throw new Error(
+        'Sheet CHI_TIET_BAO_GIA thiếu cột SoBaoGia.'
+      );
     }
 
-    /*
-     * Chi tiết của một báo giá được ghi liền nhau.
-     * Xóa theo block giúp giảm nhiều lần gọi Sheets API.
-     */
-    if (rowsToDelete.length) {
-      const blocks = [];
-      let start = rowsToDelete[0];
-      let prev = rowsToDelete[0];
+    const rowsToDelete = findDataRowsByValue_(
+      lineSheet,
+      lineNoColumn,
+      no
+    );
 
-      for (let i = 1; i < rowsToDelete.length; i++) {
-        const current = rowsToDelete[i];
-        if (current === prev + 1) {
-          prev = current;
-          continue;
-        }
-        blocks.push([start, prev - start + 1]);
-        start = current;
-        prev = current;
-      }
-
-      blocks.push([start, prev - start + 1]);
-
-      blocks
-        .sort((a, b) => b[0] - a[0])
-        .forEach(block =>
-          lineSheet.deleteRows(block[0], block[1])
-        );
-    }
+    deleteRowBlocks_(lineSheet, rowsToDelete);
 
     const lines = q.items.map((item, index) => {
       const line = calculateItemPricing_(item, taxMode);
@@ -2420,43 +2449,62 @@ function cancelQuote(no, reason) {
   if (!no) throw new Error('Thiếu số báo giá.');
 
   const sh = sheet_(APP.SHEETS.QUOTES);
-  const values = sh.getDataRange().getValues();
-  const headers = values[0].map(clean_);
-  const noCol = headers.indexOf('SoBaoGia');
-  const statusCol = headers.indexOf('TrangThai');
-  const noteCol = headers.indexOf('GhiChu');
+  const meta = sheetHeaderMap_(sh);
+  const noCol = meta.byName.SoBaoGia;
+  const statusCol = meta.byName.TrangThai;
+  const noteCol = meta.byName.GhiChu;
 
-  for (let i = 1; i < values.length; i++) {
-    if (clean_(values[i][noCol]) !== no) continue;
-
-    const currentStatus = clean_(values[i][statusCol]).toUpperCase();
-
-    if (currentStatus === 'HỦY') {
-      throw new Error('Báo giá này đã hủy.');
-    }
-
-    sh.getRange(i + 1, statusCol + 1).setValue('HỦY');
-
-    if (noteCol >= 0) {
-      const oldNote = clean_(values[i][noteCol]);
-      const cancelText =
-        '[Hủy ' +
-        Utilities.formatDate(new Date(), APP.TZ, 'dd/MM/yyyy HH:mm') +
-        '] ' +
-        (clean_(reason) || 'Không ghi lý do');
-
-      sh.getRange(i + 1, noteCol + 1)
-        .setValue((oldNote ? oldNote + ' | ' : '') + cancelText);
-    }
-
-    return {
-      success: true,
-      no: no,
-      message: 'Đã hủy báo giá ' + no
-    };
+  if (!noCol || !statusCol) {
+    throw new Error(
+      'Sheet BAO_GIA thiếu cột SoBaoGia hoặc TrangThai.'
+    );
   }
 
-  throw new Error('Không tìm thấy báo giá ' + no);
+  const row = findDataRowByValue_(sh, noCol, no);
+
+  if (!row) {
+    throw new Error('Không tìm thấy báo giá ' + no);
+  }
+
+  const rowValues = sh
+    .getRange(row, 1, 1, meta.headers.length)
+    .getValues()[0];
+
+  const currentStatus = clean_(
+    rowValues[statusCol - 1]
+  ).toUpperCase();
+
+  if (currentStatus === 'HỦY') {
+    throw new Error('Báo giá này đã hủy.');
+  }
+
+  rowValues[statusCol - 1] = 'HỦY';
+
+  if (noteCol) {
+    const oldNote = clean_(rowValues[noteCol - 1]);
+    const cancelText =
+      '[Hủy ' +
+      Utilities.formatDate(
+        new Date(),
+        APP.TZ,
+        'dd/MM/yyyy HH:mm'
+      ) +
+      '] ' +
+      (clean_(reason) || 'Không ghi lý do');
+
+    rowValues[noteCol - 1] =
+      (oldNote ? oldNote + ' | ' : '') +
+      cancelText;
+  }
+
+  sh.getRange(row, 1, 1, meta.headers.length)
+    .setValues([rowValues]);
+
+  return {
+    success: true,
+    no: no,
+    message: 'Đã hủy báo giá ' + no
+  };
 }
 
 
@@ -2471,8 +2519,16 @@ function deleteQuotePermanently(no) {
   lock.waitLock(30000);
 
   try {
-    const linkedContract = rows_(APP.SHEETS.CONTRACTS)
-      .some(x => clean_(x.MaBaoGia) === no);
+    const contractSheet = sheet_(APP.SHEETS.CONTRACTS);
+    const contractMeta = sheetHeaderMap_(contractSheet);
+    const contractQuoteCol = contractMeta.byName.MaBaoGia;
+    const linkedContract = contractQuoteCol
+      ? Boolean(findDataRowByValue_(
+          contractSheet,
+          contractQuoteCol,
+          no
+        ))
+      : false;
 
     if (linkedContract) {
       throw new Error(
@@ -2482,56 +2538,49 @@ function deleteQuotePermanently(no) {
     }
 
     const quoteSheet = sheet_(APP.SHEETS.QUOTES);
-    const quoteValues = quoteSheet.getDataRange().getValues();
-    const quoteHeaders = quoteValues[0].map(clean_);
-    const quoteNoCol = quoteHeaders.indexOf('SoBaoGia');
-    const quotePdfCol = quoteHeaders.indexOf('LinkPDF');
+    const quoteMeta = sheetHeaderMap_(quoteSheet);
+    const quoteNoCol = quoteMeta.byName.SoBaoGia;
+    const quotePdfCol = quoteMeta.byName.LinkPDF;
 
-    if (quoteNoCol < 0) {
+    if (!quoteNoCol) {
       throw new Error('Sheet BAO_GIA thiếu cột SoBaoGia.');
     }
 
-    let quoteRow = -1;
-    let pdfUrl = '';
+    const quoteRow = findDataRowByValue_(
+      quoteSheet,
+      quoteNoCol,
+      no
+    );
 
-    for (let i = 1; i < quoteValues.length; i++) {
-      if (clean_(quoteValues[i][quoteNoCol]) === no) {
-        quoteRow = i + 1;
-
-        if (quotePdfCol >= 0) {
-          pdfUrl = clean_(quoteValues[i][quotePdfCol]);
-        }
-
-        break;
-      }
-    }
-
-    if (quoteRow < 0) {
+    if (!quoteRow) {
       throw new Error('Không tìm thấy báo giá ' + no);
     }
 
-    const lineSheet = sheet_(APP.SHEETS.QUOTE_LINES);
-    const lineValues = lineSheet.getDataRange().getValues();
-    const lineHeaders = lineValues[0].map(clean_);
-    const lineNoCol = lineHeaders.indexOf('SoBaoGia');
+    let pdfUrl = '';
 
-    if (lineNoCol < 0) {
+    if (quotePdfCol) {
+      pdfUrl = clean_(
+        quoteSheet.getRange(quoteRow, quotePdfCol).getValue()
+      );
+    }
+
+    const lineSheet = sheet_(APP.SHEETS.QUOTE_LINES);
+    const lineMeta = sheetHeaderMap_(lineSheet);
+    const lineNoCol = lineMeta.byName.SoBaoGia;
+
+    if (!lineNoCol) {
       throw new Error(
         'Sheet CHI_TIET_BAO_GIA thiếu cột SoBaoGia.'
       );
     }
 
-    const rowsToDelete = [];
+    const rowsToDelete = findDataRowsByValue_(
+      lineSheet,
+      lineNoCol,
+      no
+    );
 
-    for (let i = 1; i < lineValues.length; i++) {
-      if (clean_(lineValues[i][lineNoCol]) === no) {
-        rowsToDelete.push(i + 1);
-      }
-    }
-
-    rowsToDelete
-      .sort((a, b) => b - a)
-      .forEach(rowNumber => lineSheet.deleteRow(rowNumber));
+    deleteRowBlocks_(lineSheet, rowsToDelete);
 
     quoteSheet.deleteRow(quoteRow);
 
