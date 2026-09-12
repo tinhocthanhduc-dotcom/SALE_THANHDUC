@@ -1060,7 +1060,7 @@ function clearQuoteItems(){
 
 
 function quoteTaxModeInfo(mode){
-  const normalized=normalizeQuoteTaxMode(mode);
+  const normalized=PRICING_ENGINE.normalizeMode(mode);
   const noVat=normalized==='NO_VAT';
   const included=[
     'INCLUDED_8',
@@ -1184,7 +1184,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
+  const tax=PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
     item,
     taxMode
   );

@@ -39,9 +39,18 @@ function clean_(v) {
 }
 
 function rows_(name) {
-  const values = sheet_(name).getDataRange().getValues();
-  if (!values.length) return [];
+  const sh = sheet_(name);
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+
+  if (lastRow < 1 || lastCol < 1) return [];
+
+  const values = sh
+    .getRange(1, 1, lastRow, lastCol)
+    .getValues();
+
   const headers = values[0].map(clean_);
+
   return values.slice(1)
     .filter(r => r.some(v => v !== '' && v != null))
     .map(r => {
@@ -330,20 +339,24 @@ function ensureProductGroupSheet_() {
   sh.setColumnWidth(3, 70);
   sh.setColumnWidth(4, 90);
 
-  const currentNames = rows_(
-    APP.SHEETS.GROUPS
-  )
-    .map(x =>
-      clean_(x.TenNhom)
-        .toLowerCase()
-    )
-    .filter(Boolean);
+  const groupMeta = sheetHeaderMap_(sh);
+  const groupNameCol = groupMeta.byName.TenNhom || 0;
 
-  const productGroups = rows_(
-    APP.SHEETS.PRODUCTS
-  )
-    .map(x => clean_(x.NhomHang))
-    .filter(Boolean);
+  const currentNames = groupNameCol
+    ? columnValues_(sh, groupNameCol)
+        .map(value => clean_(value).toLowerCase())
+        .filter(Boolean)
+    : [];
+
+  const productSheet = sheet_(APP.SHEETS.PRODUCTS);
+  const productMeta = sheetHeaderMap_(productSheet);
+  const productGroupCol = productMeta.byName.NhomHang || 0;
+
+  const productGroups = productGroupCol
+    ? columnValues_(productSheet, productGroupCol)
+        .map(value => clean_(value))
+        .filter(Boolean)
+    : [];
 
   const defaults = [
     'Máy in',
@@ -547,12 +560,18 @@ function updateProductGroup(group) {
   );
   const newName = clean_(group.name);
 
-  sh.getRange(row, nameCol).setValue(newName);
+  const groupRow = sh
+    .getRange(row, 1, 1, meta.headers.length)
+    .getValues()[0];
+
+  groupRow[nameCol - 1] = newName;
 
   if (orderCol) {
-    sh.getRange(row, orderCol)
-      .setValue(Number(group.order || 0));
+    groupRow[orderCol - 1] = Number(group.order || 0);
   }
+
+  sh.getRange(row, 1, 1, meta.headers.length)
+    .setValues([groupRow]);
 
   if (
     oldName &&
@@ -1149,7 +1168,7 @@ function itemVatLabel_(
 
 
 function quoteTaxModeInfo_(mode) {
-  const normalized = normalizeQuoteTaxMode_(mode);
+  const normalized = pricingEngine_().normalizeMode(mode);
   const noVat = normalized === 'NO_VAT';
   const included =
     normalized === 'INCLUDED_8' ||
