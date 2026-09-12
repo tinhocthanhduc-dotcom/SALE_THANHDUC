@@ -117,6 +117,54 @@ function findDataRowsByValue_(sh, columnIndex, value) {
     .sort((a, b) => a - b);
 }
 
+
+function findObjectByValue_(sheetName, columnName, value) {
+  const sh = sheet_(sheetName);
+  const meta = sheetHeaderMap_(sh);
+  const column = meta.byName[columnName] || 0;
+
+  if (!column) return null;
+
+  const row = findDataRowByValue_(sh, column, value);
+  if (!row) return null;
+
+  const values = sh
+    .getRange(row, 1, 1, meta.headers.length)
+    .getValues()[0];
+
+  const result = {};
+  meta.headers.forEach((header, index) => {
+    result[header] = values[index];
+  });
+
+  return result;
+}
+
+function recentRows_(sheetName, limit) {
+  const sh = sheet_(sheetName);
+  const meta = sheetHeaderMap_(sh);
+  const lastRow = sh.getLastRow();
+  const lastCol = meta.headers.length;
+  const safeLimit = Math.max(1, Number(limit || 20));
+
+  if (lastRow < 2 || lastCol < 1) return [];
+
+  const startRow = Math.max(2, lastRow - safeLimit + 1);
+  const values = sh
+    .getRange(startRow, 1, lastRow - startRow + 1, lastCol)
+    .getValues();
+
+  return values
+    .filter(row => row.some(value => value !== '' && value != null))
+    .map(row => {
+      const item = {};
+      meta.headers.forEach((header, index) => {
+        item[header] = row[index];
+      });
+      return item;
+    });
+}
+
 function deleteRowBlocks_(sh, rows) {
   if (!Array.isArray(rows) || !rows.length) return 0;
 
@@ -4102,11 +4150,11 @@ function quotePreviewData_(request) {
   const customerInput = request.customer || {};
 
   const storedCustomer = clean_(customerInput.id)
-    ? rows_(APP.SHEETS.CUSTOMERS).find(
-        item =>
-          clean_(item.MaKhachHang) ===
-          clean_(customerInput.id)
-      )
+    ? findObjectByValue_(
+      APP.SHEETS.CUSTOMERS,
+      'MaKhachHang',
+      customerInput.id
+    )
     : null;
 
   const customer = storedCustomer || {
@@ -4216,10 +4264,10 @@ function getWarehouseIssuePreviewHtml(no) {
   const data = getQuote(no);
   const quote = data.quote;
 
-  const customer = rows_(APP.SHEETS.CUSTOMERS)
-    .find(item =>
-      clean_(item.MaKhachHang) ===
-      clean_(quote.MaKhachHang)
+  const customer = findObjectByValue_(
+      APP.SHEETS.CUSTOMERS,
+      'MaKhachHang',
+      quote.MaKhachHang
     ) || {};
 
   return buildWarehouseIssueHtml_(
@@ -4541,13 +4589,11 @@ function buildQuoteA4Html_(
   const config = cfg_();
   const company = companyInfo_(config);
 
-  const customer = data.customer || rows_(
-    APP.SHEETS.CUSTOMERS
-  ).find(
-    item =>
-      clean_(item.MaKhachHang) ===
-      clean_(quote.MaKhachHang)
-  ) || {};
+  const customer = data.customer || findObjectByValue_(
+      APP.SHEETS.CUSTOMERS,
+      'MaKhachHang',
+      quote.MaKhachHang
+    ) || {};
 
   const total = Math.round(
     Number(
@@ -5263,13 +5309,11 @@ function generateQuotePdf_(data) {
     date
   );
 
-  const customer = rows_(
-    APP.SHEETS.CUSTOMERS
-  ).find(
-    item =>
-      clean_(item.MaKhachHang) ===
-      clean_(quote.MaKhachHang)
-  ) || {};
+  const customer = findObjectByValue_(
+      APP.SHEETS.CUSTOMERS,
+      'MaKhachHang',
+      quote.MaKhachHang
+    ) || {};
 
   const html = buildQuoteA4Html_(
     {
@@ -5404,17 +5448,23 @@ function getRecentQuotes(limit) {
 }
 
 function getRecentContracts(limit) {
-  return rows_(APP.SHEETS.CONTRACTS).slice(-Number(limit||20)).reverse().map(x=>({
-    no:clean_(x.SoHopDong), date:formatDate_(x.NgayHopDong), type:clean_(x.LoaiHopDong),
-    customer:clean_(x.TenKhachHang), total:Number(x.GiaTriHopDong||0),
-    status:clean_(x.TrangThai), doc:clean_(x.LinkGoogleDoc), pdf:clean_(x.LinkPDF)
-  }));
+  return recentRows_(
+    APP.SHEETS.CONTRACTS,
+    Number(limit || 20)
+  )
+    .reverse()
+    .map(x => ({
+      no: clean_(x.SoHopDong),
+      date: formatDate_(x.NgayHopDong),
+      type: clean_(x.LoaiHopDong),
+      customer: clean_(x.TenKhachHang),
+      total: Number(x.GiaTriHopDong || 0),
+      status: clean_(x.TrangThai),
+      doc: clean_(x.LinkGoogleDoc),
+      pdf: clean_(x.LinkPDF)
+    }));
 }
 
-/**
- * Đọc các dòng có cùng giá trị khóa mà không quét toàn bộ sheet.
- * Tối ưu cho các nhóm dữ liệu liên tiếp như CHI_TIET_BAO_GIA.
- */
 function readRowsByValue_(sh, columnName, value) {
   const target = clean_(value);
 
@@ -6459,13 +6509,11 @@ function createContract(no, type) {
   const data = getQuote(no);
   const q = data.quote;
 
-  const customer = rows_(
-    APP.SHEETS.CUSTOMERS
-  ).find(
-    x =>
-      clean_(x.MaKhachHang) ===
-      clean_(q.MaKhachHang)
-  );
+  const customer = findObjectByValue_(
+      APP.SHEETS.CUSTOMERS,
+      'MaKhachHang',
+      q.MaKhachHang
+    );
 
   if (!customer) {
     throw new Error(
