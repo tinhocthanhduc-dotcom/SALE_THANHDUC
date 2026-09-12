@@ -51,6 +51,45 @@ function rows_(name) {
     });
 }
 
+function sheetHeaderMap_(sh) {
+  const lastCol = sh.getLastColumn();
+
+  if (lastCol < 1) {
+    return {
+      headers: [],
+      byName: {}
+    };
+  }
+
+  const headers = sh
+    .getRange(1, 1, 1, lastCol)
+    .getValues()[0]
+    .map(clean_);
+
+  const byName = {};
+  headers.forEach((header, index) => {
+    if (header) byName[header] = index + 1;
+  });
+
+  return {
+    headers: headers,
+    byName: byName
+  };
+}
+
+function columnValues_(sh, columnIndex) {
+  const lastRow = sh.getLastRow();
+
+  if (lastRow < 2 || columnIndex < 1) {
+    return [];
+  }
+
+  return sh
+    .getRange(2, columnIndex, lastRow - 1, 1)
+    .getValues()
+    .map(row => row[0]);
+}
+
 function cfg_() {
   const out = {};
   rows_(APP.SHEETS.CONFIG).forEach(x => out[clean_(x.Khoa)] = x.GiaTri);
@@ -431,34 +470,36 @@ function updateProductGroup(group) {
   );
 
   const sh = ensureProductGroupSheet_();
-  const values = sh.getDataRange().getValues();
-  const headers = values[0].map(clean_);
-  const idCol = headers.indexOf('MaNhom');
-  const nameCol = headers.indexOf('TenNhom');
-  const orderCol = headers.indexOf('ThuTu');
+  const meta = sheetHeaderMap_(sh);
+  const idCol = meta.byName.MaNhom || 0;
+  const nameCol = meta.byName.TenNhom || 0;
+  const orderCol = meta.byName.ThuTu || 0;
 
-  let row = -1;
-  let oldName = '';
-
-  for (let i = 1; i < values.length; i++) {
-    if (clean_(values[i][idCol]) === clean_(group.id)) {
-      row = i + 1;
-      oldName = clean_(values[i][nameCol]);
-      break;
-    }
+  if (!idCol || !nameCol) {
+    throw new Error(
+      'Sheet NHOM_HANG thiếu cột MaNhom hoặc TenNhom.'
+    );
   }
 
-  if (row < 0) {
+  const row = findDataRowByValue_(
+    sh,
+    idCol,
+    group.id
+  );
+
+  if (!row) {
     throw new Error('Không tìm thấy nhóm hàng.');
   }
 
+  const oldName = clean_(
+    sh.getRange(row, nameCol).getValue()
+  );
   const newName = clean_(group.name);
 
-  sh.getRange(row, nameCol + 1)
-    .setValue(newName);
+  sh.getRange(row, nameCol).setValue(newName);
 
-  if (orderCol >= 0) {
-    sh.getRange(row, orderCol + 1)
+  if (orderCol) {
+    sh.getRange(row, orderCol)
       .setValue(Number(group.order || 0));
   }
 
@@ -467,27 +508,31 @@ function updateProductGroup(group) {
     oldName.toLowerCase() !== newName.toLowerCase()
   ) {
     const productSheet = sheet_(APP.SHEETS.PRODUCTS);
-    const productValues = productSheet
-      .getDataRange()
-      .getValues();
+    const productMeta = sheetHeaderMap_(productSheet);
+    const groupCol = productMeta.byName.NhomHang || 0;
 
-    const productHeaders = productValues[0]
-      .map(clean_);
+    if (groupCol && productSheet.getLastRow() >= 2) {
+      const range = productSheet.getRange(
+        2,
+        groupCol,
+        productSheet.getLastRow() - 1,
+        1
+      );
+      const values = range.getValues();
+      let changed = false;
 
-    const groupCol = productHeaders
-      .indexOf('NhomHang');
-
-    if (groupCol >= 0) {
-      for (let i = 1; i < productValues.length; i++) {
+      values.forEach(rowValues => {
         if (
-          clean_(productValues[i][groupCol])
-            .toLowerCase() ===
+          clean_(rowValues[0]).toLowerCase() ===
           oldName.toLowerCase()
         ) {
-          productSheet
-            .getRange(i + 1, groupCol + 1)
-            .setValue(newName);
+          rowValues[0] = newName;
+          changed = true;
         }
+      });
+
+      if (changed) {
+        range.setValues(values);
       }
     }
   }
@@ -507,31 +552,39 @@ function deleteProductGroup(groupId) {
   }
 
   const sh = ensureProductGroupSheet_();
-  const values = sh.getDataRange().getValues();
-  const headers = values[0].map(clean_);
-  const idCol = headers.indexOf('MaNhom');
-  const nameCol = headers.indexOf('TenNhom');
+  const meta = sheetHeaderMap_(sh);
+  const idCol = meta.byName.MaNhom || 0;
+  const nameCol = meta.byName.TenNhom || 0;
 
-  let row = -1;
-  let name = '';
-
-  for (let i = 1; i < values.length; i++) {
-    if (clean_(values[i][idCol]) === id) {
-      row = i + 1;
-      name = clean_(values[i][nameCol]);
-      break;
-    }
+  if (!idCol || !nameCol) {
+    throw new Error(
+      'Sheet NHOM_HANG thiếu cột MaNhom hoặc TenNhom.'
+    );
   }
 
-  if (row < 0) {
+  const row = findDataRowByValue_(sh, idCol, id);
+
+  if (!row) {
     throw new Error('Không tìm thấy nhóm hàng.');
   }
 
-  const inUse = rows_(APP.SHEETS.PRODUCTS)
-    .some(product =>
-      clean_(product.NhomHang).toLowerCase() ===
-      name.toLowerCase()
-    );
+  const name = clean_(
+    sh.getRange(row, nameCol).getValue()
+  );
+
+  const productSheet = sheet_(APP.SHEETS.PRODUCTS);
+  const productMeta = sheetHeaderMap_(productSheet);
+  const groupCol = productMeta.byName.NhomHang || 0;
+
+  let inUse = false;
+
+  if (groupCol) {
+    inUse = columnValues_(productSheet, groupCol)
+      .some(value =>
+        clean_(value).toLowerCase() ===
+        name.toLowerCase()
+      );
+  }
 
   if (inUse) {
     throw new Error(
@@ -548,6 +601,7 @@ function deleteProductGroup(groupId) {
     message: 'Đã xóa nhóm hàng ' + name
   };
 }
+
 
 
 
