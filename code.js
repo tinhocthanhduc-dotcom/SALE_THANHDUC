@@ -6559,12 +6559,86 @@ function fillGoodsTable_(
   );
 }
 
-function setQuotePdf_(no,url) {
-  const sh=sheet_(APP.SHEETS.QUOTES), values=sh.getDataRange().getValues();
-  const h=values[0].map(clean_), cNo=h.indexOf('SoBaoGia'), cPdf=h.indexOf('LinkPDF');
-  for(let i=1;i<values.length;i++) if(clean_(values[i][cNo])===clean_(no)) {
-    sh.getRange(i+1,cPdf+1).setValue(url); break;
+
+/**
+ * Tìm số dòng theo giá trị khóa mà không cần đọc toàn bộ sheet.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sh
+ * @param {number} columnIndex - cột 1-based
+ * @param {*} value
+ * @return {number} số dòng 1-based, hoặc 0 nếu không tìm thấy
+ */
+function findDataRowByValue_(sh, columnIndex, value) {
+  const target = clean_(value);
+
+  if (!target) return 0;
+
+  const lastRow = sh.getLastRow();
+
+  if (lastRow < 2) return 0;
+
+  const range = sh.getRange(
+    2,
+    columnIndex,
+    lastRow - 1,
+    1
+  );
+
+  const match = range
+    .createTextFinder(target)
+    .matchEntireCell(true)
+    .findNext();
+
+  return match ? match.getRow() : 0;
+}
+
+
+function setQuotePdf_(no, url) {
+  const sh = sheet_(APP.SHEETS.QUOTES);
+
+  const lastCol = sh.getLastColumn();
+
+  if (lastCol < 1) {
+    throw new Error(
+      'Sheet BAO_GIA chưa có cấu trúc dữ liệu.'
+    );
   }
+
+  const headers = sh
+    .getRange(1, 1, 1, lastCol)
+    .getValues()[0]
+    .map(clean_);
+
+  const noCol = headers.indexOf('SoBaoGia');
+  const pdfCol = headers.indexOf('LinkPDF');
+
+  if (noCol < 0) {
+    throw new Error(
+      'Sheet BAO_GIA thiếu cột SoBaoGia.'
+    );
+  }
+
+  if (pdfCol < 0) {
+    throw new Error(
+      'Sheet BAO_GIA thiếu cột LinkPDF.'
+    );
+  }
+
+  const row = findDataRowByValue_(
+    sh,
+    noCol + 1,
+    no
+  );
+
+  if (!row) {
+    throw new Error(
+      'Không tìm thấy báo giá ' + clean_(no)
+    );
+  }
+
+  sh
+    .getRange(row, pdfCol + 1)
+    .setValue(clean_(url));
 }
 
 function formatDateOnly_(value) {
