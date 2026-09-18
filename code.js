@@ -2311,8 +2311,8 @@ function saveQuote(q) {
     total: totals.total,
     quote: {
       no: no,
-      date: formatDate_(now),
-      dateIso: formatDateInput_(now),
+      date: formatDate_(quoteDate),
+      dateIso: formatDateInput_(quoteDate),
       customerId: clean_(customer.id),
       customer: clean_(customer.name),
       contact: clean_(q.contact || customer.recipient),

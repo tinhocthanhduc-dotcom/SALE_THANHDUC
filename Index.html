@@ -858,6 +858,7 @@ let DB={customers:[],products:[],groups:[],quotes:[],contracts:[],config:{}};
 let historyLoaded=false;
 let historyLoading=false;
 let quoteItems=[];
+let quotePickerItems=[];
 let editingQuoteNo='';
 let editingQuoteStatus='';
 let pendingContractRequest=null;
@@ -969,6 +970,7 @@ function refresh(showToast=true){
     historyLoaded=false;
     historyLoading=false;
     renderAll();
+    setDefaultQuoteDate();
     setDefaultValidDate();
     if(showToast) toast('Đã cập nhật');
   });
@@ -1300,16 +1302,18 @@ function renderProductPicker(){
     document.getElementById('quoteGroupFilter')
       ?.value||'';
 
+  quotePickerItems=(DB.products||[])
+    .filter(product =>
+      (!keyword||norm(
+        product.code+' '+product.name
+      ).includes(keyword)) &&
+      (!group||product.group===group)
+    )
+    .slice(0,250);
+
   document.getElementById('productPicker').innerHTML=
-    DB.products
-      .filter(product =>
-        (!keyword||norm(
-          product.code+' '+product.name
-        ).includes(keyword)) &&
-        (!group||product.group===group)
-      )
-      .slice(0,250)
-      .map(product=>`<tr>
+    quotePickerItems
+      .map((product,index)=>`<tr>
         <td>${esc(product.code)}</td>
         <td>
           <b>${esc(product.name)}</b>
@@ -1324,7 +1328,7 @@ function renderProductPicker(){
             :'<span class="price-missing">Chưa có giá</span>'}
         </td>
         <td>
-          <button onclick="addItem('${esc(product.code)}')">
+          <button type="button" onclick="addPickerItem(${index})">
             Thêm
           </button>
         </td>
@@ -1333,16 +1337,58 @@ function renderProductPicker(){
       '<tr><td colspan="5">Không có sản phẩm phù hợp.</td></tr>';
 }
 
-function addItem(code){
-  const p=DB.products.find(x=>x.code===code);
-  if(!p){toast('Không tìm thấy sản phẩm.');return;}
-  if(Number(p.price||0)===0){
-    const proceed=confirm('Sản phẩm "'+p.name+'" chưa có giá bán.\n\nVẫn thêm với giá 0 để nhập giá thủ công?');
-    if(!proceed)return;
+function addPickerItem(index){
+  const p=quotePickerItems[index];
+  if(!p){
+    toast('Không tìm thấy sản phẩm trong danh sách hiện tại.');
+    return;
   }
-  const current=quoteItems.find(x=>x.code===code);
-  if(current)current.qty+=1;else quoteItems.push({...p,qty:1,lineDiscount:0,price:Number(p.price||0)});
-  renderQuoteCart();
+  addItem(p.code);
+}
+
+function addItem(code){
+  try{
+    const p=(DB.products||[]).find(
+      x=>String(x.code)===String(code)
+    );
+
+    if(!p){
+      toast('Không tìm thấy sản phẩm.');
+      return;
+    }
+
+    if(Number(p.price||0)===0){
+      const proceed=confirm(
+        'Sản phẩm "'+p.name+
+        '" chưa có giá bán.\n\n'+
+        'Vẫn thêm với giá 0 để nhập giá thủ công?'
+      );
+      if(!proceed)return;
+    }
+
+    const current=quoteItems.find(
+      x=>String(x.code)===String(code)
+    );
+
+    if(current){
+      current.qty=Number(current.qty||0)+1;
+    }else{
+      quoteItems.push({
+        ...p,
+        qty:1,
+        lineDiscount:0,
+        price:Number(p.price||0)
+      });
+    }
+
+    renderQuoteCart();
+  }catch(error){
+    console.error('addItem failed',error);
+    toast(
+      'Không thêm được sản phẩm: '+
+      (error?.message||String(error))
+    );
+  }
 }
 
 function changeQuoteQty(index,delta){
@@ -1504,7 +1550,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
+  const tax=PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
     item,
     taxMode
   );
