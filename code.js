@@ -1583,6 +1583,107 @@ function ensureAppReady_() {
   }
 }
 
+function warehouseNameKey_(value) {
+  return clean_(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\bestar\b/g, 'es')
+    .replace(/\bchinh hang\b/g, 'ch')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function warehouseNameTokens_(value) {
+  return warehouseNameKey_(value)
+    .split(' ')
+    .filter(token =>
+      token &&
+      token.length >= 2 &&
+      ![
+        'hop','muc','in','may','cai','chai','cum',
+        'chinh','hang','linh','kien','tuong','thich'
+      ].includes(token)
+    );
+}
+
+function resolveWarehouseProduct_(salesName, warehouseIndex) {
+  const targetKey = warehouseNameKey_(salesName);
+
+  if (!targetKey) return null;
+
+  const products = Object.keys(warehouseIndex || {})
+    .map(code => ({
+      code: code,
+      ...warehouseIndex[code]
+    }));
+
+  const exact = products.find(
+    item => warehouseNameKey_(item.name) === targetKey
+  );
+
+  if (exact) {
+    return {
+      item: exact,
+      matchType: 'EXACT_NAME',
+      score: 1
+    };
+  }
+
+  const targetTokens = warehouseNameTokens_(salesName);
+
+  if (!targetTokens.length) return null;
+
+  let best = null;
+  let secondScore = 0;
+
+  products.forEach(item => {
+    const itemTokens = warehouseNameTokens_(item.name);
+
+    if (!itemTokens.length) return;
+
+    const itemSet = {};
+    itemTokens.forEach(token => itemSet[token] = true);
+
+    const common = targetTokens.filter(
+      token => itemSet[token]
+    ).length;
+
+    const coverage = common / targetTokens.length;
+    const reverseCoverage = common / itemTokens.length;
+
+    /*
+     * Ưu tiên model/mã kỹ thuật và tên đặc trưng.
+     * Chỉ tự map khi độ tương đồng đủ cao để tránh ghép nhầm mã kho.
+     */
+    const score =
+      coverage * 0.72 +
+      reverseCoverage * 0.28;
+
+    if (!best || score > best.score) {
+      secondScore = best ? best.score : 0;
+      best = {
+        item: item,
+        matchType: 'TOKEN_NAME',
+        score: score
+      };
+    } else if (score > secondScore) {
+      secondScore = score;
+    }
+  });
+
+  if (
+    best &&
+    best.score >= 0.72 &&
+    best.score - secondScore >= 0.08
+  ) {
+    return best;
+  }
+
+  return null;
+}
+
 function getWarehouseProductIndex_() {
   const cache = CacheService.getScriptCache();
 
@@ -1646,6 +1747,7 @@ function getWarehouseProductIndex_() {
       if (!code) return;
 
       index[code] = {
+        code: code,
         name: clean_(row[1]),
         unit: clean_(row[2]),
         stock: Number(row[3] || 0),
@@ -1702,8 +1804,17 @@ function bootstrap() {
   const products = rows_(APP.SHEETS.PRODUCTS)
     .filter(x => x.DangKinhDoanh !== false)
     .map(x => {
-      const code = clean_(x.MaSanPham);
-      const warehouse = warehouseIndex[code] || null;
+      const salesCode = clean_(x.MaSanPham);
+      const warehouseMatch = resolveWarehouseProduct_(
+        x.TenSanPham,
+        warehouseIndex
+      );
+      const warehouse = warehouseMatch
+        ? warehouseMatch.item
+        : null;
+      const code = warehouse
+        ? clean_(warehouse.code)
+        : salesCode;
 
       const tax = normalizeProductTax_({
         name: x.TenSanPham,
@@ -1714,6 +1825,7 @@ function bootstrap() {
 
       return {
         code: code,
+        salesCode: salesCode,
         name: clean_(x.TenSanPham),
         unit: clean_(x.DonViTinh) || 'Cái',
         price: Number(x.GiaBan || 0),
@@ -1726,6 +1838,12 @@ function bootstrap() {
         description: clean_(x.MoTa),
 
         warehouseMatched: Boolean(warehouse),
+        warehouseMatchType: warehouseMatch
+          ? warehouseMatch.matchType
+          : '',
+        warehouseMatchScore: warehouseMatch
+          ? warehouseMatch.score
+          : 0,
         warehouseName: warehouse ? warehouse.name : '',
         warehouseUnit: warehouse ? warehouse.unit : '',
         stock: warehouse ? warehouse.stock : null,
