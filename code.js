@@ -4422,83 +4422,6 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     customer.DienThoai
   );
 
-  const customerEmail = clean_(customer.Email);
-
-  const customerInfoRows = [
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Khách hàng</div>',
-      '<div class="info-value info-strong">',
-      escapeHtmlServer_(quote.TenKhachHang),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Mã số thuế</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(customer.MaSoThue),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row info-wide">',
-      '<div class="info-label">Địa chỉ</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(customer.DiaChi),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Người liên hệ</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(
-        quote.NguoiLienHe ||
-        customer.NguoiNhan
-      ),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Điện thoại</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(
-        quote.DienThoai ||
-        customer.DienThoai
-      ),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Hiệu lực đến</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(
-        formatDateOnly_(quote.HieuLucDen)
-      ),
-      '</div>',
-      '</div>'
-    ].join(''),
-    customerEmail
-      ? [
-          '<div class="info-row">',
-          '<div class="info-label">Email</div>',
-          '<div class="info-value">',
-          escapeHtmlServer_(customerEmail),
-          '</div>',
-          '</div>'
-        ].join('')
-      : '',
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Đơn vị tiền</div>',
-      '<div class="info-value">Việt Nam đồng (VNĐ)</div>',
-      '</div>'
-    ].join('')
-  ].filter(Boolean).join('');
-
   const toolbar = previewMode
     ? [
         '<div class="preview-toolbar">',
@@ -4886,6 +4809,75 @@ function buildQuoteA4Html_(
           '</li>'
         ].join('')
       : '';
+
+  const customerEmail = clean_(customer.Email);
+
+  const customerInfoRows = [
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Khách hàng</div>',
+      '<div class="info-value info-strong">',
+      escapeHtmlServer_(quote.TenKhachHang),
+      '</div>',
+      '</div>'
+    ].join(''),
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Mã số thuế</div>',
+      '<div class="info-value">',
+      escapeHtmlServer_(customer.MaSoThue),
+      '</div>',
+      '</div>'
+    ].join(''),
+    [
+      '<div class="info-row info-wide">',
+      '<div class="info-label">Địa chỉ</div>',
+      '<div class="info-value">',
+      escapeHtmlServer_(customer.DiaChi),
+      '</div>',
+      '</div>'
+    ].join(''),
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Người liên hệ</div>',
+      '<div class="info-value">',
+      escapeHtmlServer_(quote.NguoiLienHe || customer.NguoiNhan),
+      '</div>',
+      '</div>'
+    ].join(''),
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Điện thoại</div>',
+      '<div class="info-value">',
+      escapeHtmlServer_(quote.DienThoai || customer.DienThoai),
+      '</div>',
+      '</div>'
+    ].join(''),
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Hiệu lực đến</div>',
+      '<div class="info-value">',
+      escapeHtmlServer_(formatDateOnly_(quote.HieuLucDen)),
+      '</div>',
+      '</div>'
+    ].join(''),
+    customerEmail
+      ? [
+          '<div class="info-row">',
+          '<div class="info-label">Email</div>',
+          '<div class="info-value">',
+          escapeHtmlServer_(customerEmail),
+          '</div>',
+          '</div>'
+        ].join('')
+      : '',
+    [
+      '<div class="info-row">',
+      '<div class="info-label">Đơn vị tiền</div>',
+      '<div class="info-value">Việt Nam đồng (VNĐ)</div>',
+      '</div>'
+    ].join('')
+  ].filter(Boolean).join('');
 
   const toolbar = previewMode
     ? [
