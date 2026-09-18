@@ -1928,15 +1928,6 @@ function saveQuote(printAfter=false){
   });
 }
 
-function printQuoteFromHistory(no,hasPdf){
-  if(hasPdf){
-    reprintQuote(no);
-    return;
-  }
-
-  regenerateQuoteFile(no);
-}
-
 function openSavedQuotePdf(no){
   const popup=window.open('','_blank');
 
@@ -2468,17 +2459,10 @@ function renderHistory(){
           </button>
 
           <button class="light mini icon-button"
-            title="${quote.pdf?'Mở PDF / In':'Tạo PDF / In'}"
-            aria-label="${quote.pdf?'Mở PDF / In':'Tạo PDF / In'}"
-            onclick="printQuoteFromHistory('${esc(quote.no)}',${quote.pdf?'true':'false'})">
+            title="Xem trước A4 / In"
+            aria-label="Xem trước A4 / In"
+            onclick="previewSavedQuote('${esc(quote.no)}')">
             🖨️
-          </button>
-
-          <button class="light mini icon-button"
-            title="${quote.pdf?'Tạo lại PDF':'Tạo PDF'}"
-            aria-label="${quote.pdf?'Tạo lại PDF':'Tạo PDF'}"
-            onclick="regenerateQuoteFile('${esc(quote.no)}')">
-            🔄
           </button>
 
           <button class="light mini"
@@ -2646,64 +2630,36 @@ function openQuoteForEdit(no,duplicate){
   });
 }
 
-function reprintQuote(no){
+function previewSavedQuote(no){
   const popup=window.open('','_blank');
 
   if(!popup){
-    toast('Trình duyệt đang chặn cửa sổ PDF.');
+    toast(
+      'Trình duyệt đang chặn cửa sổ xem trước. '+
+      'Hãy cho phép pop-up.'
+    );
     return;
   }
 
   popup.document.write(
-    '<p style="font-family:Arial;padding:20px">'+
-    'Đang mở PDF hiện hành '+esc(no)+'...</p>'
+    '<div style="'+
+    'font-family:Arial,sans-serif;'+
+    'padding:28px;color:#263746">'+
+    'Đang dựng bản xem trước A4 '+esc(no)+'...'+
+    '</div>'
   );
 
   google.script.run
-    .withSuccessHandler(result=>{
-      popup.location=result.pdf;
+    .withSuccessHandler(printHtml=>{
+      popup.document.open();
+      popup.document.write(printHtml);
+      popup.document.close();
     })
     .withFailureHandler(error=>{
       popup.close();
       toast(error.message||String(error));
     })
-    .getStoredQuotePdf(no);
-}
-
-function regenerateQuoteFile(no){
-  const quote=(DB.quotes||[])
-    .find(item=>item.no===no);
-
-  const message=quote?.pdf
-    ?'Tạo lại PDF cho '+no+
-      '? Bản hiện hành sẽ được chuyển vào PHIEN_BAN_CU.'
-    :'Tạo PDF hiện hành cho '+no+'?';
-
-  if(!confirm(message)) return;
-
-  const popup=window.open('','_blank');
-
-  if(!popup){
-    toast('Trình duyệt đang chặn cửa sổ PDF.');
-    return;
-  }
-
-  popup.document.write(
-    '<p style="font-family:Arial;padding:20px">'+
-    'Đang tạo PDF hiện hành '+esc(no)+'...</p>'
-  );
-
-  google.script.run
-    .withSuccessHandler(result=>{
-      popup.location=result.pdf;
-      toast('Đã tạo PDF hiện hành '+no);
-      refresh();
-    })
-    .withFailureHandler(error=>{
-      popup.close();
-      toast(error.message||String(error));
-    })
-    .regenerateQuotePdf(no);
+    .getSavedQuotePreviewHtml(no);
 }
 
 function confirmDeleteQuotePermanently(no){
