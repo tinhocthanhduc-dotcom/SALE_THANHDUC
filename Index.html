@@ -519,6 +519,7 @@ tbody tr:last-child td{border-bottom:0}
   <div class="field wide"><label>Khách hàng <span class="required">*</span></label><input id="quoteCustomer" list="customerList" placeholder="Gõ tên hoặc số điện thoại khách hàng"><datalist id="customerList"></datalist><small>Có thể tìm bằng tên, mã khách hàng hoặc số điện thoại.</small></div>
   <div class="field"><label>Người liên hệ</label><input id="quoteContact" placeholder="Người nhận hoặc người phụ trách"></div>
   <div class="field"><label>Điện thoại</label><input id="quotePhone" inputmode="numeric" maxlength="12" placeholder="Chỉ nhập chữ số"></div>
+  <div class="field"><label>Ngày báo giá <span class="required">*</span></label><input id="quoteDate" type="date"></div>
   <div class="field"><label>Hiệu lực báo giá <span class="required">*</span></label><input id="quoteValid" type="date"></div>
   <div class="field">
   <label>Thuế VAT</label>
@@ -1503,7 +1504,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
+  const tax=PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.PRICING_ENGINE.resolveItemTax(
     item,
     taxMode
   );
@@ -1798,6 +1799,8 @@ document.getElementById(
 function quotePayload(){
   return {
     no:editingQuoteNo,
+    date:
+      document.getElementById('quoteDate').value,
     customer:selectedCustomer(),
     contact:
       document.getElementById('quoteContact').value,
@@ -1833,6 +1836,7 @@ function quotePayload(){
 
 function validateQuote(){
   if(!quoteItems.length){toast('Báo giá chưa có sản phẩm.');return false;}
+  if(!document.getElementById('quoteDate').value){toast('Chưa chọn ngày báo giá.');return false;}
   const customer=selectedCustomer();
   if(!customer.name){toast('Chưa chọn hoặc nhập khách hàng.');return false;}
   if(!document.getElementById('quoteValid').value){toast('Chưa chọn ngày hết hiệu lực báo giá.');return false;}
@@ -1909,6 +1913,7 @@ function clearQuote(){
   document.getElementById('quoteContact').value='';
   document.getElementById('quotePhone').value='';
   document.getElementById('quoteDiscount').value=0;
+  setDefaultQuoteDate(true);
   document.getElementById('quoteTaxMode').value='INCLUDED_8';
   document.getElementById('quoteNote').value='';
   document.getElementById('quoteFormTitle').textContent='Báo giá mới';
@@ -1918,6 +1923,14 @@ function clearQuote(){
 
   setDefaultValidDate(true);
   renderQuoteCart();
+}
+
+function setDefaultQuoteDate(force=false){
+  const input=document.getElementById('quoteDate');
+
+  if(input.value && !force) return;
+
+  input.value=new Date().toISOString().slice(0,10);
 }
 
 function setDefaultValidDate(force=false){
@@ -2495,6 +2508,9 @@ function openQuoteForEdit(no,duplicate){
     document.getElementById('quoteCustomer').value=customerValue||'';
     document.getElementById('quoteContact').value=quote.contact||'';
     document.getElementById('quotePhone').value=quote.phone||'';
+    document.getElementById('quoteDate').value=duplicate
+      ?new Date().toISOString().slice(0,10)
+      :(quote.dateIso||'');
     document.getElementById('quoteValid').value=quote.validUntil||'';
     document.getElementById('quoteDiscount').value=
       Number(quote.discount||0);

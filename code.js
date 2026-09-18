@@ -2229,6 +2229,9 @@ function saveQuote(q) {
 
   const no = q.no || nextNo_('BG');
   const now = new Date();
+  const quoteDate = q.date
+    ? new Date(q.date + 'T00:00:00')
+    : now;
   const taxMode = pricingEngine_().normalizeMode(q.taxMode);
 
   const totals = pricingEngine_().calculateQuote(
@@ -2248,7 +2251,7 @@ function saveQuote(q) {
     .getRange(quoteRow, 1, 1, 16)
     .setValues([[
       no,
-      now,
+      quoteDate,
       clean_(customer.id),
       clean_(customer.name),
       clean_(q.contact || customer.recipient),
@@ -2607,7 +2610,12 @@ function updateQuote(q) {
       q.phone || customer.phone
     );
 
+    const newQuoteDate = q.date
+      ? new Date(q.date + 'T00:00:00')
+      : quoteDate;
+
     const valuesByHeader = {
+      NgayBaoGia: newQuoteDate,
       MaKhachHang: clean_(customer.id),
       TenKhachHang: clean_(customer.name),
       NguoiLienHe: clean_(q.contact || customer.recipient),
@@ -2706,8 +2714,8 @@ function updateQuote(q) {
       pdfInvalidated: true,
       quote: {
         no: no,
-        date: formatDate_(quoteDate),
-        dateIso: formatDateInput_(quoteDate),
+        date: formatDate_(newQuoteDate),
+        dateIso: formatDateInput_(newQuoteDate),
         customerId: clean_(customer.id),
         customer: clean_(customer.name),
         contact: clean_(q.contact || customer.recipient),
