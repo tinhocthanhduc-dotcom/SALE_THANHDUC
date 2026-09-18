@@ -9,7 +9,13 @@ const APP = {
     CONFIG: 'CAU_HINH',
     GROUPS: 'NHOM_HANG'
   },
-  TZ: 'Asia/Ho_Chi_Minh'
+  TZ: 'Asia/Ho_Chi_Minh',
+  WAREHOUSE: {
+    SPREADSHEET_ID: '1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU',
+    SHEET_NAME: 'TONKHO',
+    CACHE_KEY: 'TD_SALES_TONKHO_V1',
+    CACHE_SECONDS: 120
+  }
 };
 
 
@@ -1577,8 +1583,105 @@ function ensureAppReady_() {
   }
 }
 
+function getWarehouseProductIndex_() {
+  const cache = CacheService.getScriptCache();
+
+  try {
+    const cached = cache.get(
+      APP.WAREHOUSE.CACHE_KEY
+    );
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.warn(
+      'Không đọc được cache TONKHO: ' +
+      (error && error.message ? error.message : error)
+    );
+  }
+
+  const index = {};
+
+  try {
+    const warehouseSs = SpreadsheetApp.openById(
+      APP.WAREHOUSE.SPREADSHEET_ID
+    );
+
+    const sh = warehouseSs.getSheetByName(
+      APP.WAREHOUSE.SHEET_NAME
+    );
+
+    if (!sh) {
+      throw new Error(
+        'Không tìm thấy sheet ' +
+        APP.WAREHOUSE.SHEET_NAME
+      );
+    }
+
+    const lastRow = sh.getLastRow();
+
+    if (lastRow < 5) {
+      return index;
+    }
+
+    /*
+     * TONKHO:
+     * B Mã hàng
+     * C Tên hàng hóa
+     * D ĐVT
+     * E Tồn hiện tại
+     * F Mức cảnh báo
+     * G Trạng thái
+     * H Ghi chú
+     * I Giá nhập tham khảo
+     */
+    const values = sh
+      .getRange(5, 2, lastRow - 4, 8)
+      .getValues();
+
+    values.forEach(row => {
+      const code = clean_(row[0]);
+
+      if (!code) return;
+
+      index[code] = {
+        name: clean_(row[1]),
+        unit: clean_(row[2]),
+        stock: Number(row[3] || 0),
+        warning: Number(row[4] || 0),
+        status: clean_(row[5]),
+        note: clean_(row[6]),
+        referenceCost: Number(row[7] || 0)
+      };
+    });
+
+    try {
+      cache.put(
+        APP.WAREHOUSE.CACHE_KEY,
+        JSON.stringify(index),
+        APP.WAREHOUSE.CACHE_SECONDS
+      );
+    } catch (error) {
+      console.warn(
+        'Không ghi được cache TONKHO: ' +
+        (error && error.message ? error.message : error)
+      );
+    }
+  } catch (error) {
+    console.warn(
+      'Không đọc được TONKHO. Sales vẫn tiếp tục chạy: ' +
+      (error && error.message ? error.message : error)
+    );
+  }
+
+  return index;
+}
+
 function bootstrap() {
   ensureAppReady_();
+
+  const warehouseIndex = getWarehouseProductIndex_();
 
   const customers = rows_(APP.SHEETS.CUSTOMERS)
     .filter(x => x.DangHoatDong !== false)
@@ -1599,6 +1702,9 @@ function bootstrap() {
   const products = rows_(APP.SHEETS.PRODUCTS)
     .filter(x => x.DangKinhDoanh !== false)
     .map(x => {
+      const code = clean_(x.MaSanPham);
+      const warehouse = warehouseIndex[code] || null;
+
       const tax = normalizeProductTax_({
         name: x.TenSanPham,
         vat: x.VAT,
@@ -1607,7 +1713,7 @@ function bootstrap() {
       });
 
       return {
-        code: clean_(x.MaSanPham),
+        code: code,
         name: clean_(x.TenSanPham),
         unit: clean_(x.DonViTinh) || 'Cái',
         price: Number(x.GiaBan || 0),
@@ -1617,7 +1723,16 @@ function bootstrap() {
         used: tax.used,
         group: clean_(x.NhomHang),
         warranty: clean_(x.BaoHanh),
-        description: clean_(x.MoTa)
+        description: clean_(x.MoTa),
+
+        warehouseMatched: Boolean(warehouse),
+        warehouseName: warehouse ? warehouse.name : '',
+        warehouseUnit: warehouse ? warehouse.unit : '',
+        stock: warehouse ? warehouse.stock : null,
+        stockWarning: warehouse ? warehouse.warning : null,
+        stockStatus: warehouse ? warehouse.status : '',
+        warehouseNote: warehouse ? warehouse.note : '',
+        referenceCost: warehouse ? warehouse.referenceCost : null
       };
     });
 
