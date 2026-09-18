@@ -3233,14 +3233,39 @@ function ensureExternalLogo_() {
 }
 
 function getLogoBlob_() {
-  return DriveApp
-    .getFileById(ensureExternalLogo_())
-    .getBlob()
-    .setName('logo-thanh-duc.jpg');
+  try {
+    const fileId = ensureExternalLogo_();
+
+    if (!fileId) {
+      return null;
+    }
+
+    return DriveApp
+      .getFileById(fileId)
+      .getBlob()
+      .setName('logo-thanh-duc.jpg');
+  } catch (error) {
+    console.warn(
+      'Logo Thành Đức chưa được cấu hình: ' +
+      (error && error.message ? error.message : error)
+    );
+
+    return null;
+  }
 }
 
 function getLogoDataUrl_() {
   const blob = getLogoBlob_();
+
+  if (!blob) {
+    return (
+      'data:image/svg+xml;charset=UTF-8,' +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'
+      )
+    );
+  }
+
   const mimeType = clean_(blob.getContentType()) || 'image/jpeg';
 
   return (
@@ -3364,12 +3389,16 @@ function appendCompanyHeader_(
   infoCell.setPaddingLeft(3);
   infoCell.setPaddingRight(0);
 
-  const image = logoCell.appendImage(
-    getLogoBlob_()
-  );
+  const logoBlob = getLogoBlob_();
 
-  image.setWidth(88);
-  image.setHeight(96);
+  if (logoBlob) {
+    const image = logoCell.appendImage(
+      logoBlob
+    );
+
+    image.setWidth(88);
+    image.setHeight(96);
+  }
 
   logoCell.setVerticalAlignment(
     DocumentApp.VerticalAlignment.CENTER
