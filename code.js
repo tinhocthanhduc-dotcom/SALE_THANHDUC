@@ -3258,12 +3258,7 @@ function getLogoDataUrl_() {
   const blob = getLogoBlob_();
 
   if (!blob) {
-    return (
-      'data:image/svg+xml;charset=UTF-8,' +
-      encodeURIComponent(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'
-      )
-    );
+    return 'https://thanhduc.vn/wp-content/uploads/2018/11/1111-300x114.png';
   }
 
   const mimeType = clean_(blob.getContentType()) || 'image/jpeg';
@@ -4451,7 +4446,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     '.company{width:100%;border-collapse:collapse;margin:0 0 .5mm;}',
     '.company td{vertical-align:top;}',
     '.logo-cell{width:32mm;text-align:center;}',
-    '.logo{display:block;width:25mm;max-height:25mm;margin:0 auto;object-fit:contain;}',
+    '.logo{display:block;width:25mm;height:auto;max-height:25mm;margin:0 auto;object-fit:contain;}',
     '.company-info{text-align:center;line-height:1.2;padding-top:0;}',
     '.company-name{margin:0 0 .35mm;font-size:12.5pt;font-weight:700;line-height:1.15;text-transform:uppercase;}',
     '.company-line{margin:.25mm 0;font-size:9.5pt;line-height:1.15;}',
@@ -4810,75 +4805,6 @@ function buildQuoteA4Html_(
         ].join('')
       : '';
 
-  const customerEmail = clean_(customer.Email);
-
-  const customerInfoRows = [
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Khách hàng</div>',
-      '<div class="info-value info-strong">',
-      escapeHtmlServer_(quote.TenKhachHang),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Mã số thuế</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(customer.MaSoThue),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row info-wide">',
-      '<div class="info-label">Địa chỉ</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(customer.DiaChi),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Người liên hệ</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(quote.NguoiLienHe || customer.NguoiNhan),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Điện thoại</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(quote.DienThoai || customer.DienThoai),
-      '</div>',
-      '</div>'
-    ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Hiệu lực đến</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(formatDateOnly_(quote.HieuLucDen)),
-      '</div>',
-      '</div>'
-    ].join(''),
-    customerEmail
-      ? [
-          '<div class="info-row">',
-          '<div class="info-label">Email</div>',
-          '<div class="info-value">',
-          escapeHtmlServer_(customerEmail),
-          '</div>',
-          '</div>'
-        ].join('')
-      : '',
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Đơn vị tiền</div>',
-      '<div class="info-value">Việt Nam đồng (VNĐ)</div>',
-      '</div>'
-    ].join('')
-  ].filter(Boolean).join('');
-
   const toolbar = previewMode
     ? [
         '<div class="preview-toolbar">',
@@ -4960,7 +4886,8 @@ function buildQuoteA4Html_(
     '.logo{',
     'display:block;',
     'width:25mm;',
-    'height:27mm;',
+    'height:auto;',
+    'max-height:27mm;',
     'object-fit:contain;',
     '}',
     '.company-name{',
