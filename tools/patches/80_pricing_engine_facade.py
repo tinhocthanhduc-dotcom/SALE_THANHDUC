@@ -38,7 +38,7 @@ backend_calls = {
     'calculateQuotePricing_': 'pricingEngine_().calculateQuote',
 }
 for old, new in backend_calls.items():
-    pattern = rf'(?<!function )\b{re.escape(old)}\('
+    pattern = rf'(?<!function )(?<!\.)\b{re.escape(old)}\('
     code = re.sub(pattern, new + '(', code)
 
 # Frontend: mirror the same abstraction so all UI calculations flow through
@@ -65,7 +65,7 @@ frontend_calls = {
     'calculateItemPricing': 'PRICING_ENGINE.calculateItem',
 }
 for old, new in frontend_calls.items():
-    pattern = rf'(?<!function )\b{re.escape(old)}\('
+    pattern = rf'(?<!function )(?<!\.)\b{re.escape(old)}\('
     html = re.sub(pattern, new + '(', html)
 
 code_path.write_text(code, encoding='utf-8')
