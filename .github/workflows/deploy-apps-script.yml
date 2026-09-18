@@ -49,3 +49,43 @@ jobs:
 
       - name: Push source to Google Apps Script
         run: clasp push --force
+
+      - name: Update existing Web App deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Current Apps Script deployments:"
+          DEPLOYMENTS="$(clasp deployments)"
+          printf '%s\n' "$DEPLOYMENTS"
+
+          DEPLOYMENT_ID="$(
+            printf '%s\n' "$DEPLOYMENTS" |
+            awk '
+              /^-/ && $0 !~ /@HEAD/ {
+                id = ""
+                version = -1
+                for (i = 1; i <= NF; i++) {
+                  if ($i ~ /^AKfy/) id = $i
+                  if ($i ~ /^@[0-9]+$/) {
+                    version = substr($i, 2) + 0
+                  }
+                }
+                if (id != "" && version > max_version) {
+                  max_version = version
+                  best_id = id
+                }
+              }
+              END { print best_id }
+            '
+          )"
+
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "Could not find an existing versioned Apps Script deployment."
+            echo "Refusing to create a new URL automatically."
+            exit 1
+          fi
+
+          echo "Updating deployment: $DEPLOYMENT_ID"
+          SHORT_SHA="$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
+          clasp deploy -i "$DEPLOYMENT_ID" -d "Auto deploy $SHORT_SHA"
