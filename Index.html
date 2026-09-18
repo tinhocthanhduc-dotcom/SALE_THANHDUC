@@ -547,7 +547,7 @@ tbody tr:last-child td{border-bottom:0}
 <div class="card"><div class="head"><b>Tra giá sản phẩm</b></div><div class="body">
 <div class="quote-toolbar-grid">
   <input id="productSearch" placeholder="Tìm mã hoặc tên..." oninput="renderProductPicker()">
-  <select id="quoteGroupFilter" onchange="renderProductPicker()">
+  <select id="quoteGroupFilter" title="Lọc theo nguồn hoặc nhóm hàng" onchange="renderProductPicker()">
     <option value="">Tất cả nhóm hàng</option>
   </select>
 </div>
@@ -1232,6 +1232,14 @@ function renderGroupOptions(){
       select.innerHTML=
         '<option value="">Chưa phân nhóm</option>'+
         options;
+    }else if(id==='quoteGroupFilter'){
+      select.innerHTML=
+        '<option value="">Tất cả sản phẩm</option>'+
+        '<option value="__SOURCE_KHO__">Kho</option>'+
+        '<option value="__SOURCE_SALE__">Sale</option>'+
+        '<optgroup label="Nhóm hàng Sale">'+
+        options+
+        '</optgroup>';
     }else{
       select.innerHTML=
         '<option value="">Tất cả nhóm hàng</option>'+
@@ -1369,12 +1377,31 @@ function renderProductPicker(){
       ?.value||'';
 
   quotePickerItems=(DB.products||[])
-    .filter(product =>
-      (!keyword||norm(
-        product.code+' '+product.name+' '+(product.warehouseName||'')+' '+(product.source||'')
-      ).includes(keyword)) &&
-      (!group||product.group===group)
-    )
+    .filter(product => {
+      const matchesKeyword=
+        !keyword||norm(
+          product.code+' '+product.name+' '+(product.warehouseName||'')+' '+(product.source||'')
+        ).includes(keyword);
+
+      if(!matchesKeyword) return false;
+
+      if(group==='__SOURCE_KHO__'){
+        return product.source==='KHO';
+      }
+
+      if(group==='__SOURCE_SALE__'){
+        return product.source==='SALE';
+      }
+
+      if(group){
+        return (
+          product.source==='SALE' &&
+          product.group===group
+        );
+      }
+
+      return true;
+    })
     .slice(0,250);
 
   document.getElementById('productPicker').innerHTML=
