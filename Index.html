@@ -83,6 +83,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
   line-height:1.3;
 }
 .warehouse-meta b{font-weight:800;}
+.source-badge{
+  display:inline-block;
+  margin-top:2px;
+  padding:1px 5px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:800;
+  line-height:1.35;
+}
+.source-sale{
+  background:#e0f2fe;
+  color:#075985;
+}
+.source-kho{
+  background:#dcfce7;
+  color:#166534;
+}
+
 .warehouse-unmatched{
   display:inline-block;
   margin-top:2px;
@@ -1353,7 +1371,7 @@ function renderProductPicker(){
   quotePickerItems=(DB.products||[])
     .filter(product =>
       (!keyword||norm(
-        product.code+' '+(product.salesCode||'')+' '+product.name+' '+(product.warehouseName||'')
+        product.code+' '+product.name+' '+(product.warehouseName||'')+' '+(product.source||'')
       ).includes(keyword)) &&
       (!group||product.group===group)
     )
@@ -1362,17 +1380,19 @@ function renderProductPicker(){
   document.getElementById('productPicker').innerHTML=
     quotePickerItems
       .map((product,index)=>`<tr>
-        <td>${esc(product.code)}</td>
+        <td>
+          <b>${esc(product.code)}</b>
+          <br><small class="source-badge ${product.source==='KHO'?'source-kho':'source-sale'}">
+            ${product.source==='KHO'?'KHO':'SALE'}
+          </small>
+        </td>
         <td>
           <b>${esc(product.name)}</b>
-          ${product.group
+          ${product.source==='SALE' && product.group
             ?`<br><small>${esc(product.group)}</small>`
             :''}
-          ${product.warehouseMatched
-            ?`<br><small class="warehouse-meta">Kho: ${esc(product.warehouseName||product.name)} · Tồn: <b>${esc(product.stock)}</b> ${esc(product.warehouseUnit||product.unit||'')}</small>`
-            :'<br><small class="warehouse-unmatched">Chưa map được mã kho</small>'}
-          ${product.salesCode && product.salesCode!==product.code
-            ?`<br><small class="sales-code-note">Mã Sales cũ: ${esc(product.salesCode)}</small>`
+          ${product.source==='KHO'
+            ?`<br><small class="warehouse-meta">Tồn: <b>${esc(product.stock)}</b> ${esc(product.unit||'')} · ${esc(product.stockStatus||'')}</small>`
             :''}
         </td>
         <td>${esc(product.unit)}</td>
@@ -1397,13 +1417,13 @@ function addPickerItem(index){
     toast('Không tìm thấy sản phẩm trong danh sách hiện tại.');
     return;
   }
-  addItem(p.code);
+  addItem(p.key||p.code);
 }
 
-function addItem(code){
+function addItem(productKey){
   try{
     const p=(DB.products||[]).find(
-      x=>String(x.code)===String(code)
+      x=>String(x.key||x.code)===String(productKey)
     );
 
     if(!p){
@@ -1421,7 +1441,7 @@ function addItem(code){
     }
 
     const current=quoteItems.find(
-      x=>String(x.code)===String(code)
+      x=>String(x.key||x.code)===String(p.key||p.code)
     );
 
     if(current){
@@ -1760,12 +1780,9 @@ function renderQuoteCart(){
         <div class="cart-row">
           <div>
             <strong>${esc(item.name)}</strong>
-            <small>${esc(item.code)} · ${esc(item.unit)}</small>
-            ${item.warehouseMatched
-              ?`<small class="warehouse-meta">Kho: ${esc(item.warehouseName||item.name)} · Tồn: <b>${esc(item.stock)}</b> ${esc(item.warehouseUnit||item.unit||'')}</small>`
-              :'<small class="warehouse-unmatched">Chưa map được mã kho</small>'}
-            ${item.salesCode && item.salesCode!==item.code
-              ?`<small class="sales-code-note">Mã Sales cũ: ${esc(item.salesCode)}</small>`
+            <small>${esc(item.code)} · ${esc(item.unit)} · ${item.source==='KHO'?'KHO':'SALE'}</small>
+            ${item.source==='KHO'
+              ?`<small class="warehouse-meta">Tồn: <b>${esc(item.stock)}</b> ${esc(item.unit||'')} · ${esc(item.stockStatus||'')}</small>`
               :''}
             <span class="tax-note-ui">
               ${esc(itemVatLabel(item,taxMode))}
@@ -2207,7 +2224,7 @@ function renderProducts(){
 
   const products=DB.products.filter(product =>
     (!keyword||norm(
-      product.code+' '+(product.salesCode||'')+' '+product.name+' '+(product.warehouseName||'')
+      product.code+' '+product.name+' '+(product.warehouseName||'')+' '+(product.source||'')
     ).includes(keyword)) &&
     (!group||product.group===group)
   );
@@ -2217,8 +2234,18 @@ function renderProducts(){
 
   document.getElementById('productBody').innerHTML=
     products.map(product=>`<tr>
-      <td>${esc(product.code)}</td>
-      <td>${esc(product.name)}</td>
+      <td>
+        <b>${esc(product.code)}</b>
+        <br><small class="source-badge ${product.source==='KHO'?'source-kho':'source-sale'}">
+          ${product.source==='KHO'?'KHO':'SALE'}
+        </small>
+      </td>
+      <td>
+        <b>${esc(product.name)}</b>
+        ${product.source==='KHO'
+          ?`<br><small class="warehouse-meta">Tồn: <b>${esc(product.stock)}</b> ${esc(product.unit||'')} · ${esc(product.stockStatus||'')}</small>`
+          :''}
+      </td>
       <td>
         ${product.group
           ?`<span class="group-pill">${esc(product.group)}</span>`
@@ -2242,10 +2269,9 @@ function renderProducts(){
         </span>
       </td>
       <td>
-        <button class="light"
-          onclick="openProduct('${esc(product.code)}')">
-          Sửa
-        </button>
+        ${product.source==='SALE'
+          ?`<button class="light" onclick="openProduct('${esc(product.key||product.code)}')">Sửa</button>`
+          :'<small>Chỉ xem</small>'}
       </td>
     </tr>`).join('')||
     '<tr><td colspan="7">Không có sản phẩm phù hợp.</td></tr>';
@@ -2293,9 +2319,16 @@ document.getElementById('pVat')
     syncProductTaxUi(false);
   });
 
-function openProduct(code){
+function openProduct(productKey){
   const product=DB.products
-    .find(item=>item.code===code)||{};
+    .find(item=>
+      String(item.key||item.code)===String(productKey||'')
+    )||{};
+
+  if(product.source==='KHO'){
+    toast('Sản phẩm kho chỉ hiển thị để tra cứu. Giá bán nhập trực tiếp khi báo giá.');
+    return;
+  }
 
   renderGroupOptions();
 
