@@ -83,6 +83,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
   line-height:1.3;
 }
 .warehouse-meta b{font-weight:800;}
+.warehouse-unmatched{
+  display:inline-block;
+  margin-top:2px;
+  color:#b45309;
+  font-size:11px;
+  line-height:1.3;
+}
+.sales-code-note{
+  display:inline-block;
+  margin-top:1px;
+  color:#64748b;
+  font-size:10px;
+  line-height:1.25;
+}
+
 
 .input-invalid{border-color:#dc2626!important;background:#fff7f7!important}
 .contract-missing-list{margin:5px 0 0;padding-left:18px}
@@ -1338,7 +1353,7 @@ function renderProductPicker(){
   quotePickerItems=(DB.products||[])
     .filter(product =>
       (!keyword||norm(
-        product.code+' '+product.name+' '+(product.warehouseName||'')
+        product.code+' '+(product.salesCode||'')+' '+product.name+' '+(product.warehouseName||'')
       ).includes(keyword)) &&
       (!group||product.group===group)
     )
@@ -1355,6 +1370,9 @@ function renderProductPicker(){
             :''}
           ${product.warehouseMatched
             ?`<br><small class="warehouse-meta">Kho: ${esc(product.warehouseName||product.name)} · Tồn: <b>${esc(product.stock)}</b> ${esc(product.warehouseUnit||product.unit||'')}</small>`
+            :'<br><small class="warehouse-unmatched">Chưa map được mã kho</small>'}
+          ${product.salesCode && product.salesCode!==product.code
+            ?`<br><small class="sales-code-note">Mã Sales cũ: ${esc(product.salesCode)}</small>`
             :''}
         </td>
         <td>${esc(product.unit)}</td>
@@ -1745,6 +1763,9 @@ function renderQuoteCart(){
             <small>${esc(item.code)} · ${esc(item.unit)}</small>
             ${item.warehouseMatched
               ?`<small class="warehouse-meta">Kho: ${esc(item.warehouseName||item.name)} · Tồn: <b>${esc(item.stock)}</b> ${esc(item.warehouseUnit||item.unit||'')}</small>`
+              :'<small class="warehouse-unmatched">Chưa map được mã kho</small>'}
+            ${item.salesCode && item.salesCode!==item.code
+              ?`<small class="sales-code-note">Mã Sales cũ: ${esc(item.salesCode)}</small>`
               :''}
             <span class="tax-note-ui">
               ${esc(itemVatLabel(item,taxMode))}
@@ -2186,7 +2207,7 @@ function renderProducts(){
 
   const products=DB.products.filter(product =>
     (!keyword||norm(
-      product.code+' '+product.name+' '+(product.warehouseName||'')
+      product.code+' '+(product.salesCode||'')+' '+product.name+' '+(product.warehouseName||'')
     ).includes(keyword)) &&
     (!group||product.group===group)
   );
@@ -2278,7 +2299,7 @@ function openProduct(code){
 
   renderGroupOptions();
 
-  pOldCode.value=product.code||'';
+  pOldCode.value=product.salesCode||product.code||'';
   pCode.value=product.code||'';
   pName.value=product.name||'';
 
