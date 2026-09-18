@@ -1801,20 +1801,10 @@ function bootstrap() {
       note: clean_(x.GhiChu)
     }));
 
-  const products = rows_(APP.SHEETS.PRODUCTS)
+  const salesProducts = rows_(APP.SHEETS.PRODUCTS)
     .filter(x => x.DangKinhDoanh !== false)
     .map(x => {
       const salesCode = clean_(x.MaSanPham);
-      const warehouseMatch = resolveWarehouseProduct_(
-        x.TenSanPham,
-        warehouseIndex
-      );
-      const warehouse = warehouseMatch
-        ? warehouseMatch.item
-        : null;
-      const code = warehouse
-        ? clean_(warehouse.code)
-        : salesCode;
 
       const tax = normalizeProductTax_({
         name: x.TenSanPham,
@@ -1824,7 +1814,10 @@ function bootstrap() {
       });
 
       return {
-        code: code,
+        key: 'SALE:' + salesCode,
+        source: 'SALE',
+        editable: true,
+        code: salesCode,
         salesCode: salesCode,
         name: clean_(x.TenSanPham),
         unit: clean_(x.DonViTinh) || 'Cái',
@@ -1836,23 +1829,54 @@ function bootstrap() {
         group: clean_(x.NhomHang),
         warranty: clean_(x.BaoHanh),
         description: clean_(x.MoTa),
-
-        warehouseMatched: Boolean(warehouse),
-        warehouseMatchType: warehouseMatch
-          ? warehouseMatch.matchType
-          : '',
-        warehouseMatchScore: warehouseMatch
-          ? warehouseMatch.score
-          : 0,
-        warehouseName: warehouse ? warehouse.name : '',
-        warehouseUnit: warehouse ? warehouse.unit : '',
-        stock: warehouse ? warehouse.stock : null,
-        stockWarning: warehouse ? warehouse.warning : null,
-        stockStatus: warehouse ? warehouse.status : '',
-        warehouseNote: warehouse ? warehouse.note : '',
-        referenceCost: warehouse ? warehouse.referenceCost : null
+        warehouseMatched: false,
+        warehouseName: '',
+        warehouseUnit: '',
+        stock: null,
+        stockWarning: null,
+        stockStatus: '',
+        warehouseNote: '',
+        referenceCost: null
       };
     });
+
+  const warehouseProducts = Object.keys(warehouseIndex)
+    .map(code => {
+      const item = warehouseIndex[code] || {};
+
+      return {
+        key: 'KHO:' + code,
+        source: 'KHO',
+        editable: false,
+        code: clean_(code),
+        salesCode: '',
+        name: clean_(item.name),
+        unit: clean_(item.unit) || 'Cái',
+        price: 0,
+        cost: Number(item.referenceCost || 0),
+        vat: 0.08,
+        priceIncludesVat: true,
+        used: false,
+        group: '',
+        warranty: '',
+        description: '',
+        warehouseMatched: true,
+        warehouseName: clean_(item.name),
+        warehouseUnit: clean_(item.unit),
+        stock: Number(item.stock || 0),
+        stockWarning: Number(item.warning || 0),
+        stockStatus: clean_(item.status),
+        warehouseNote: clean_(item.note),
+        referenceCost: Number(item.referenceCost || 0)
+      };
+    })
+    .sort((a, b) =>
+      a.name.localeCompare(b.name, 'vi')
+    );
+
+  const products = salesProducts.concat(
+    warehouseProducts
+  );
 
   return {
     customers: customers,
