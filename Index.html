@@ -42,7 +42,8 @@ button{border:0;padding:9px 12px;font-weight:700;cursor:pointer;background:var(-
 .status{display:inline-block;padding:4px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#e7f6f4;color:var(--p2)}
 .status.cancelled{background:#fff1f1;color:var(--red)}
 .status.updated{background:#eef2ff;color:#3730a3}
-.row-actions{display:flex;gap:5px;flex-wrap:wrap;white-space:nowrap}
+.row-actions{display:flex;gap:5px;flex-wrap:wrap;white-space:nowrap;min-width:360px}
+#history th:last-child,#history td:last-child{min-width:360px}
 .mini{padding:6px 8px;font-size:12px}
 .quote-list-toolbar{display:grid;grid-template-columns:minmax(220px,1fr) 150px 150px 150px auto;gap:8px;margin-bottom:10px}
 .history-stack{display:grid;gap:12px}
@@ -1927,6 +1928,15 @@ function saveQuote(printAfter=false){
   });
 }
 
+function printQuoteFromHistory(no,hasPdf){
+  if(hasPdf){
+    reprintQuote(no);
+    return;
+  }
+
+  regenerateQuoteFile(no);
+}
+
 function openSavedQuotePdf(no){
   const popup=window.open('','_blank');
 
@@ -2458,10 +2468,9 @@ function renderHistory(){
           </button>
 
           <button class="light mini icon-button"
-            title="${quote.pdf?'Mở PDF hiện hành':'Chưa có PDF hiện hành'}"
-            aria-label="Mở PDF hiện hành"
-            onclick="reprintQuote('${esc(quote.no)}')"
-            ${quote.pdf?'':'disabled'}>
+            title="${quote.pdf?'Mở PDF / In':'Tạo PDF / In'}"
+            aria-label="${quote.pdf?'Mở PDF / In':'Tạo PDF / In'}"
+            onclick="printQuoteFromHistory('${esc(quote.no)}',${quote.pdf?'true':'false'})">
             🖨️
           </button>
 
