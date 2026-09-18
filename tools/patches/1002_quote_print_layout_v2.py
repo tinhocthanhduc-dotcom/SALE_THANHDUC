@@ -462,7 +462,7 @@ new_markup = """    '<section class="meta-strip">',
     '</section>',
 """
 
-replace_once(old_markup, new_markup, "'<section class="meta-strip">'")
+replace_once(old_markup, new_markup, "'<section class=\"meta-strip\">'")
 
 path.write_text(text, encoding="utf-8")
 print("Upgraded quote print layout and bound preview date to quote date")
