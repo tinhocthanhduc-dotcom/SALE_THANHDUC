@@ -673,7 +673,7 @@ tbody tr:last-child td{border-bottom:0}
 
           <input id="quoteFromDate" type="date" onchange="renderHistory()">
           <input id="quoteToDate" type="date" onchange="renderHistory()">
-          <button class="light" onclick="clearQuoteFilters()">Xóa lọc</button>
+          <button class="light" onclick="clearQuoteFilters()">Hôm nay</button>
         </div>
 
         <div class="table">
@@ -897,6 +897,27 @@ function normalizePhoneInput(input){
   return input.value;
 }
 
+function localTodayIso(){
+  const now=new Date();
+  const yyyy=now.getFullYear();
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const dd=String(now.getDate()).padStart(2,'0');
+  return yyyy+'-'+mm+'-'+dd;
+}
+
+function setHistoryTodayFilter(force=false){
+  const from=document.getElementById('quoteFromDate');
+  const to=document.getElementById('quoteToDate');
+
+  if(!from||!to) return;
+
+  if(!force && (from.value||to.value)) return;
+
+  const today=localTodayIso();
+  from.value=today;
+  to.value=today;
+}
+
 function loadHistoryData(force=false){
   if(historyLoading) return;
 
@@ -944,6 +965,7 @@ function showPage(pageId){
     renderProducts();
     renderGroups();
   }else if(pageId==='history'){
+    setHistoryTodayFilter();
     loadHistoryData();
   }else if(pageId==='quote'){
     renderProductPicker();
@@ -2517,8 +2539,7 @@ function startNewQuote(){
 function clearQuoteFilters(){
   document.getElementById('quoteListSearch').value='';
   document.getElementById('quoteStatusFilter').value='';
-  document.getElementById('quoteFromDate').value='';
-  document.getElementById('quoteToDate').value='';
+  setHistoryTodayFilter(true);
   renderHistory();
 }
 
