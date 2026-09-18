@@ -4532,6 +4532,13 @@ function getQuotePreviewHtml(request) {
   );
 }
 
+function getSavedQuotePreviewHtml(no) {
+  return buildQuoteA4Html_(
+    getQuote(no),
+    true
+  );
+}
+
 
 function quoteVatNote_(mode) {
   const normalized =
