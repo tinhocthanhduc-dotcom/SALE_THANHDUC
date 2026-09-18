@@ -75,6 +75,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .badge-ready{background:#e7f6f4!important;color:var(--p2)!important}
 .badge-missing{background:#fff4df!important;color:#9a5b00!important}
 .price-missing{color:#b91c1c;font-weight:700}
+.warehouse-meta{
+  display:inline-block;
+  margin-top:2px;
+  color:#0f766e;
+  font-size:11px;
+  line-height:1.3;
+}
+.warehouse-meta b{font-weight:800;}
+
 .input-invalid{border-color:#dc2626!important;background:#fff7f7!important}
 .contract-missing-list{margin:5px 0 0;padding-left:18px}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
@@ -1329,7 +1338,7 @@ function renderProductPicker(){
   quotePickerItems=(DB.products||[])
     .filter(product =>
       (!keyword||norm(
-        product.code+' '+product.name
+        product.code+' '+product.name+' '+(product.warehouseName||'')
       ).includes(keyword)) &&
       (!group||product.group===group)
     )
@@ -1343,6 +1352,9 @@ function renderProductPicker(){
           <b>${esc(product.name)}</b>
           ${product.group
             ?`<br><small>${esc(product.group)}</small>`
+            :''}
+          ${product.warehouseMatched
+            ?`<br><small class="warehouse-meta">Kho: ${esc(product.warehouseName||product.name)} · Tồn: <b>${esc(product.stock)}</b> ${esc(product.warehouseUnit||product.unit||'')}</small>`
             :''}
         </td>
         <td>${esc(product.unit)}</td>
@@ -1731,6 +1743,9 @@ function renderQuoteCart(){
           <div>
             <strong>${esc(item.name)}</strong>
             <small>${esc(item.code)} · ${esc(item.unit)}</small>
+            ${item.warehouseMatched
+              ?`<small class="warehouse-meta">Kho: ${esc(item.warehouseName||item.name)} · Tồn: <b>${esc(item.stock)}</b> ${esc(item.warehouseUnit||item.unit||'')}</small>`
+              :''}
             <span class="tax-note-ui">
               ${esc(itemVatLabel(item,taxMode))}
             </span>
@@ -2171,7 +2186,7 @@ function renderProducts(){
 
   const products=DB.products.filter(product =>
     (!keyword||norm(
-      product.code+' '+product.name
+      product.code+' '+product.name+' '+(product.warehouseName||'')
     ).includes(keyword)) &&
     (!group||product.group===group)
   );
