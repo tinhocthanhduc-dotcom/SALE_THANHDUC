@@ -854,6 +854,7 @@ tbody tr:last-child td{border-bottom:0}
 <div id="toast" class="toast"></div>
 
 <script>
+const TD_SALES_BUILD_20260918_0905=true;
 let DB={customers:[],products:[],groups:[],quotes:[],contracts:[],config:{}};
 let historyLoaded=false;
 let historyLoading=false;
@@ -1550,7 +1551,7 @@ function calculateItemPricing(
   item,
   taxMode
 ){
-  const tax=PRICING_ENGINE.resolveItemTax(
+  const tax=resolveItemTax(
     item,
     taxMode
   );
