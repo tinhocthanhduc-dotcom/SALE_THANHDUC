@@ -3842,16 +3842,8 @@ function appendCustomerInfo_(
         quote.NguoiLienHe ||
         customer.NguoiNhan
       ),
-      'Hiệu lực đến',
-      formatDateOnly_(
-        quote.HieuLucDen
-      )
-    ],
-    [
       'Email',
-      clean_(customer.Email),
-      'Hình thức',
-      'Báo giá hàng hóa/dịch vụ'
+      clean_(customer.Email)
     ]
   ];
 
@@ -4239,8 +4231,7 @@ function appendQuoteNotes_(
   const notes = [
     quoteVatNote_(taxMode),
     'Giá có thể thay đổi theo thời điểm và số lượng đặt hàng.',
-    'Thời gian giao hàng và điều kiện thanh toán được xác nhận khi đặt hàng.',
-    'Quý khách vui lòng liên hệ Thành Đức để được hỗ trợ mức giá tốt nhất.'
+    'Thời gian giao hàng và điều kiện thanh toán được xác nhận khi đặt hàng.'
   ];
 
   const table = body.appendTable([['']]);
@@ -5016,8 +5007,7 @@ function buildQuoteA4Html_(
   const notes = [
     quoteVatNote_(taxMode),
     'Giá có thể thay đổi theo thời điểm và số lượng đặt hàng.',
-    'Thời gian giao hàng và điều kiện thanh toán được xác nhận khi đặt hàng.',
-    'Quý khách vui lòng liên hệ Thành Đức để được hỗ trợ mức giá tốt nhất.'
+    'Thời gian giao hàng và điều kiện thanh toán được xác nhận khi đặt hàng.'
   ];
 
   const notesHtml = notes.map(
@@ -5090,14 +5080,6 @@ function buildQuoteA4Html_(
       '</div>',
       '</div>'
     ].join(''),
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Hiệu lực đến</div>',
-      '<div class="info-value">',
-      escapeHtmlServer_(formatDateOnly_(quote.HieuLucDen)),
-      '</div>',
-      '</div>'
-    ].join(''),
     customerEmail
       ? [
           '<div class="info-row">',
@@ -5107,13 +5089,7 @@ function buildQuoteA4Html_(
           '</div>',
           '</div>'
         ].join('')
-      : '',
-    [
-      '<div class="info-row">',
-      '<div class="info-label">Đơn vị tiền</div>',
-      '<div class="info-value">Việt Nam đồng (VNĐ)</div>',
-      '</div>'
-    ].join('')
+      : ''
   ].filter(Boolean).join('');
 
   const toolbar = previewMode
