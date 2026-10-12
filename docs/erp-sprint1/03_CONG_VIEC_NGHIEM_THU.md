@@ -49,3 +49,14 @@ PASS: 5 nguồn có bằng chứng commit, cấu trúc đọc và phát hiện r
 
 ## Chưa làm và rủi ro còn lại
 Chưa đọc số liệu thực tế nên chưa đếm được số hàng/khách trùng, chưa xác nhận orphan hay số dư. Chưa chạy ERP, UAT, benchmark, shadow-read hoặc migration. Cấu hình source và code GitHub có thể khác bản Apps Script triển khai. Quyền anonymous trong manifest cần kiểm authorization thực tế; không tự đổi quyền. Hai project cùng ghi Kho 145 là rủi ro concurrency cần chốt chủ quản trước pilot. Không sửa lỗi tài chính hoặc chứng từ chỉ dựa trên kiểm toán tĩnh.
+
+## Quyết định đã duyệt — 12/10/2026
+Người duyệt: anh Tuấn (xác nhận trong phiên làm việc: “chốt nguyên tắc”).
+
+1. Kho 58 là danh mục chuẩn cho hàng vật lý; Sale quản lý dịch vụ. Ánh xạ mã Sale/Kho phải rõ ràng và được duyệt, không ghép theo tên.
+2. ERP giữ danh mục khách hàng và nhân viên chung, liên kết mã hiện có từ Sale–Care–Finance. Không tự hợp nhất bản ghi mơ hồ.
+3. Hoàn thành công việc tạo đề nghị ghi doanh thu; Finance xác nhận. Tiền đã thu được theo dõi riêng.
+
+Các quyết định này cho phép thiết kế/viết mã thử nghiệm theo nguyên tắc trên; không cho phép ghi dữ liệu production, đổi quyền, merge PR hay deploy production. Quy tắc cấp số đơn, người duyệt mapping cụ thể và xử lý đổi trả vẫn cần đặc tả; không coi là đã duyệt toàn bộ D02.
+
+Kiểm tra nguồn bước đầu: đã tìm thấy metadata Sheets Kho 58, Kho 145, Sale, Care và Finance qua Google Drive. File Sale có tên THANH_DUC_SALES_APP_DATABASE; chưa xác nhận đây là workbook gắn với deployment hiện hành. Chưa đọc headers hoặc Script Properties runtime trong bước này.
