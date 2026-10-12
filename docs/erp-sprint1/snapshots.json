@@ -1,0 +1,32 @@
+[
+  {
+    "repository": "AI_KHO_THANH_DUC",
+    "commit": "d77e5be2caf3052c9fb73c2235bb7f89beb39f33",
+    "branch": "master",
+    "tree_complete": true
+  },
+  {
+    "repository": "QL_KHO_THANH_DUC",
+    "commit": "bb2585541164d74fb06457508db3dbbf0a452826",
+    "branch": "main",
+    "tree_complete": true
+  },
+  {
+    "repository": "SALE_THANHDUC",
+    "commit": "c459c9d75273302437e8a90477f9f595da1e65c7",
+    "branch": "main",
+    "tree_complete": true
+  },
+  {
+    "repository": "CARE_THANHDUC",
+    "commit": "eb908e42609066e9ad3ae629a063ddeec854f7bf",
+    "branch": "main",
+    "tree_complete": true
+  },
+  {
+    "repository": "FINANCE_THANHDUC",
+    "commit": "d3c460700bb8823272374e16aea5d762c2cf10f5",
+    "branch": "main",
+    "tree_complete": true
+  }
+]

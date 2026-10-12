@@ -1,0 +1,205 @@
+{
+  "date": "2026-10-12",
+  "scope": "static source audit only; no GAS function executed; no Sheets access",
+  "syntax_checks": [
+    {
+      "file": "AI_KHO_THANH_DUC/AI_AGENT_V1.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/AI_AGENT_V13.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/AI_ALIAS_V2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/DEPLOY_AGENT_V13.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/DEPLOY_BATCH_SELECTION.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/MANUAL_INVENTORY.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/MANUAL_REVERSAL.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "AI_KHO_THANH_DUC/code.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/DashboardDataStableV4.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/Database.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/KpiServiceV2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/OverdueServiceV2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/PaginationServiceV4.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/PerformanceV3.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/SelfTestV2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/ServiceCoreV2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/TechnicalAssistantServiceV2.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "CARE_THANHDUC/code.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "FINANCE_THANHDUC/ConnectionTest.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "FINANCE_THANHDUC/CustomerData.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "FINANCE_THANHDUC/DeployMarker.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "FINANCE_THANHDUC/code.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "QL_KHO_THANH_DUC/code.js",
+      "pass": true,
+      "error": ""
+    },
+    {
+      "file": "SALE_THANHDUC/code.js",
+      "pass": true,
+      "error": ""
+    }
+  ],
+  "inventory": [
+    {
+      "repository": "AI_KHO_THANH_DUC",
+      "downloaded_files": 14,
+      "js_files": 8,
+      "duplicate_global_functions": [],
+      "openById_calls": 20,
+      "activeSpreadsheet_calls": 0,
+      "writes": {
+        "setValues": 25,
+        "setValue": 17,
+        "appendRow": 2,
+        "deleteRow": 0,
+        "clearContent": 2
+      }
+    },
+    {
+      "repository": "CARE_THANHDUC",
+      "downloaded_files": 28,
+      "js_files": 10,
+      "duplicate_global_functions": [],
+      "openById_calls": 2,
+      "activeSpreadsheet_calls": 0,
+      "writes": {
+        "setValues": 23,
+        "setValue": 5,
+        "appendRow": 0,
+        "deleteRow": 2,
+        "clearContent": 0
+      }
+    },
+    {
+      "repository": "FINANCE_THANHDUC",
+      "downloaded_files": 8,
+      "js_files": 4,
+      "duplicate_global_functions": [
+        "formatMoneyText_"
+      ],
+      "openById_calls": 1,
+      "activeSpreadsheet_calls": 0,
+      "writes": {
+        "setValues": 26,
+        "setValue": 23,
+        "appendRow": 1,
+        "deleteRow": 4,
+        "clearContent": 1
+      }
+    },
+    {
+      "repository": "QL_KHO_THANH_DUC",
+      "downloaded_files": 4,
+      "js_files": 1,
+      "duplicate_global_functions": [],
+      "openById_calls": 22,
+      "activeSpreadsheet_calls": 1,
+      "writes": {
+        "setValues": 28,
+        "setValue": 50,
+        "appendRow": 4,
+        "deleteRow": 0,
+        "clearContent": 6
+      }
+    },
+    {
+      "repository": "SALE_THANHDUC",
+      "downloaded_files": 6,
+      "js_files": 1,
+      "duplicate_global_functions": [],
+      "openById_calls": 1,
+      "activeSpreadsheet_calls": 1,
+      "writes": {
+        "setValues": 22,
+        "setValue": 6,
+        "appendRow": 3,
+        "deleteRow": 2,
+        "clearContent": 0
+      }
+    }
+  ]
+}
