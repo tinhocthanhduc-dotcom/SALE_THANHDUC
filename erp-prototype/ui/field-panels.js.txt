@@ -1,0 +1,57 @@
+// Included inside the app closure. Fixture role switch is not server authentication.
+const fieldEventNames={issue_technician_stock:'Cấp hàng cho kỹ thuật',consume_technician_stock:'Ghi hàng đã sử dụng',request_stock_return:'Đề nghị trả hàng dư',confirm_stock_return:'Kho xác nhận nhận lại',report_payment:'Báo khoản thu khách',confirm_payment:'Finance xác nhận khoản thu',request_cash_handover:'Đề nghị nộp quỹ',confirm_cash_handover:'Quỹ xác nhận nhận tiền'};
+Object.assign(eventNames,fieldEventNames);
+Object.assign(names,{reported:'Chờ xác nhận thu',partial:'Đã thu một phần',paid:'Đã thu đủ'});
+Object.assign(errors,{INVALID_QUANTITY_OR_AMOUNT:'Số lượng hoặc số tiền phải là số nguyên dương.',UNKNOWN_WAREHOUSE_BALANCE:'Chưa có số dư kho mẫu cho sản phẩm này.',INSUFFICIENT_WAREHOUSE_STOCK:'Kho mẫu không đủ hàng.',INSUFFICIENT_TECHNICIAN_STOCK:'Hàng giữ không đủ hoặc đã được đề nghị trả.',ORDER_QUANTITY_EXCEEDED:'Số cấp vượt số lượng trên dòng đơn.',PAYMENT_EXCEEDS_ORDER:'Khoản thu vượt giá trị đơn sau khi tính cả các khoản đang chờ xác nhận.',DUPLICATE_PAYMENT_REFERENCE:'Mã biên nhận hoặc giao dịch này đã được dùng.',HANDOVER_EXCEEDS_CASH:'Số nộp vượt khoản tiền đã xác nhận còn có thể nộp.',CONFIRMED_CASH_REQUIRED:'Chỉ nộp quỹ từ khoản tiền mặt đã được Finance xác nhận.',DUPLICATE_HANDOVER_REFERENCE:'Mã đề nghị nộp quỹ này đã được dùng.'});
+const fieldLedger=()=>state.field_operations||{payments:{},handovers:{},stock_movements:[],stock_returns:{},warehouse_balances:{}};
+const paymentRows=o=>Object.values(fieldLedger().payments).filter(p=>p.order_id===o.id);
+function stockPanel(o){
+ const r=actor().role,lines=o.lines.filter(l=>masters.products[l.product_id]?.kind==='physical');
+ if(!lines.length||!['technician','warehouse','manager'].includes(r))return '';
+ const buttons=[];const button=(type)=>buttons.push(`<button data-action="${type}">${e(eventNames[type])}</button>`);
+ if(!o.reversal&&!['draft','cancelled','reversal_approved'].includes(o.status)){
+  if(r==='warehouse'&&o.assignee_id)button('issue_technician_stock');
+  if(r==='technician'&&o.assignee_id===actor().id){if(['doing','testing'].includes(o.work_status))button('consume_technician_stock');button('request_stock_return');}
+ }
+ const returns=Object.values(fieldLedger().stock_returns).filter(x=>x.order_id===o.id);
+ if(r==='warehouse'&&returns.some(x=>x.status==='proposed'))button('confirm_stock_return');
+ return `<div class="panel"><div class="panel-head"><h2>Kho thợ · hàng theo đơn</h2></div><div class="panel-body">${lines.map(l=>`<p>${e(l.name)} · Số đơn: ${l.qty} · Đang giữ: <strong>${ErpDomain.stockBalance(state,o.id,l.id)}</strong></p>`).join('')}<p class="muted">Hàng đã dùng và hàng trả đã được kho xác nhận mới giảm số đang giữ. Đề nghị trả giữ chỗ, chưa nhập lại kho.</p>${returns.map(x=>`<p>Đề nghị trả ${x.qty} · ${e(x.reference)} · ${pill(x.status)}</p>`).join('')}<div class="actions">${buttons.join('')}</div></div></div>`;
+}
+function paymentPanel(o){
+ const role=actor().role;if(role==='warehouse')return '';
+ const rows=paymentRows(o).filter(p=>role!=='technician'||p.collected_by===actor().id),summary=ErpDomain.paymentSummary(state,o.id),buttons=[];
+ const button=type=>buttons.push(`<button data-action="${type}">${e(eventNames[type])}</button>`);
+ if(['sales','technician'].includes(role)&&!o.reversal&&!['draft','cancelled','reversal_approved'].includes(o.status))button('report_payment');
+ if(role==='finance'&&rows.some(p=>p.status==='reported'))button('confirm_payment');
+ if(['sales','technician'].includes(role)&&rows.some(p=>p.method==='cash'&&p.status==='confirmed'&&p.collected_by===actor().id))button('request_cash_handover');
+ const handovers=Object.values(fieldLedger().handovers).filter(h=>h.order_id===o.id&&(role!=='technician'||h.collected_by===actor().id));
+ if(role==='finance'&&handovers.some(h=>h.status==='proposed'))button('confirm_cash_handover');
+ return `<div class="panel"><div class="panel-head"><h2>Thu khách & nộp quỹ · dữ liệu mẫu</h2></div><div class="panel-body">${role!=='technician'?`<p>Đã xác nhận thu: <strong>${money(summary.confirmed_vnd)}</strong> · Còn phải thu: <strong>${money(summary.remaining_vnd)}</strong></p><p>Đang chờ xác nhận: ${money(summary.pending_vnd)}</p>`:''}<p class="muted">Báo thu chưa giảm phải thu. Nộp quỹ chưa xác nhận vẫn tính là tiền đang giữ. Doanh thu được duyệt riêng.</p>${rows.map(p=>`<p>${e(p.reference)} · ${money(p.amount_vnd)} · ${e({cash:'Tiền mặt',bank:'Chuyển khoản',pos:'POS'}[p.method])} · ${pill(p.status)}</p>`).join('')||'<p class="muted">Chưa có khoản thu.</p>'}${handovers.map(h=>`<p>Nộp quỹ ${e(h.reference)} · ${money(h.amount_vnd)} · ${pill(h.status)}</p>`).join('')}<div class="actions">${buttons.join('')}</div></div></div>`;
+}
+function cashPage(){
+ if(!['technician','sales','finance','manager'].includes(actor().role))return heading('Thu tiền & nộp quỹ','')+'<div class="empty">Vai trò kho không xử lý thu tiền.</div>';
+ const ids=['finance','manager'].includes(actor().role)?[...new Set(Object.values(fieldLedger().payments).map(p=>p.collected_by))]:[actor().id];
+ return heading('Thu tiền & nộp quỹ','Khoản thu khách và chuyển tiền vào quỹ được đối chiếu riêng.')+`<div class="guide"><strong>Đối soát tiền mặt</strong><div class="muted">Không áp dụng hạn giữ tiền hoặc hạn mức chưa được duyệt. Khoản hoàn chưa thực hiện không trừ tiền đang giữ. POS và chuyển khoản không tính vào tiền mặt.</div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Người thu</th><th>Báo thu chưa xác nhận</th><th>Tiền mặt giữ đã xác nhận</th><th>Đề nghị nộp chờ nhận</th><th>Quỹ đã nhận</th></tr></thead><tbody>${ids.map(id=>{const c=ErpDomain.custodySummary(state,id);return `<tr><td>${e(Object.values(actors).find(a=>a.id===id)?.name||id)}</td><td>${money(c.reported_cash_vnd)}</td><td>${money(c.held_confirmed_vnd)}</td><td>${money(c.pending_handover_vnd)}</td><td>${money(c.deposited_vnd)}</td></tr>`;}).join('')||'<tr><td colspan="5">Chưa có khoản thu mẫu.</td></tr>'}</tbody></table></div></div><div class="panel"><div class="panel-head"><h2>Mở đơn để báo thu, xác nhận hoặc nộp quỹ</h2></div>${table(visible().filter(o=>o.status!=='draft'&&o.status!=='cancelled'))}</div>`;
+}
+function stockPage(){return heading('Kho thợ','Theo dõi vật tư đã cấp, đã dùng và hàng dư theo từng đơn.')+`<div class="guide"><strong>Tồn mẫu kho trung tâm</strong><p>${Object.entries(masters.fixture_warehouse_stock).map(([id,opening])=>`${e(masters.products[id].name)}: ${fieldLedger().warehouse_balances[id]??opening}`).join(' · ')}</p><p class="muted">Số dư bộ mẫu, không lấy từ kho thực tế.</p></div><div class="panel">${table(visible().filter(o=>o.assignee_id&&o.lines.some(l=>masters.products[l.product_id]?.kind==='physical')))}</div>`;}
+function fieldForm(type,o){
+ const select=(label,id,options)=>`<label for="${id}">${label}</label><select id="${id}">${options.map(([value,title])=>`<option value="${e(value)}">${e(title)}</option>`).join('')}</select>`;
+ const number=(label,id)=>`<label for="${id}" style="margin-top:12px">${label}</label><input id="${id}" type="number" min="1" step="1" required>`;
+ const evidence=(label='Căn cứ / số biên nhận mẫu')=>`<label for="evidence" style="margin-top:12px">${label}</label><textarea id="evidence" required></textarea>`;
+ if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return select('Dòng hàng vật lý','field-line',o.lines.filter(l=>masters.products[l.product_id]?.kind==='physical').map(l=>[l.id,l.name]))+number('Số lượng','field-qty')+evidence();
+ if(type==='confirm_stock_return')return select('Đề nghị trả hàng','field-record',Object.values(fieldLedger().stock_returns).filter(x=>x.order_id===o.id&&x.status==='proposed').map(x=>[x.id,`${x.reference} · ${x.qty}`]))+evidence('Bằng chứng kho nhận lại');
+ if(type==='report_payment')return number('Số tiền thu mẫu (VND)','field-amount')+select('Phương thức','field-method',[['cash','Tiền mặt'],['bank','Chuyển khoản'],['pos','POS']])+evidence('Mã biên nhận / giao dịch duy nhất');
+ if(type==='confirm_payment')return select('Khoản thu chờ xác nhận','field-record',paymentRows(o).filter(p=>p.status==='reported').map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+evidence('Căn cứ Finance xác nhận');
+ if(type==='request_cash_handover')return select('Khoản tiền mặt của bạn đã xác nhận','field-record',paymentRows(o).filter(p=>p.method==='cash'&&p.status==='confirmed'&&p.collected_by===actor().id).map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+number('Số tiền nộp mẫu (VND)','field-amount')+evidence('Mã đề nghị nộp quỹ duy nhất');
+ if(type==='confirm_cash_handover')return select('Đề nghị nộp quỹ','field-record',Object.values(fieldLedger().handovers).filter(h=>h.order_id===o.id&&h.status==='proposed').map(h=>[h.id,`${h.reference} · ${money(h.amount_vnd)}`]))+evidence('Bằng chứng quỹ đã nhận tiền');
+ return null;
+}
+function fieldPayload(type){
+ const value=id=>document.getElementById(id)?.value;
+ if(!Object.hasOwn(fieldEventNames,type))return null;
+ const p={order_id:form.order_id},evidence=value('evidence');
+ if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return {...p,line_id:value('field-line'),qty:Number(value('field-qty')),reference:evidence};
+ if(type==='report_payment')return {...p,amount_vnd:Number(value('field-amount')),method:value('field-method'),reference:evidence};
+ if(type==='request_cash_handover')return {...p,allocations:[{payment_id:value('field-record'),amount_vnd:Number(value('field-amount'))}],reference:evidence};
+ return {...p,[{confirm_payment:'payment_id',confirm_stock_return:'return_id',confirm_cash_handover:'handover_id'}[type]]:value('field-record'),evidence,reference:evidence};
+}

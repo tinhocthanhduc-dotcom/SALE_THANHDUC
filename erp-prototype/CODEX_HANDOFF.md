@@ -17,10 +17,10 @@ Cập nhật 12/10/2026. Đây là chỉ dẫn bàn giao, không phải phê duy
 ## Đã có
 Kiểm toán 5 repo; metadata 5 workbook và 16 headers. Prototype offline có UI, 4 đơn mẫu, nhận đơn đa dòng, giao kỹ thuật, test/bàn giao, đề nghị doanh thu/Finance duyệt, hủy/hoàn fixture, nhật ký, tiến độ, search, export/reset.
 Domain dùng chung cho UI và output GAS. Cấp số ngày Việt Nam, idempotency/version/role guards. File local có journal/recovery; SheetsRepository đã test giả lập có chunks/checksum/manifest/recovery và guard staging.
-Kiểm thử mới nhất: 58 core + 16 browser scenarios PASS local. Browser CI đã có; kiểm tra run của HEAD trước khi báo trạng thái. Sửa UX gần nhất: Bước tiếp theo, nút chuyển vai trò và giữ đơn đang mở, sticky toolbar.
+Kiểm thử mới nhất: 67 core + 20 browser scenarios PASS local. Browser CI đã có; kiểm tra run của HEAD trước khi báo trạng thái. Sửa UX gần nhất: Bước tiếp theo, nút chuyển vai trò và giữ đơn đang mở, sticky toolbar.
 
 ## Chưa có
-Project/file staging thực tế; Apps Script UAT; auth/session server; masters persistence; API command/query; UI–Sheets staging integration; normalized tables, benchmark/quota; full payment/cash custody/technician stock/contract workflows.
+Project/file staging thực tế; Apps Script UAT; auth/session server; masters persistence; API command/query; UI–Sheets staging integration; normalized tables, benchmark/quota; full payment workflows, hoàn tiền thực tế, POS settlement, technician stock nhiều kho và contract workflows. Kho thợ theo dòng đơn và đối soát thu/nộp quỹ đã có fixture/UI; xem BUSINESS_FRAMEWORK.md.
 HTML offline dùng localStorage. Chọn vai trò chỉ mô phỏng, không có bảo mật server. Không nhập dữ liệu thật. Snapshot tổng state trong Sheets chỉ cho thử nghiệm kỹ thuật nhỏ.
 
 ## Quyết định đã duyệt
@@ -43,7 +43,7 @@ Sáu điểm review còn cần thống nhất:
 Không tự chốt 3 ngày/5 triệu, discount 5%, hạn mức mua/chi, người kiêm nhiệm hoặc vai trò giám đốc duyệt hoàn. Role manager/admin trong fixture không thay quyền nhân viên thật.
 
 ## Mốc tiếp theo
-Ưu tiên làm mã có thể review cho luồng dịch vụ tại khách, kho thợ, thu tiền–nộp quỹ; đồng thời hoàn thiện staging server/API/auth và nối UI. Có thể viết contract/migration/fixture/tests an toàn trước khi có môi trường thật. Những thay đổi số tiền, xác nhận thu/hoàn hoặc quyền vận hành phải giữ là fixture/config đề xuất khi chưa được chốt.
+Đã có fixture/UI cho kho thợ và thu tiền–nộp quỹ; tiếp tục lịch hẹn/dịch vụ tại khách, từ chối/sửa phiếu, hoàn tiền và nhiều kho; đồng thời hoàn thiện staging server/API/auth và nối UI. Có thể viết contract/migration/fixture/tests an toàn trước khi có môi trường thật. Những thay đổi số tiền, xác nhận thu/hoàn hoặc quyền vận hành phải giữ là fixture/config đề xuất khi chưa được chốt.
 Cần xác minh workbook bound của Sale và Care Script Properties override trước shadow-read. Không cho rằng kết nối Google Drive/GitHub của phiên ChatGPT tự có trong Codex mới.
 
 ## Kiểm thử/build

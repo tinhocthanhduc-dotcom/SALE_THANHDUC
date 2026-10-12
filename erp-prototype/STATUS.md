@@ -6,15 +6,18 @@ Cập nhật: 12/10/2026. Mốc hiện tại: bản thử nghiệm OFFLINE có g
 | Kiểm toán và nguồn dữ liệu | 5 repo, metadata 5 Sheets, 16 headers | chưa đọc business rows hoặc xác nhận binding deployment Sale/Care |
 | Nguyên tắc | Kho 58 master; ERP khách/nhân viên; Finance duyệt; số đơn theo ngày; hủy/hoàn giữ lịch sử | người duyệt vận hành cụ thể chưa xác nhận |
 | Domain đơn–công việc | tạo/xác nhận/giao/test/bàn giao/doanh thu, version, idempotency | partial fulfillment, nhiều task và VAT chưa triển khai |
+| Kho thợ/thu tiền | mô phỏng vật tư, khoản thu và nộp quỹ có phiên bản/idempotency | chưa từ chối/sửa phiếu, hoàn tiền thực tế, POS settlement hoặc nhiều kho |
 | Lưu trữ kỹ thuật | file local có journal; SheetsRepository có chunks/checksum/guard | Sheets repository mới test giả lập, chưa tạo staging thật |
-| Giao diện | tổng quan, đơn, việc, doanh thu, nhật ký, tiến độ, tìm kiếm, đa dòng, mobile | chọn vai trò demo, không phải auth server |
+| Giao diện | tổng quan, đơn, việc, doanh thu, kho thợ, thu tiền/nộp quỹ, nhật ký, tiến độ, tìm kiếm, đa dòng, mobile | chọn vai trò demo, không phải auth server |
 | Dữ liệu giao diện | fixture localStorage, đồng bộ revision, export/reset có xác nhận | không kết nối Sheets, không có dữ liệu thật |
-| Kiểm thử | 58 core + 16 scenario trình duyệt local đạt; CI kiểm trên PR | chưa UAT Apps Script thực tế, quota/concurrency Google |
+| Kiểm thử | 67 core + 20 scenario trình duyệt local đạt; CI kiểm trên PR | chưa UAT Apps Script thực tế, quota/concurrency Google |
 | Triển khai | mã và docs trên branch riêng/PR #1 | chưa merge, deploy hoặc đổi quyền |
 
 ## Mốc bàn giao đã đạt trong lượt này
 - HTML self-contained mở offline, có 4 đơn mẫu ở các trạng thái khác nhau.
 - Luồng tạo đơn → giao kỹ thuật → in thử → bàn giao → đề nghị và duyệt doanh thu, tiền thu riêng.
+- Kho thợ theo dòng: cấp → dùng → đề nghị trả dư → kho xác nhận thực nhận.
+- Báo thu từng phần → Finance xác nhận → đề nghị nộp quỹ → quỹ xác nhận; tiền giữ không giảm khi mới đề nghị.
 - Dùng chung domain hiện hành; browser tests thực hiện qua DOM và đối chiếu kết quả.
 - Cập nhật PR, hướng dẫn thao tác, kết quả test; không tác động hệ thống thực tế.
 
@@ -32,3 +35,6 @@ Snapshot tổng state tăng nhanh, chỉ phù hợp pilot kỹ thuật nhỏ; c�
 
 ## Sửa sau phản hồi dùng thử
 Đơn đã xác nhận trước đây chỉ hiện thao tác của Kinh doanh nên người dùng tưởng luồng bị ngắt. Đã thêm Bước tiếp theo tại chi tiết, nút chuyển vai trò demo, giữ đơn đang mở khi đổi vai trò có quyền xem và cố định thanh chọn vai trò. Browser test xác nhận handoff sang Quản lý vẫn mở cùng đơn và hiện nút Giao kỹ thuật.
+
+## Mốc tiếp nối khung nghiệp vụ
+Đã thêm field-operations.cjs, hai màn hình Kho thợ/Thu tiền & nộp quỹ và BUSINESS_FRAMEWORK.md mô tả 8 luồng cùng giới hạn. 67/67 kiểm thử Node và 20/20 scenario Chromium local đạt. Trình duyệt kiểm thử phục vụ HTML qua HTTP loopback để tương thích môi trường chặn file://; tệp xuất vẫn self-contained/offline. Không chạy workflow triển khai hoặc ghi Google thực tế.

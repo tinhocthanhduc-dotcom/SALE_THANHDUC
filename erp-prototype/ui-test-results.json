@@ -1,6 +1,6 @@
 {
-  "browser_tests": 16,
-  "pass": 16,
+  "browser_tests": 20,
+  "pass": 20,
   "fail": 0,
   "results": [
     {
@@ -57,6 +57,22 @@
     },
     {
       "name": "two tabs reject a stale command without duplicate transition",
+      "pass": true
+    },
+    {
+      "name": "UI stock issue, use and confirmed surplus return conserve quantity",
+      "pass": true
+    },
+    {
+      "name": "UI reported cash keeps payment unpaid until Finance confirms",
+      "pass": true
+    },
+    {
+      "name": "UI Finance confirmation records partial payment without revenue",
+      "pass": true
+    },
+    {
+      "name": "UI cash custody decreases only after confirmed deposit and survives reload",
       "pass": true
     },
     {

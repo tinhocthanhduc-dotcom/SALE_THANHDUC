@@ -2,16 +2,19 @@
 const {chromium}=require('playwright');const assert=require('node:assert/strict');const path=require('node:path');const fs=require('node:fs');const os=require('node:os');const cp=require('node:child_process');
 (async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'erp-ui-'));const preview=path.join(dir,'demo.html');cp.execFileSync('python3',[path.join(__dirname,'../build-preview.py'),preview]);
+ const server=require('node:http').createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(fs.readFileSync(preview));});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const previewUrl='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch(process.env.ERP_TEST_CHROMIUM?{headless:true,executablePath:process.env.ERP_TEST_CHROMIUM,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process','--use-gl=angle','--use-angle=swiftshader']}:{headless:true});
- const results=[],errors=[],network=[];const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))network.push(r.url());});
+ const results=[],errors=[],network=[];const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url())&&!r.url().startsWith(previewUrl))network.push(r.url());});
  const check=(name,fn)=>{fn();results.push({name,pass:true});};
  const getState=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('thanhduc.erp.fixture.ui.v1')).state);
  const role=async key=>{await page.locator('#actor').selectOption(key);};
  const open=async id=>{await page.locator(`[data-open="${id}"]`).first().click();};
  const action=async(type,evidence)=>{await page.locator(`[data-action="${type}"]`).click();if(evidence!==undefined)await page.locator('#evidence').fill(evidence);await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);};
- const create=async()=>{await role('sales');await page.locator('[data-create]').click();await page.locator('#customer').selectOption('c2');await page.locator('.line-item select').selectOption('p3');await page.getByLabel('Số lượng',{exact:true}).fill('2');await page.locator('[data-add-line]').click();await page.locator('.line-item').nth(1).locator('select').selectOption('p2');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);const s=await getState();return Object.values(s.orders).at(-1);};
+ const create=async(physicalQty=1)=>{await role('sales');await page.locator('[data-create]').click();await page.locator('#customer').selectOption('c2');await page.locator('.line-item select').selectOption('p3');await page.getByLabel('Số lượng',{exact:true}).fill('2');await page.locator('[data-add-line]').click();await page.locator('.line-item').nth(1).locator('select').selectOption('p2');await page.locator('.line-item').nth(1).getByLabel('Số lượng',{exact:true}).fill(String(physicalQty));await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);const s=await getState();return Object.values(s.orders).at(-1);};
  try{
-  await page.goto('file://'+preview);check('startup seed: four orders, no JS error',()=>assert.equal(errors.length,0));let s=await getState();assert.equal(Object.keys(s.orders).length,4);
+  await page.goto(previewUrl);check('startup seed: four orders, no JS error',()=>assert.equal(errors.length,0));let s=await getState();assert.equal(Object.keys(s.orders).length,4);
   const created=await create();check('UI create multiple lines and correct total',()=>{assert.equal(created.lines.length,2);assert.equal(created.total_vnd,420000);assert.equal(created.status,'draft');});
   await action('confirm');assert(await page.locator('[data-next-step]').getByText('Bước tiếp theo: Quản lý giao kỹ thuật phụ trách.',{exact:true}).isVisible());await page.locator('[data-switch-role="manager"]').click();assert(await page.locator('[data-action="assign"]').isVisible());assert((await page.locator('#detail').textContent()).includes(created.order_no));check('next-step handoff keeps current order open',()=>{});await open(created.id);await page.locator('[data-action="assign"]').click();await page.locator('#assignee').selectOption('tech1');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);await role('tech1');await open(created.id);
   assert.equal(await page.locator('[data-action="approve_revenue"]').count(),0);assert.equal(await page.locator('#detail').getByText('420.000 đ',{exact:true}).count(),0);check('technician screen hides financial actions',()=>{});
@@ -29,15 +32,37 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   await page.setViewportSize({width:1440,height:1000});await role('sales');
   const draft=Object.values((await getState()).orders).find(o=>o.status==='draft');
   await open(draft.id);await page.locator('[data-action="confirm"]').click();
-  const peer=await context.newPage();await peer.goto('file://'+preview);await peer.locator(`[data-open="${draft.id}"]`).first().click();await peer.locator('[data-action="confirm"]').click();
+  const peer=await context.newPage();await peer.goto(previewUrl);await peer.locator(`[data-open="${draft.id}"]`).first().click();await peer.locator('[data-action="confirm"]').click();
   await Promise.all([page.locator('#save-command').click(),peer.locator('#save-command').click()]);
   await page.waitForFunction(id=>JSON.parse(localStorage.getItem('thanhduc.erp.fixture.ui.v1')).state.orders[id].status==='confirmed',draft.id);
   const shared=await getState();assert.equal(shared.events.filter(ev=>ev.order_id===draft.id&&ev.type==='confirm').length,1);
   const rejections=[await page.locator('#form-error').count()?await page.locator('#form-error').textContent():'',await peer.locator('#form-error').count()?await peer.locator('#form-error').textContent():''];assert(rejections.some(t=>/thay đổi|mở lại/.test(t)));
   await peer.close();if(await page.locator('#dialog').evaluate(d=>d.open))await page.locator('[data-dismiss]').first().click();check('two tabs reject a stale command without duplicate transition',()=>{});
+  // Field operations exercised through the same UI commands and persistence.
+  await page.locator('[data-page="dashboard"]').click();
+  const field=await create(3);await action('confirm');await role('manager');await open(field.id);
+  await page.locator('[data-action="assign"]').click();await page.locator('#assignee').selectOption('tech1');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  await role('warehouse');await open(field.id);
+  await page.locator('[data-action="issue_technician_stock"]').click();await page.locator('#field-qty').fill('3');await page.locator('#evidence').fill('PX-FIELD-01');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  await role('tech1');await open(field.id);await action('start');
+  await page.locator('[data-action="consume_technician_stock"]').click();await page.locator('#field-qty').fill('2');await page.locator('#evidence').fill('Dùng tại khách mẫu');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  await page.locator('[data-action="request_stock_return"]').click();await page.locator('#field-qty').fill('1');await page.locator('#evidence').fill('TR-FIELD-01');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  await role('warehouse');await open(field.id);await action('confirm_stock_return','Kho nhận dư mẫu');
+  s=await getState();check('UI stock issue, use and confirmed surplus return conserve quantity',()=>{const moves=s.field_operations.stock_movements.filter(m=>m.order_id===field.id);assert.deepEqual(moves.map(m=>[m.type,m.qty]),[['issue',3],['consume',2],['return',1]]);assert.equal(s.orders[field.id].dispatched,true);});
+  await role('tech1');await open(field.id);
+  await page.locator('[data-action="report_payment"]').click();await page.locator('#field-amount').fill('150000');await page.locator('#field-method').selectOption('cash');await page.locator('#evidence').fill('PAY-FIELD-01');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  s=await getState();check('UI reported cash keeps payment unpaid until Finance confirms',()=>assert.equal(s.orders[field.id].payment_status,'unpaid'));
+  await role('finance');await open(field.id);await action('confirm_payment','Finance đối chiếu mẫu');
+  s=await getState();check('UI Finance confirmation records partial payment without revenue',()=>{assert.equal(s.orders[field.id].payment_status,'partial');assert.equal(s.orders[field.id].revenue_status,'none');});
+  await role('tech1');await open(field.id);await page.locator('[data-action="request_cash_handover"]').click();await page.locator('#field-amount').fill('100000');await page.locator('#evidence').fill('CASH-FIELD-01');await page.locator('#save-command').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
+  await page.locator('[data-page="cash"]').click();assert(await page.getByText('150.000 đ',{exact:true}).isVisible());
+  await role('finance');await open(field.id);await action('confirm_cash_handover','Quỹ đã nhận mẫu');
+  await page.reload();await role('tech1');await page.locator('[data-page="cash"]').click();
+  assert(await page.getByText('50.000 đ',{exact:true}).isVisible());
+  s=await getState();check('UI cash custody decreases only after confirmed deposit and survives reload',()=>{assert.equal(Object.values(s.field_operations.handovers)[0].status,'confirmed');assert.equal(s.orders[field.id].payment_status,'partial');});
   // Corrupt saved data is quarantined, not silently overwritten.
   await page.evaluate(()=>localStorage.setItem('thanhduc.erp.fixture.ui.v1','{broken'));await page.reload();assert(await page.getByText('Dữ liệu demo không hợp lệ, đã khóa thao tác để tránh ghi đè.',{exact:false}).isVisible());check('corrupt storage quarantines without overwrite',()=>{});
   check('offline preview makes no external requests and has no JS errors',()=>{assert.deepEqual(network,[]);assert.deepEqual(errors,[]);});
   console.log(JSON.stringify({browser_tests:results.length,pass:results.length,fail:0,results},null,2));
- }finally{await browser.close();fs.rmSync(dir,{recursive:true,force:true});}
+ }finally{await browser.close();await new Promise(resolve=>server.close(resolve));fs.rmSync(dir,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exit(1);});

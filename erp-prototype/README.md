@@ -1,15 +1,18 @@
 # ERP Sprint 1 — prototype tích hợp và luồng đơn/công việc
-Trạng thái: mã thử nghiệm local, chưa phải ERP đã triển khai. Có lưu trữ local bằng file dành cho fixture; có adapter Sheets staging đã test giả lập; có UI offline và adapter Sheets staging; chưa có file Google Sheets staging thực tế, endpoint web, trigger, thanh toán hoặc lệnh ghi kho/tài chính.
+Trạng thái: mã thử nghiệm local, chưa phải ERP đã triển khai. Có lưu trữ local bằng file dành cho fixture; có adapter Sheets staging đã test giả lập; có UI offline và adapter Sheets staging; chưa có file Google Sheets staging thực tế, endpoint web, trigger hoặc lệnh ghi kho/tài chính thực tế. Thu tiền và kho thợ mới có mô phỏng fixture.
 
 ## Đã có
 - Adapter đọc 10 bảng từ 5 nguồn, dựa trên headers thực tế đọc ngày 12/10/2026.
 - Chỉ đọc cột cần thiết; không đọc dữ liệu mật khẩu/salt/phiên đăng nhập nhân viên.
 - Kiểm tra required/duplicate headers, phân trang tối đa 100 dòng; nguồn lỗi không biến tồn thành 0.
 - Ánh xạ product theo namespace và khóa ngoài đã duyệt; không ghép theo tên.
-- Pure domain tạo đơn → xác nhận → giao kỹ thuật → thực hiện → test → bàn giao → đề nghị doanh thu → Finance duyệt. Payment giữ unpaid.
+- Pure domain tạo đơn → xác nhận → giao kỹ thuật → thực hiện → test → bàn giao → đề nghị doanh thu → Finance duyệt. Thanh toán khách được theo dõi riêng, chỉ đổi khi Finance xác nhận khoản thu.
 - Idempotency theo actor+key, version conflict, kiểm quyền vai trò, khóa ngoại, safe integer và snapshot tên/đơn vị/giá.
 - Số đơn TD-YYYYMMDD-0001 theo ngày Việt Nam, không tái sử dụng số đã cấp; journal PREPARED/COMMITTED, single-writer lock và hash kiểm tra phục hồi trên local fixture.
 - Hủy trước khi xuất giữ đơn/lịch sử; sau khi xuất đề nghị hoàn/đảo và duyệt bằng người khác. Chỉ ghi trạng thái đề nghị/duyệt fixture, không thực hiện hoàn kho hoặc đảo Finance.
+
+## Khung nghiệp vụ tiếp nối
+Xem BUSINESS_FRAMEWORK.md cho 8 luồng và phạm vi hiện hành. Demo có Kho thợ (cấp/dùng/trả xác nhận), báo thu từng phần, Finance xác nhận, đề nghị nộp quỹ và quỹ xác nhận. Không có hoàn tiền thực tế, sửa/từ chối phiếu, hóa đơn/VAT hoặc POS settlement.
 
 ## Chạy kiểm thử
 `node --test erp-prototype/test/*.test.cjs`

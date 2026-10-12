@@ -29,3 +29,6 @@ Hủy: trước xuất có Hủy trước xuất, bắt buộc lý do. Sau khi K
 
 ## Phạm vi còn thiếu trước pilot
 Đăng nhập/session server, nguồn masters/runtime đã xác nhận, project/file staging thật, kết nối UI tới staging repository, normalized tables và benchmark, VAT/ngày, hoàn một phần và thu tiền. Chưa có endpoint production hoặc deploy. Mẫu số đơn và luồng duyệt đã áp dụng fixture, chưa cấp quyền cho nhân viên thật.
+
+## Kho thợ và thu/nộp quỹ
+Xem BUSINESS_FRAMEWORK.md, mục Dùng thử HTML. Hai mục Kho thợ và Thu tiền & nộp quỹ mở các đơn liên quan; tại chi tiết có form theo vai trò. Khi Finance xác nhận thu thì thanh toán chuyển một phần/đủ; khi quỹ xác nhận nhận tiền mới giảm tiền đang giữ. Duyệt doanh thu/hoàn không tự tạo hoặc đảo giao dịch tiền.
