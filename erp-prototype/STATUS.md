@@ -20,3 +20,10 @@ Xây repository staging và auth server, chốt schema lưu trữ, kiểm thử 
 
 ## Phê duyệt còn lại
 PR code/design để review; không tự merge. Quy tắc cấp số đơn, người duyệt mapping và đổi trả chưa được chốt. Không cần yêu cầu lại ba nguyên tắc master/khách–nhân viên/doanh thu đã duyệt.
+
+## Cập nhật sau khi duyệt mẫu số đơn và nguyên tắc hủy — 12/10/2026
+- 43/43 test local PASS. Số đơn theo ngày Việt Nam, sequence giữ sau reopen/hủy. 12 process riêng cấp số không trùng; 5 process replay cùng key chỉ tạo một đơn.
+- Lưu trữ fixture local với journal chuẩn bị/commit, atomic file rename + fsync, lock single writer. Inject lỗi ở 3 checkpoint phục hồi/replay không nhân đôi; lỗi hash hoặc mất committed state bị chặn.
+- Hard process exit được kiểm thử: khóa giữ lại, operator xác nhận PID đã dừng trước khi giải phóng khóa ở fixture; không auto-break lock.
+- Thêm marker dispatch, cancel trước xuất, request/approve reversal sau xuất. Vai trò manager/admin trong fixture là đề xuất kiểm thử; vai trò/người duyệt vận hành chưa được cấp hoặc thay đổi. Người đề nghị không tự duyệt. Trạng thái reversal_approved chỉ biểu thị duyệt hồ sơ, không xác nhận kho/Finance đã đảo.
+- Lớp file local không nằm trong build GAS; chưa có Sheets staging repository. UI/session thật, nguồn runtime, phân bổ tiền/hoàn một phần và kiểm thử Apps Script vẫn còn. Không deploy hoặc ghi dữ liệu thực tế.
