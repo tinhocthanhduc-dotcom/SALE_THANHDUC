@@ -2,6 +2,7 @@
 // Fixture domain only. Actors must come from a trusted server when used in staging.
 const roles={
   issue_technician_stock:['warehouse','admin'],
+  receive_technician_stock:['technician','admin'],
   consume_technician_stock:['technician','admin'],
   request_stock_return:['technician','admin'],
   confirm_stock_return:['warehouse','admin'],
@@ -16,7 +17,15 @@ function positive(value){if(!Number.isSafeInteger(value)||value<=0)fail('INVALID
 function sum(values){return values.reduce((a,b)=>{const n=a+b;if(!Number.isSafeInteger(n))fail('AMOUNT_OVERFLOW');return n;},0);}
 function store(state){return state.field_operations||{payments:{},handovers:{},stock_movements:[],stock_returns:{},warehouse_balances:{}};}
 function stockBalance(state,orderId,lineId){
-  return sum(store(state).stock_movements.filter(m=>m.order_id===orderId&&m.line_id===lineId).map(m=>m.type==='issue'?m.qty:-m.qty));
+  return sum(store(state).stock_movements.filter(m=>m.order_id===orderId&&m.line_id===lineId).map(m=>m.type==='issue'?(m.status==='awaiting_receipt'?0:m.qty):-m.qty));
+}
+function pendingPickup(state,orderId,lineId){return sum(store(state).stock_movements.filter(m=>m.type==='issue'&&m.order_id===orderId&&(!lineId||m.line_id===lineId)&&m.status==='awaiting_receipt').map(m=>m.qty));}
+function requirePickup(state,order){
+  for(const line of order.lines.filter(l=>l.kind==='physical')){
+    const received=sum(store(state).stock_movements.filter(m=>m.type==='issue'&&m.order_id===order.id&&m.line_id===line.id&&m.status!=='awaiting_receipt').map(m=>m.qty));
+    if(received<line.qty||pendingPickup(state,order.id,line.id))fail('STOCK_PICKUP_REQUIRED');
+  }
+  if(pendingPickup(state,order.id))fail('STOCK_PICKUP_REQUIRED');
 }
 function reservedReturn(state,orderId,lineId){return sum(Object.values(store(state).stock_returns).filter(r=>r.order_id===orderId&&r.line_id===lineId&&r.status==='proposed').map(r=>r.qty));}
 function paymentSummary(state,orderId){
@@ -64,7 +73,7 @@ function apply(state,order,command,context){
         }
         if(ledger.warehouse_balances[line.product_id]<qty)fail('INSUFFICIENT_WAREHOUSE_STOCK');
         ledger.warehouse_balances[line.product_id]-=qty;
-        movement('issue',line.id,qty);order.dispatched=true;order.dispatch_ref=text(p.reference);
+        movement('issue',line.id,qty);ledger.stock_movements.at(-1).status='awaiting_receipt';order.dispatched=true;order.dispatch_ref=text(p.reference);
       }else{
         if(stockBalance(state,order.id,line.id)-reservedReturn(state,order.id,line.id)<qty)fail('INSUFFICIENT_TECHNICIAN_STOCK');
         if(type==='consume_technician_stock'){
@@ -75,6 +84,14 @@ function apply(state,order,command,context){
         }
       }
       break;
+    }
+    case 'receive_technician_stock':{
+      const issue=ledger.stock_movements.find(m=>m.id===p.issue_id&&m.type==='issue');
+      if(!issue||issue.order_id!==order.id)fail('UNKNOWN_STOCK_ISSUE');
+      if(issue.technician_id!==actor.id)fail('FORBIDDEN');
+      if(issue.status!=='awaiting_receipt')fail('INVALID_TRANSITION');
+      if(issue.actor_id===actor.id)fail('SELF_APPROVAL_FORBIDDEN');
+      issue.receipt_evidence=text(p.evidence);issue.status='received';issue.received_by=actor.id;issue.received_at=now();operationId=issue.id;break;
     }
     case 'confirm_stock_return':{
       const r=ledger.stock_returns[p.return_id];if(!r||r.order_id!==order.id)fail('UNKNOWN_STOCK_RETURN');
@@ -125,4 +142,4 @@ function apply(state,order,command,context){
   }
   return operationId;
 }
-module.exports={roles,apply,stockBalance,paymentSummary,custodySummary,store};
+module.exports={roles,apply,stockBalance,pendingPickup,requirePickup,paymentSummary,custodySummary,store};

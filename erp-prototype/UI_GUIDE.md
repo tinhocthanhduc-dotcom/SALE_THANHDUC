@@ -32,3 +32,6 @@ Hủy: trước xuất có Hủy trước xuất, bắt buộc lý do. Sau khi K
 
 ## Kho thợ và thu/nộp quỹ
 Xem BUSINESS_FRAMEWORK.md, mục Dùng thử HTML. Hai mục Kho thợ và Thu tiền & nộp quỹ mở các đơn liên quan; tại chi tiết có form theo vai trò. Khi Finance xác nhận thu thì thanh toán chuyển một phần/đủ; khi quỹ xác nhận nhận tiền mới giảm tiền đang giữ. Duyệt doanh thu/hoàn không tự tạo hoặc đảo giao dịch tiền.
+
+## Kỹ thuật lấy hàng mang theo
+Sau quản lý giao việc, mở đơn ở vai trò Kho và chọn Kho chuẩn bị & cấp hàng. Đổi sang đúng kỹ thuật được giao, mở đơn và chọn Nhận hàng mang theo; chọn phiếu, nhập xác nhận kiểm đếm. Chờ nhận và đã nhận đang giữ hiển thị riêng. Đơn mới có hàng vật lý chưa nhận đủ sẽ bị chặn Bắt đầu tới khách / xử lý. Với dữ liệu demo cũ, tạo đơn mới hoặc khôi phục bộ mẫu để thử đầy đủ bước này.

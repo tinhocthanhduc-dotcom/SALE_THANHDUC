@@ -1,8 +1,8 @@
 // Included inside the app closure. Fixture role switch is not server authentication.
-const fieldEventNames={issue_technician_stock:'Cấp hàng cho kỹ thuật',consume_technician_stock:'Ghi hàng đã sử dụng',request_stock_return:'Đề nghị trả hàng dư',confirm_stock_return:'Kho xác nhận nhận lại',report_payment:'Báo khoản thu khách',confirm_payment:'Finance xác nhận khoản thu',request_cash_handover:'Đề nghị nộp quỹ',confirm_cash_handover:'Quỹ xác nhận nhận tiền'};
+const fieldEventNames={issue_technician_stock:'Kho chuẩn bị & cấp hàng',receive_technician_stock:'Nhận hàng mang theo',consume_technician_stock:'Ghi hàng đã sử dụng',request_stock_return:'Đề nghị trả hàng dư',confirm_stock_return:'Kho xác nhận nhận lại',report_payment:'Báo khoản thu khách',confirm_payment:'Finance xác nhận khoản thu',request_cash_handover:'Đề nghị nộp quỹ',confirm_cash_handover:'Quỹ xác nhận nhận tiền'};
 Object.assign(eventNames,fieldEventNames);
 Object.assign(names,{reported:'Chờ xác nhận thu',partial:'Đã thu một phần',paid:'Đã thu đủ'});
-Object.assign(errors,{INVALID_QUANTITY_OR_AMOUNT:'Số lượng hoặc số tiền phải là số nguyên dương.',UNKNOWN_WAREHOUSE_BALANCE:'Chưa có số dư kho mẫu cho sản phẩm này.',INSUFFICIENT_WAREHOUSE_STOCK:'Kho mẫu không đủ hàng.',INSUFFICIENT_TECHNICIAN_STOCK:'Hàng giữ không đủ hoặc đã được đề nghị trả.',ORDER_QUANTITY_EXCEEDED:'Số cấp vượt số lượng trên dòng đơn.',PAYMENT_EXCEEDS_ORDER:'Khoản thu vượt giá trị đơn sau khi tính cả các khoản đang chờ xác nhận.',DUPLICATE_PAYMENT_REFERENCE:'Mã biên nhận hoặc giao dịch này đã được dùng.',HANDOVER_EXCEEDS_CASH:'Số nộp vượt khoản tiền đã xác nhận còn có thể nộp.',CONFIRMED_CASH_REQUIRED:'Chỉ nộp quỹ từ khoản tiền mặt đã được Finance xác nhận.',DUPLICATE_HANDOVER_REFERENCE:'Mã đề nghị nộp quỹ này đã được dùng.'});
+Object.assign(errors,{INVALID_QUANTITY_OR_AMOUNT:'Số lượng hoặc số tiền phải là số nguyên dương.',UNKNOWN_WAREHOUSE_BALANCE:'Chưa có số dư kho mẫu cho sản phẩm này.',STOCK_PICKUP_REQUIRED:'Cần kho cấp đủ hàng và kỹ thuật xác nhận nhận hàng trước khi bắt đầu tới khách.',INSUFFICIENT_WAREHOUSE_STOCK:'Kho mẫu không đủ hàng.',INSUFFICIENT_TECHNICIAN_STOCK:'Hàng giữ không đủ hoặc đã được đề nghị trả.',ORDER_QUANTITY_EXCEEDED:'Số cấp vượt số lượng trên dòng đơn.',PAYMENT_EXCEEDS_ORDER:'Khoản thu vượt giá trị đơn sau khi tính cả các khoản đang chờ xác nhận.',DUPLICATE_PAYMENT_REFERENCE:'Mã biên nhận hoặc giao dịch này đã được dùng.',HANDOVER_EXCEEDS_CASH:'Số nộp vượt khoản tiền đã xác nhận còn có thể nộp.',CONFIRMED_CASH_REQUIRED:'Chỉ nộp quỹ từ khoản tiền mặt đã được Finance xác nhận.',DUPLICATE_HANDOVER_REFERENCE:'Mã đề nghị nộp quỹ này đã được dùng.'});
 const fieldLedger=()=>state.field_operations||{payments:{},handovers:{},stock_movements:[],stock_returns:{},warehouse_balances:{}};
 const paymentRows=o=>Object.values(fieldLedger().payments).filter(p=>p.order_id===o.id);
 function stockPanel(o){
@@ -11,11 +11,11 @@ function stockPanel(o){
  const buttons=[];const button=(type)=>buttons.push(`<button data-action="${type}">${e(eventNames[type])}</button>`);
  if(!o.reversal&&!['draft','cancelled','reversal_approved'].includes(o.status)){
   if(r==='warehouse'&&o.assignee_id)button('issue_technician_stock');
-  if(r==='technician'&&o.assignee_id===actor().id){if(['doing','testing'].includes(o.work_status))button('consume_technician_stock');button('request_stock_return');}
+  if(r==='technician'&&o.assignee_id===actor().id){if(ErpDomain.pendingPickup(state,o.id))button('receive_technician_stock');if(['doing','testing'].includes(o.work_status))button('consume_technician_stock');button('request_stock_return');}
  }
  const returns=Object.values(fieldLedger().stock_returns).filter(x=>x.order_id===o.id);
  if(r==='warehouse'&&returns.some(x=>x.status==='proposed'))button('confirm_stock_return');
- return `<div class="panel"><div class="panel-head"><h2>Kho thợ · hàng theo đơn</h2></div><div class="panel-body">${lines.map(l=>`<p>${e(l.name)} · Số đơn: ${l.qty} · Đang giữ: <strong>${ErpDomain.stockBalance(state,o.id,l.id)}</strong></p>`).join('')}<p class="muted">Hàng đã dùng và hàng trả đã được kho xác nhận mới giảm số đang giữ. Đề nghị trả giữ chỗ, chưa nhập lại kho.</p>${returns.map(x=>`<p>Đề nghị trả ${x.qty} · ${e(x.reference)} · ${pill(x.status)}</p>`).join('')}<div class="actions">${buttons.join('')}</div></div></div>`;
+ return `<div class="panel"><div class="panel-head"><h2>Kho thợ · hàng theo đơn</h2></div><div class="panel-body">${lines.map(l=>`<p>${e(l.name)} · Số đơn: ${l.qty} · Chờ kỹ thuật nhận: <strong>${ErpDomain.pendingPickup(state,o.id,l.id)}</strong> · Đã nhận, đang giữ: <strong>${ErpDomain.stockBalance(state,o.id,l.id)}</strong></p>`).join('')}<p class="muted">Kho cấp hàng → kỹ thuật đến kho kiểm đếm và xác nhận nhận mang theo → bắt đầu tới khách. Hàng chờ nhận chưa tính vào hàng kỹ thuật đang giữ. Đề nghị trả giữ chỗ, chưa nhập lại kho.</p>${returns.map(x=>`<p>Đề nghị trả ${x.qty} · ${e(x.reference)} · ${pill(x.status)}</p>`).join('')}<div class="actions">${buttons.join('')}</div></div></div>`;
 }
 function paymentPanel(o){
  const role=actor().role;if(role==='warehouse')return '';
@@ -39,6 +39,7 @@ function fieldForm(type,o){
  const number=(label,id)=>`<label for="${id}" style="margin-top:12px">${label}</label><input id="${id}" type="number" min="1" step="1" required>`;
  const evidence=(label='Căn cứ / số biên nhận mẫu')=>`<label for="evidence" style="margin-top:12px">${label}</label><textarea id="evidence" required></textarea>`;
  if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return select('Dòng hàng vật lý','field-line',o.lines.filter(l=>masters.products[l.product_id]?.kind==='physical').map(l=>[l.id,l.name]))+number('Số lượng','field-qty')+evidence();
+ if(type==='receive_technician_stock')return select('Phiếu kho cấp đang chờ nhận','field-record',fieldLedger().stock_movements.filter(m=>m.order_id===o.id&&m.type==='issue'&&m.status==='awaiting_receipt'&&m.technician_id===actor().id).map(m=>[m.id,`${m.reference} · ${o.lines.find(l=>l.id===m.line_id)?.name} · SL ${m.qty}`]))+evidence('Xác nhận đã kiểm đếm và lấy hàng mang theo');
  if(type==='confirm_stock_return')return select('Đề nghị trả hàng','field-record',Object.values(fieldLedger().stock_returns).filter(x=>x.order_id===o.id&&x.status==='proposed').map(x=>[x.id,`${x.reference} · ${x.qty}`]))+evidence('Bằng chứng kho nhận lại');
  if(type==='report_payment')return number('Số tiền thu mẫu (VND)','field-amount')+select('Phương thức','field-method',[['cash','Tiền mặt'],['bank','Chuyển khoản'],['pos','POS']])+evidence('Mã biên nhận / giao dịch duy nhất');
  if(type==='confirm_payment')return select('Khoản thu chờ xác nhận','field-record',paymentRows(o).filter(p=>p.status==='reported').map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+evidence('Căn cứ Finance xác nhận');
@@ -53,5 +54,5 @@ function fieldPayload(type){
  if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return {...p,line_id:value('field-line'),qty:Number(value('field-qty')),reference:evidence};
  if(type==='report_payment')return {...p,amount_vnd:Number(value('field-amount')),method:value('field-method'),reference:evidence};
  if(type==='request_cash_handover')return {...p,allocations:[{payment_id:value('field-record'),amount_vnd:Number(value('field-amount'))}],reference:evidence};
- return {...p,[{confirm_payment:'payment_id',confirm_stock_return:'return_id',confirm_cash_handover:'handover_id'}[type]]:value('field-record'),evidence,reference:evidence};
+ return {...p,[{receive_technician_stock:'issue_id',confirm_payment:'payment_id',confirm_stock_return:'return_id',confirm_cash_handover:'handover_id'}[type]]:value('field-record'),evidence,reference:evidence};
 }

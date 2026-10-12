@@ -19,6 +19,7 @@ test('technician stock transfer, consumption and confirmed return conserve wareh
   const h=fixture(),p={order_id:h.order,line_id:h.line};
   h.run('issue_technician_stock',{...p,qty:3,reference:'X1'},'warehouse');
   assert.equal(h.state.field_operations.warehouse_balances.p,7);
+  h.run('receive_technician_stock',{order_id:h.order,issue_id:h.state.field_operations.stock_movements.at(-1).id,evidence:'Đã nhận'},'technician','t');
   h.run('start',{order_id:h.order},'technician','t');
   h.run('consume_technician_stock',{...p,qty:2,reference:'Used'},'technician','t');
   const r=h.run('request_stock_return',{...p,qty:1,reference:'R1'},'technician','t');
@@ -42,7 +43,7 @@ test('unknown warehouse balance, excessive issue, services and foreign technicia
 });
 test('pending stock return reserves quantity and replay cannot return twice',()=>{
   const h=fixture(),p={order_id:h.order,line_id:h.line,qty:3,reference:'X'};
-  h.run('issue_technician_stock',p,'warehouse');h.run('start',{order_id:h.order},'technician','t');
+  h.run('issue_technician_stock',p,'warehouse');h.run('receive_technician_stock',{order_id:h.order,issue_id:h.state.field_operations.stock_movements.at(-1).id,evidence:'Đã nhận'},'technician','t');h.run('start',{order_id:h.order},'technician','t');
   h.run('request_stock_return',p,'technician','t');
   assert.throws(()=>h.run('consume_technician_stock',{...p,qty:1},'technician','t'),/INSUFFICIENT_TECHNICIAN_STOCK/);
   assert.throws(()=>h.run('request_stock_return',{...p,qty:1},'technician','t'),/INSUFFICIENT_TECHNICIAN_STOCK/);
@@ -121,4 +122,34 @@ test('reported payment survives local journal recovery without duplicating recei
     assert.equal(receipt.replayed,true);
     assert.equal(Object.keys(repository.snapshot().state.field_operations.payments).length,1);
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('pickup is explicit: only assigned technician can acknowledge, before work starts',()=>{
+ const h=fixture(),payload={order_id:h.order,line_id:h.line,qty:3,reference:'PX-TAKE'};
+ assert.throws(()=>h.run('start',{order_id:h.order},'technician','t'),/STOCK_PICKUP_REQUIRED/);
+ const issue=h.run('issue_technician_stock',payload,'warehouse');
+ assert.equal(Domain.stockBalance(h.state,h.order,h.line),0);
+ assert.equal(Domain.pendingPickup(h.state,h.order,h.line),3);
+ assert.throws(()=>h.run('start',{order_id:h.order},'technician','t'),/STOCK_PICKUP_REQUIRED/);
+ assert.throws(()=>h.run('request_stock_return',{...payload,qty:1},'technician','t'),/INSUFFICIENT_TECHNICIAN_STOCK/);
+ const p={order_id:h.order,issue_id:issue.operation_id,evidence:'Đã nhận 3 hộp'};
+ assert.throws(()=>h.run('receive_technician_stock',p,'technician','other'),/FORBIDDEN/);
+ assert.throws(()=>h.run('receive_technician_stock',p,'warehouse'),/FORBIDDEN/);
+ assert.throws(()=>h.run('receive_technician_stock',{...p,evidence:''},'technician','t'),/REQUIRED_FIELD/);
+ const version=h.state.orders[h.order].version;
+ h.run('receive_technician_stock',p,'technician','t',{expected_version:version,idempotency_key:'pickup'});
+ assert.equal(Domain.stockBalance(h.state,h.order,h.line),3);
+ assert.equal(Domain.pendingPickup(h.state,h.order,h.line),0);
+ assert.equal(h.run('receive_technician_stock',p,'technician','t',{expected_version:version,idempotency_key:'pickup'}).replayed,true);
+ assert.throws(()=>h.run('receive_technician_stock',p,'technician','t'),/INVALID_TRANSITION/);
+ h.run('start',{order_id:h.order},'technician','t');
+ assert.equal(h.state.orders[h.order].work_status,'doing');
+});
+test('partial issue and pickup cannot begin a visit missing physical order quantities',()=>{
+ const h=fixture();const issue=h.run('issue_technician_stock',{order_id:h.order,line_id:h.line,qty:1,reference:'PX-PART'},'warehouse');
+ h.run('receive_technician_stock',{order_id:h.order,issue_id:issue.operation_id,evidence:'Received 1'},'technician','t');
+ assert.throws(()=>h.run('start',{order_id:h.order},'technician','t'),/STOCK_PICKUP_REQUIRED/);
+ const rest=h.run('issue_technician_stock',{order_id:h.order,line_id:h.line,qty:2,reference:'PX-REST'},'warehouse');
+ h.run('receive_technician_stock',{order_id:h.order,issue_id:rest.operation_id,evidence:'Received 2'},'technician','t');
+ h.run('start',{order_id:h.order},'technician','t');
 });

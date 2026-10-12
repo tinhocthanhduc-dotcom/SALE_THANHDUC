@@ -1,6 +1,6 @@
 {
-  "browser_tests": 20,
-  "pass": 20,
+  "browser_tests": 21,
+  "pass": 21,
   "fail": 0,
   "results": [
     {
@@ -17,6 +17,10 @@
     },
     {
       "name": "technician screen hides financial actions",
+      "pass": true
+    },
+    {
+      "name": "UI technician explicitly picks up issued stock before starting",
       "pass": true
     },
     {

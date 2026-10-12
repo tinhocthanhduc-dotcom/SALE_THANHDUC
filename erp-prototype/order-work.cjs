@@ -28,7 +28,7 @@ function execute(state,command,{actor,masters,now,id}) {
       if(!product||!product.active||!product.approved)fail('UNAPPROVED_PRODUCT');
       if(!Number.isSafeInteger(line.qty)||line.qty<=0||!Number.isSafeInteger(line.unit_price_vnd)||line.unit_price_vnd<0)fail('INVALID_LINE');
       if(!Number.isSafeInteger(line.qty*line.unit_price_vnd))fail('AMOUNT_OVERFLOW');
-      return {id:id(),product_id:line.product_id,qty:line.qty,unit_price_vnd:line.unit_price_vnd,name:product.name,unit:product.unit};
+      return {id:id(),kind:product.kind,product_id:line.product_id,qty:line.qty,unit_price_vnd:line.unit_price_vnd,name:product.name,unit:product.unit};
     });
     const total=lines.reduce((a,l)=>a+l.qty*l.unit_price_vnd,0);if(!Number.isSafeInteger(total))fail('AMOUNT_OVERFLOW');
     // VND agreed gross total only; VAT decomposition intentionally deferred.
@@ -45,7 +45,7 @@ function execute(state,command,{actor,masters,now,id}) {
     else switch(command.type){
       case 'confirm':check('draft');order.status='confirmed';break;
       case 'assign':check('confirmed','queued');if(!masters.employees[payload.assignee_id]?.active||masters.employees[payload.assignee_id].role!=='technician')fail('UNKNOWN_TECHNICIAN');order.assignee_id=payload.assignee_id;order.work_status='assigned';break;
-      case 'start':if(order.reversal)fail('INVALID_TRANSITION');check('confirmed','assigned');order.status='in_progress';order.work_status='doing';break;
+      case 'start':if(order.reversal)fail('INVALID_TRANSITION');check('confirmed','assigned');Field.requirePickup(next,order);order.status='in_progress';order.work_status='doing';break;
       case 'test':if(order.reversal)fail('INVALID_TRANSITION');check('in_progress','doing');order.test_result=requiredText(payload.test_result);order.work_status='testing';break;
       case 'complete':if(order.reversal)fail('INVALID_TRANSITION');check('in_progress','testing');order.handover_evidence=requiredText(payload.handover_evidence);order.work_status='completed';order.status='fulfilled';order.completed_at=now();break;
       case 'request_revenue':if(order.reversal)fail('INVALID_TRANSITION');check('fulfilled','completed');if(order.revenue_status!=='none')fail('INVALID_TRANSITION');order.revenue_status='proposed';break;
@@ -63,4 +63,4 @@ function execute(state,command,{actor,masters,now,id}) {
   next.commands[key]={fingerprint,result:clone(result)};
   return {state:next,result};
 }
-module.exports={emptyState,execute,businessDate,stockBalance:Field.stockBalance,paymentSummary:Field.paymentSummary,custodySummary:Field.custodySummary};
+module.exports={emptyState,execute,businessDate,stockBalance:Field.stockBalance,pendingPickup:Field.pendingPickup,paymentSummary:Field.paymentSummary,custodySummary:Field.custodySummary};
