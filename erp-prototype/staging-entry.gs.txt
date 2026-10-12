@@ -1,0 +1,46 @@
+/** No doGet/doPost, triggers, setup, storage writes or financial writes. */
+function erpReadStagingSource(tableKey, offset, limit) {
+  var properties = PropertiesService.getScriptProperties();
+  // Default disabled. Enable only in a separately verified staging project.
+  if (properties.getProperty('ERP_ENABLE_SOURCE_READS') !== 'true') {
+    throw new Error('SOURCE_READS_DISABLED');
+  }
+  var registry = {};
+  ['KHO58','KHO145','SALE','CARE','FINANCE'].forEach(function(source) {
+    registry[source] = properties.getProperty('ERP_SOURCE_' + source);
+  });
+  var reader = ErpReader.createReader({
+    registry: registry,
+    openById: function(id) { return SpreadsheetApp.openById(id); }
+  });
+  return reader(tableKey, {offset: offset || 0, limit: limit == null ? 50 : limit});
+}
+/** Developer-only fixture demonstration. In-memory, never writes Sheets. */
+function erpRunFixtureDemo() {
+  var state = ErpDomain.emptyState();
+  var masters = {
+    customers: {c1:{active:true}},
+    products: {p1:{active:true,approved:true,name:'Fixture printer',unit:'Cái'}},
+    employees: {t1:{active:true,role:'technician'}}
+  };
+  var sequence=0;
+  function run(type,payload,role,actorId) {
+    var command={type:type,payload:payload,idempotency_key:'demo-'+(++sequence)};
+    if(payload.order_id) command.expected_version=state.orders[payload.order_id].version;
+    var output=ErpDomain.execute(state,command,{
+      masters:masters, actor:{id:actorId||role,role:role},
+      now:function(){return new Date().toISOString();},
+      id:function(){return Utilities.getUuid();}
+    });
+    state=output.state;return output.result;
+  }
+  var order=run('create',{customer_id:'c1',lines:[{product_id:'p1',qty:1,unit_price_vnd:1000000}]},'sales');
+  var id=order.order_id;
+  run('confirm',{order_id:id},'sales');
+  run('assign',{order_id:id,assignee_id:'t1'},'manager');
+  run('start',{order_id:id},'technician','t1');
+  run('test',{order_id:id,test_result:'Fixture in thử đạt'},'technician','t1');
+  run('complete',{order_id:id,handover_evidence:'Fixture bàn giao'},'technician','t1');
+  run('request_revenue',{order_id:id},'sales');
+  return {order:state.orders[id],events:state.events};
+}

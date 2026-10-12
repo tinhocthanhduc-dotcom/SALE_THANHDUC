@@ -1,0 +1,38 @@
+✔ GAS build runs fixture demo without touching Sheets (31.341579ms)
+✔ GAS live reader disabled by default (24.524152ms)
+✔ build refuses output inside prototype source (22.68216ms)
+✔ full order/work/proposal/approval flow keeps payment unpaid (1.60946ms)
+✔ replay is no-op and a changed payload conflicts (0.55053ms)
+✔ stale version rejects without mutation (0.318308ms)
+✔ technician cannot approve finance or spoof assigned actor (0.302055ms)
+✔ cannot skip testing or complete without handover (0.385637ms)
+✔ FK, approval, quantity and amount validation (0.2647ms)
+✔ revenue request before fulfillment rejects (0.30582ms)
+✔ pure command leaves input state unchanged and line snapshots stable (0.718468ms)
+✔ same code in separate sources remains distinct (0.704457ms)
+✔ ambiguous mapping quarantines even when duplicate points to same ID (0.112966ms)
+✔ missing key or approval never falls back to similar name (0.115781ms)
+✔ header contract and zero writes: kho58 (1.78673ms)
+✔ header contract and zero writes: kho145 (0.207416ms)
+✔ header contract and zero writes: sale_products (0.155679ms)
+✔ header contract and zero writes: sale_customers (0.137913ms)
+✔ header contract and zero writes: care_tickets (0.193234ms)
+✔ header contract and zero writes: care_customers (0.105716ms)
+✔ header contract and zero writes: care_employees (0.177521ms)
+✔ header contract and zero writes: finance_employees (0.183731ms)
+✔ header contract and zero writes: finance_customers (0.12889ms)
+✔ header contract and zero writes: finance_transactions (0.200806ms)
+✔ employee adapters never read secret cell columns (0.565082ms)
+✔ missing/duplicate header fails closed (0.198842ms)
+✔ source read failure returns no partial values and sanitized error (0.67876ms)
+✔ pagination bounded and does not fabricate zero (0.466337ms)
+✔ Kho 145 missing master code remains unresolved (0.118004ms)
+✔ server registry is copied and missing config fails closed (1.297471ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 160.017352
