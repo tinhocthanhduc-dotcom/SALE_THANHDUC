@@ -27,3 +27,8 @@ PR code/design để review; không tự merge. Quy tắc cấp số đơn, ngư
 - Hard process exit được kiểm thử: khóa giữ lại, operator xác nhận PID đã dừng trước khi giải phóng khóa ở fixture; không auto-break lock.
 - Thêm marker dispatch, cancel trước xuất, request/approve reversal sau xuất. Vai trò manager/admin trong fixture là đề xuất kiểm thử; vai trò/người duyệt vận hành chưa được cấp hoặc thay đổi. Người đề nghị không tự duyệt. Trạng thái reversal_approved chỉ biểu thị duyệt hồ sơ, không xác nhận kho/Finance đã đảo.
 - Lớp file local không nằm trong build GAS; chưa có Sheets staging repository. UI/session thật, nguồn runtime, phân bổ tiền/hoàn một phần và kiểm thử Apps Script vẫn còn. Không deploy hoặc ghi dữ liệu thực tế.
+
+## Cập nhật lớp Sheets staging — 12/10/2026
+- Thêm SheetsRepository, build GAS và private developer fixture/recovery helper. Mặc định tắt ghi; kiểm project ID, workbook ID, marker, legacy ID và schema.
+- 58/58 test local PASS. Kiểm thử giả lập partial write/chunk/manifest/checksum/capacity, idempotency/recovery/lock và Unicode. Không gọi Google API hoặc ghi Sheets thực tế.
+- Lớp lưu trữ tổng snapshot chỉ dùng pilot kỹ thuật nhỏ, không phải normalized tables cuối cùng; lịch sử tăng nhanh, còn cần benchmark/quota/visibility thực tế. Chưa tạo staging thật, auth/session/UI/masters persistence vẫn còn.
