@@ -31,3 +31,12 @@ jobs:
       - run: npm ci --prefix erp-prototype --ignore-scripts
       - run: erp-prototype/node_modules/.bin/playwright install --with-deps chromium
       - run: node erp-prototype/test/ui-browser.cjs
+      - name: Build downloadable offline demo
+        run: python3 erp-prototype/build-preview.py "${{ runner.temp }}/erp-demo/THANH_DUC_ERP_DEMO.html"
+      - name: Upload offline demo
+        uses: actions/upload-artifact@v4
+        with:
+          name: THANH_DUC_ERP_DEMO
+          path: ${{ runner.temp }}/erp-demo/THANH_DUC_ERP_DEMO.html
+          if-no-files-found: error
+          retention-days: 14
