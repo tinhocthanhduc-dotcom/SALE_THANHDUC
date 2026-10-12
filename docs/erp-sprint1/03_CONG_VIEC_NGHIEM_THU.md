@@ -60,3 +60,11 @@ Người duyệt: anh Tuấn (xác nhận trong phiên làm việc: “chốt ng
 Các quyết định này cho phép thiết kế/viết mã thử nghiệm theo nguyên tắc trên; không cho phép ghi dữ liệu production, đổi quyền, merge PR hay deploy production. Quy tắc cấp số đơn, người duyệt mapping cụ thể và xử lý đổi trả vẫn cần đặc tả; không coi là đã duyệt toàn bộ D02.
 
 Kiểm tra nguồn bước đầu: đã tìm thấy metadata Sheets Kho 58, Kho 145, Sale, Care và Finance qua Google Drive. File Sale có tên THANH_DUC_SALES_APP_DATABASE; chưa xác nhận đây là workbook gắn với deployment hiện hành. Chưa đọc headers hoặc Script Properties runtime trong bước này.
+
+## Quyết định bổ sung đã duyệt — 12/10/2026, 10:40 (Asia/Saigon)
+Người duyệt: anh Tuấn; xác nhận trong phiên làm việc: “chốt 2 quy tắc này”.
+
+1. **Số đơn ERP:** TD-YYYYMMDD-0001, tăng theo ngày nghiệp vụ Việt Nam; giữ nguyên số chứng từ cũ. Số đã cấp không tái sử dụng khi đơn bị hủy; khóa cấp số phải được kiểm thử trên lớp lưu trữ staging để tránh trùng khi nhiều người tạo đồng thời.
+2. **Hủy/đổi trả:** trước khi xuất hàng được hủy; sau khi xuất phải có phiếu hoàn/đảo được người có quyền duyệt, giữ lịch sử. Không xóa chứng từ hoặc tự đảo thu chi/công nợ thực tế. ERP chưa có chức năng hủy/hoàn trong prototype hiện hành; quy tắc sẽ được triển khai và kiểm thử bằng dữ liệu giả trước khi chạy staging.
+
+Hai quyết định này thay thế trạng thái “chưa chốt” về mẫu số đơn và nguyên tắc hủy/đổi trả ở backlog. Danh tính/vai trò người duyệt cụ thể và xử lý các tình huống hoàn một phần, tiền đã thu vẫn cần đặc tả trước pilot. Không phải phê duyệt merge, deploy production, đổi quyền hay ghi Sheets thực tế.
