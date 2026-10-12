@@ -1,0 +1,67 @@
+{
+  "browser_tests": 15,
+  "pass": 15,
+  "fail": 0,
+  "results": [
+    {
+      "name": "startup seed: four orders, no JS error",
+      "pass": true
+    },
+    {
+      "name": "UI create multiple lines and correct total",
+      "pass": true
+    },
+    {
+      "name": "technician screen hides financial actions",
+      "pass": true
+    },
+    {
+      "name": "full UI workflow ends approved and unpaid",
+      "pass": true
+    },
+    {
+      "name": "reload preserves fixture state and order number",
+      "pass": true
+    },
+    {
+      "name": "same person approval blocked in UI",
+      "pass": true
+    },
+    {
+      "name": "reversal keeps original order, dispatch and payment",
+      "pass": true
+    },
+    {
+      "name": "cancellation renders user content as text",
+      "pass": true
+    },
+    {
+      "name": "search filters by order number",
+      "pass": true
+    },
+    {
+      "name": "progress screen states remaining live milestones",
+      "pass": true
+    },
+    {
+      "name": "storage failure leaves state unchanged",
+      "pass": true
+    },
+    {
+      "name": "mobile viewport has no page overflow",
+      "pass": true
+    },
+    {
+      "name": "two tabs reject a stale command without duplicate transition",
+      "pass": true
+    },
+    {
+      "name": "corrupt storage quarantines without overwrite",
+      "pass": true
+    },
+    {
+      "name": "offline preview makes no external requests and has no JS errors",
+      "pass": true
+    }
+  ]
+}

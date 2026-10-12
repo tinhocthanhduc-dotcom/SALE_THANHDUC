@@ -1,34 +1,31 @@
-# Tiến độ 12/10/2026 — sau khi duyệt nguyên tắc
+# Thành Đức ERP — bảng tiến độ hiện hành
+Cập nhật: 12/10/2026. Mốc hiện tại: bản thử nghiệm OFFLINE có giao diện đã hoàn thiện để dùng dữ liệu giả. Chưa phải ERP vận hành thật.
 
-## Đã thực hiện
-- Đọc metadata 5 workbook và 16 hàng tiêu đề; không đọc business rows, mật khẩu hoặc dữ liệu phiên đăng nhập, không ghi Sheets.
-- Xác nhận schema Kho 58, Kho 145, Sale, Care, Finance cho adapter prototype; lưu schema-evidence.json.
-- Xây read adapter 10 bảng, mapping theo khóa đã duyệt, domain đơn/công việc, build GAS riêng và CI chỉ kiểm thử.
-- 30/30 kiểm thử local PASS, gồm demo GAS trong Node VM. Code.gs qua node --check sau khi đổi extension bản kiểm tra.
+| Hạng mục | Đã có | Chưa có / giới hạn |
+|---|---|---|
+| Kiểm toán và nguồn dữ liệu | 5 repo, metadata 5 Sheets, 16 headers | chưa đọc business rows hoặc xác nhận binding deployment Sale/Care |
+| Nguyên tắc | Kho 58 master; ERP khách/nhân viên; Finance duyệt; số đơn theo ngày; hủy/hoàn giữ lịch sử | người duyệt vận hành cụ thể chưa xác nhận |
+| Domain đơn–công việc | tạo/xác nhận/giao/test/bàn giao/doanh thu, version, idempotency | partial fulfillment, nhiều task và VAT chưa triển khai |
+| Lưu trữ kỹ thuật | file local có journal; SheetsRepository có chunks/checksum/guard | Sheets repository mới test giả lập, chưa tạo staging thật |
+| Giao diện | tổng quan, đơn, việc, doanh thu, nhật ký, tiến độ, tìm kiếm, đa dòng, mobile | chọn vai trò demo, không phải auth server |
+| Dữ liệu giao diện | fixture localStorage, đồng bộ revision, export/reset có xác nhận | không kết nối Sheets, không có dữ liệu thật |
+| Kiểm thử | 58 core + 15 scenario trình duyệt local đạt; CI kiểm trên PR | chưa UAT Apps Script thực tế, quota/concurrency Google |
+| Triển khai | mã và docs trên branch riêng/PR #1 | chưa merge, deploy hoặc đổi quyền |
 
-## Phát hiện mới
-- SALE spreadsheet timezone America/Los_Angeles; APP.TZ trong code là Asia/Ho_Chi_Minh. Cần chuẩn hóa ngày; chưa sửa cài đặt workbook.
-- FINANCE metadata không có NHA_CUNG_CAP. Chưa đọc code path nhà cung cấp hay dữ liệu để kết luận lỗi; để kiểm tra tiếp ở staging.
-- CARE/FINANCE nhân viên có headers xác thực; adapter chỉ lấy ID, tên, role, trạng thái. Header đọc phục vụ schema, không có business cells nhạy cảm được tải.
-- File Sale đọc được là THANH_DUC_SALES_APP_DATABASE; chưa chứng minh đây là workbook của webapp hiện hành. Care Script Property override cũng chưa xác minh.
+## Mốc bàn giao đã đạt trong lượt này
+- HTML self-contained mở offline, có 4 đơn mẫu ở các trạng thái khác nhau.
+- Luồng tạo đơn → giao kỹ thuật → in thử → bàn giao → đề nghị và duyệt doanh thu, tiền thu riêng.
+- Dùng chung domain hiện hành; browser tests thực hiện qua DOM và đối chiếu kết quả.
+- Cập nhật PR, hướng dẫn thao tác, kết quả test; không tác động hệ thống thực tế.
 
-## Chưa hoàn tất
-Không có UI hoặc lưu trữ bền vững; chưa triển khai GAS/Sheets staging. Chưa có auth session thật, journal recovery, VAT/date normalization, fulfillment từng dòng, nhiều task/đơn, hủy/đổi trả, shadow-read và test Apps Script runtime. Test local không nghiệm thu production.
+## Mốc tiếp theo: staging thật
+1. Xác định/tạo project GAS và Sheets staging mới, xác minh khác project/file legacy; không ghi production.
+2. Xây auth/session server, masters, API command/query và nối UI với repository staging; actor/role lấy từ server.
+3. Kiểm thử Google thực tế với fixture: recovery, concurrency, durability, quota và rollback.
+4. Xác minh nguồn runtime, mapping, người duyệt hoàn/đảo; UAT trước pilot.
 
-## Bước kế tiếp
-Xây repository staging và auth server, chốt schema lưu trữ, kiểm thử recovery trên fixture; xác nhận workbook bound của Sale và Care runtime override trước khi nối nguồn. Tạo staging độc lập chỉ khi có cấu hình project đúng môi trường, không dùng các project legacy.
+## Những việc cần người dùng quyết định trước pilot
+Review PR; xác nhận project/file staging và người có quyền duyệt. Không yêu cầu chốt lại 5 nguyên tắc đã duyệt. Chưa có phê duyệt merge/deploy production.
 
-## Phê duyệt còn lại
-PR code/design để review; không tự merge. Quy tắc cấp số đơn, người duyệt mapping và đổi trả chưa được chốt. Không cần yêu cầu lại ba nguyên tắc master/khách–nhân viên/doanh thu đã duyệt.
-
-## Cập nhật sau khi duyệt mẫu số đơn và nguyên tắc hủy — 12/10/2026
-- 43/43 test local PASS. Số đơn theo ngày Việt Nam, sequence giữ sau reopen/hủy. 12 process riêng cấp số không trùng; 5 process replay cùng key chỉ tạo một đơn.
-- Lưu trữ fixture local với journal chuẩn bị/commit, atomic file rename + fsync, lock single writer. Inject lỗi ở 3 checkpoint phục hồi/replay không nhân đôi; lỗi hash hoặc mất committed state bị chặn.
-- Hard process exit được kiểm thử: khóa giữ lại, operator xác nhận PID đã dừng trước khi giải phóng khóa ở fixture; không auto-break lock.
-- Thêm marker dispatch, cancel trước xuất, request/approve reversal sau xuất. Vai trò manager/admin trong fixture là đề xuất kiểm thử; vai trò/người duyệt vận hành chưa được cấp hoặc thay đổi. Người đề nghị không tự duyệt. Trạng thái reversal_approved chỉ biểu thị duyệt hồ sơ, không xác nhận kho/Finance đã đảo.
-- Lớp file local không nằm trong build GAS; chưa có Sheets staging repository. UI/session thật, nguồn runtime, phân bổ tiền/hoàn một phần và kiểm thử Apps Script vẫn còn. Không deploy hoặc ghi dữ liệu thực tế.
-
-## Cập nhật lớp Sheets staging — 12/10/2026
-- Thêm SheetsRepository, build GAS và private developer fixture/recovery helper. Mặc định tắt ghi; kiểm project ID, workbook ID, marker, legacy ID và schema.
-- 58/58 test local PASS. Kiểm thử giả lập partial write/chunk/manifest/checksum/capacity, idempotency/recovery/lock và Unicode. Không gọi Google API hoặc ghi Sheets thực tế.
-- Lớp lưu trữ tổng snapshot chỉ dùng pilot kỹ thuật nhỏ, không phải normalized tables cuối cùng; lịch sử tăng nhanh, còn cần benchmark/quota/visibility thực tế. Chưa tạo staging thật, auth/session/UI/masters persistence vẫn còn.
+## Rủi ro còn lại
+Snapshot tổng state tăng nhanh, chỉ phù hợp pilot kỹ thuật nhỏ; cần normalized tables và benchmark. Bản HTML client-side không có auth bảo mật; dữ liệu localStorage có thể bị sửa/mất. Không dùng dữ liệu hoặc giao dịch thật trong demo.
