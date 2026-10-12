@@ -50,7 +50,7 @@ function execute(state,command,{actor,masters,now,id}) {
       case 'complete':if(order.reversal)fail('INVALID_TRANSITION');check('in_progress','testing');order.handover_evidence=requiredText(payload.handover_evidence);order.work_status='completed';order.status='fulfilled';order.completed_at=now();break;
       case 'request_revenue':if(order.reversal)fail('INVALID_TRANSITION');check('fulfilled','completed');if(order.revenue_status!=='none')fail('INVALID_TRANSITION');order.revenue_status='proposed';break;
       case 'approve_revenue':check('fulfilled','completed');if(order.revenue_status!=='proposed'||order.reversal)fail('INVALID_TRANSITION');order.revenue_status='approved';order.revenue_approved_by=actor.id;break;
-      case 'record_dispatch':if(!['confirmed','in_progress','fulfilled'].includes(order.status)||order.dispatched||order.reversal)fail('INVALID_TRANSITION');order.dispatch_ref=requiredText(payload.dispatch_ref);order.dispatched=true;break;
+      case 'record_dispatch':if(!['confirmed','in_progress','fulfilled'].includes(order.status)||order.dispatched||order.reversal)fail('INVALID_TRANSITION');order.dispatch_ref=Field.nextReference(next,'PX',now());order.dispatched=true;break;
       case 'cancel':if(Object.values(Field.store(next).payments).some(p=>p.order_id===order.id))fail('REVERSAL_REQUIRED');if(['cancelled','reversal_approved'].includes(order.status))fail('INVALID_TRANSITION');if(order.dispatched||order.revenue_status!=='none')fail('REVERSAL_REQUIRED');order.cancel_reason=requiredText(payload.reason);order.status='cancelled';order.work_status='cancelled';break;
       case 'request_reversal':if(!order.dispatched&&order.revenue_status==='none'&&!Object.values(Field.store(next).payments).some(p=>p.order_id===order.id))fail('CANCELLATION_AVAILABLE');if(order.reversal||['cancelled','reversal_approved'].includes(order.status))fail('INVALID_TRANSITION');order.reversal={id:id(),status:'proposed',reason:requiredText(payload.reason),requested_by:actor.id,original_order_id:order.id};break;
       case 'approve_reversal':if(order.reversal?.status!=='proposed')fail('INVALID_TRANSITION');if(order.reversal.requested_by===actor.id)fail('SELF_APPROVAL_FORBIDDEN');order.reversal.approval_evidence=requiredText(payload.approval_evidence);order.reversal.status='approved';order.reversal.approved_by=actor.id;order.status='reversal_approved';break;
@@ -58,7 +58,8 @@ function execute(state,command,{actor,masters,now,id}) {
     order.version++;
   }
   const result={order_id:order.id,order_no:order.order_no,version:order.version,status:order.status,work_status:order.work_status,revenue_status:order.revenue_status,payment_status:order.payment_status,replayed:false};
-  if(operationId)result.operation_id=operationId;
+  if(operationId){result.operation_id=operationId;const ledger=Field.store(next);const record=ledger.payments[operationId]||ledger.handovers[operationId]||ledger.stock_returns[operationId]||ledger.stock_movements.find(m=>m.id===operationId);if(record)result.reference=record.reference;}
+  if(command.type==='record_dispatch')result.reference=order.dispatch_ref;
   next.events.push({operation_id:operationId,id:id(),order_id:order.id,type:command.type,actor_id:actor.id,at:now(),version:order.version});
   next.commands[key]={fingerprint,result:clone(result)};
   return {state:next,result};

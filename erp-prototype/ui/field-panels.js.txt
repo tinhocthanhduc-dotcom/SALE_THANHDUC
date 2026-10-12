@@ -37,13 +37,15 @@ function stockPage(){return heading('Kho thợ','Theo dõi vật tư đã cấp,
 function fieldForm(type,o){
  const select=(label,id,options)=>`<label for="${id}">${label}</label><select id="${id}">${options.map(([value,title])=>`<option value="${e(value)}">${e(title)}</option>`).join('')}</select>`;
  const number=(label,id)=>`<label for="${id}" style="margin-top:12px">${label}</label><input id="${id}" type="number" min="1" step="1" required>`;
- const evidence=(label='Căn cứ / số biên nhận mẫu')=>`<label for="evidence" style="margin-top:12px">${label}</label><textarea id="evidence" required></textarea>`;
- if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return select('Dòng hàng vật lý','field-line',o.lines.filter(l=>masters.products[l.product_id]?.kind==='physical').map(l=>[l.id,l.name]))+number('Số lượng','field-qty')+evidence();
+ const evidence=(label='Nội dung xác nhận')=>`<label for="evidence" style="margin-top:12px">${label}</label><textarea id="evidence" required></textarea>`;
+ const automatic='<p class="muted">Số phiếu/biên nhận được tự động cấp khi lưu.</p>';
+ const note='<label for="evidence" style="margin-top:12px">Ghi chú (không bắt buộc)</label><textarea id="evidence"></textarea>';
+ if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return select('Dòng hàng vật lý','field-line',o.lines.filter(l=>masters.products[l.product_id]?.kind==='physical').map(l=>[l.id,l.name]))+number('Số lượng','field-qty')+automatic+note;
  if(type==='receive_technician_stock')return select('Phiếu kho cấp đang chờ nhận','field-record',fieldLedger().stock_movements.filter(m=>m.order_id===o.id&&m.type==='issue'&&m.status==='awaiting_receipt'&&m.technician_id===actor().id).map(m=>[m.id,`${m.reference} · ${o.lines.find(l=>l.id===m.line_id)?.name} · SL ${m.qty}`]))+evidence('Xác nhận đã kiểm đếm và lấy hàng mang theo');
  if(type==='confirm_stock_return')return select('Đề nghị trả hàng','field-record',Object.values(fieldLedger().stock_returns).filter(x=>x.order_id===o.id&&x.status==='proposed').map(x=>[x.id,`${x.reference} · ${x.qty}`]))+evidence('Bằng chứng kho nhận lại');
- if(type==='report_payment')return number('Số tiền thu mẫu (VND)','field-amount')+select('Phương thức','field-method',[['cash','Tiền mặt'],['bank','Chuyển khoản'],['pos','POS']])+evidence('Mã biên nhận / giao dịch duy nhất');
+ if(type==='report_payment')return number('Số tiền thu mẫu (VND)','field-amount')+select('Phương thức','field-method',[['cash','Tiền mặt'],['bank','Chuyển khoản'],['pos','POS']])+automatic+'<label for="external-reference">Mã giao dịch ngân hàng/POS (nếu có)</label><input id="external-reference">'+note;
  if(type==='confirm_payment')return select('Khoản thu chờ xác nhận','field-record',paymentRows(o).filter(p=>p.status==='reported').map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+evidence('Căn cứ Finance xác nhận');
- if(type==='request_cash_handover')return select('Khoản tiền mặt của bạn đã xác nhận','field-record',paymentRows(o).filter(p=>p.method==='cash'&&p.status==='confirmed'&&p.collected_by===actor().id).map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+number('Số tiền nộp mẫu (VND)','field-amount')+evidence('Mã đề nghị nộp quỹ duy nhất');
+ if(type==='request_cash_handover')return select('Khoản tiền mặt của bạn đã xác nhận','field-record',paymentRows(o).filter(p=>p.method==='cash'&&p.status==='confirmed'&&p.collected_by===actor().id).map(p=>[p.id,`${p.reference} · ${money(p.amount_vnd)}`]))+number('Số tiền nộp mẫu (VND)','field-amount')+automatic+note;
  if(type==='confirm_cash_handover')return select('Đề nghị nộp quỹ','field-record',Object.values(fieldLedger().handovers).filter(h=>h.order_id===o.id&&h.status==='proposed').map(h=>[h.id,`${h.reference} · ${money(h.amount_vnd)}`]))+evidence('Bằng chứng quỹ đã nhận tiền');
  return null;
 }
@@ -51,8 +53,8 @@ function fieldPayload(type){
  const value=id=>document.getElementById(id)?.value;
  if(!Object.hasOwn(fieldEventNames,type))return null;
  const p={order_id:form.order_id},evidence=value('evidence');
- if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return {...p,line_id:value('field-line'),qty:Number(value('field-qty')),reference:evidence};
- if(type==='report_payment')return {...p,amount_vnd:Number(value('field-amount')),method:value('field-method'),reference:evidence};
- if(type==='request_cash_handover')return {...p,allocations:[{payment_id:value('field-record'),amount_vnd:Number(value('field-amount'))}],reference:evidence};
- return {...p,[{receive_technician_stock:'issue_id',confirm_payment:'payment_id',confirm_stock_return:'return_id',confirm_cash_handover:'handover_id'}[type]]:value('field-record'),evidence,reference:evidence};
+ if(['issue_technician_stock','consume_technician_stock','request_stock_return'].includes(type))return {...p,line_id:value('field-line'),qty:Number(value('field-qty')),note:evidence};
+ if(type==='report_payment')return {...p,amount_vnd:Number(value('field-amount')),method:value('field-method'),external_reference:value('external-reference'),note:evidence};
+ if(type==='request_cash_handover')return {...p,allocations:[{payment_id:value('field-record'),amount_vnd:Number(value('field-amount'))}],note:evidence};
+ return {...p,[{receive_technician_stock:'issue_id',confirm_payment:'payment_id',confirm_stock_return:'return_id',confirm_cash_handover:'handover_id'}[type]]:value('field-record'),evidence};
 }

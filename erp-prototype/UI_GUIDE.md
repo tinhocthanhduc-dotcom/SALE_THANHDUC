@@ -35,3 +35,6 @@ Xem BUSINESS_FRAMEWORK.md, mục Dùng thử HTML. Hai mục Kho thợ và Thu t
 
 ## Kỹ thuật lấy hàng mang theo
 Sau quản lý giao việc, mở đơn ở vai trò Kho và chọn Kho chuẩn bị & cấp hàng. Đổi sang đúng kỹ thuật được giao, mở đơn và chọn Nhận hàng mang theo; chọn phiếu, nhập xác nhận kiểm đếm. Chờ nhận và đã nhận đang giữ hiển thị riêng. Đơn mới có hàng vật lý chưa nhận đủ sẽ bị chặn Bắt đầu tới khách / xử lý. Với dữ liệu demo cũ, tạo đơn mới hoặc khôi phục bộ mẫu để thử đầy đủ bước này.
+
+## Cấp số tự động
+Phiếu cấp/sử dụng/trả hàng, biên nhận thu và đề nghị nộp quỹ tự cấp số khi lưu. Không nhập số biên nhận; ghi chú là tùy chọn. Mã giao dịch ngân hàng/POS (nếu có) nhập ở ô riêng để đối chiếu. Finance/kỹ thuật/kho vẫn ghi bằng chứng xác nhận khi nhận hàng hoặc xác nhận tiền. Mã được hiển thị sau lưu và giữ nguyên khi gửi lại cùng thao tác.

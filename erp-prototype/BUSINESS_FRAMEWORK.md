@@ -28,7 +28,7 @@ Số đang giữ = đã nhận − đã dùng − trả đã xác nhận. Cấp 
 
 ## Luồng thu khách và nộp quỹ
 
-1. Kinh doanh hoặc kỹ thuật được giao báo thu: số tiền VND nguyên dương, phương thức, mã biên nhận/giao dịch. Khoản báo thu có trạng thái `reported`; không giảm số còn phải thu.
+1. Kinh doanh hoặc kỹ thuật được giao báo thu: số tiền VND nguyên dương và phương thức. Biên nhận nội bộ tự cấp số; mã giao dịch ngân hàng/POS nhập riêng nếu có. Khoản báo thu có trạng thái `reported`; không giảm số còn phải thu.
 2. Finance xác nhận theo bằng chứng, bằng actor khác người thu. Khoản này chuyển `confirmed`. Còn phải thu = giá trị đơn − các khoản thu đã xác nhận. Tổng các khoản báo và đã xác nhận không vượt đơn.
 3. Người đã thu tiền mặt đề nghị nộp một phần hoặc toàn bộ, phân bổ tới khoản thu đã xác nhận của chính mình. Chuyển khoản và POS không thuộc tiền mặt đang giữ. Đề nghị đang chờ giữ chỗ để tránh lập hai đề nghị cùng tiền.
 4. Finance/quỹ xác nhận nhận tiền với bằng chứng, bằng actor khác. Khi đó tiền đã nộp mới giảm tiền mặt đang giữ; trạng thái thanh toán khách không đổi lần nữa.
@@ -39,7 +39,7 @@ Doanh thu vẫn theo đề nghị từ công việc đã bàn giao và Finance d
 
 ## Quyền và độ bền
 
-Chín command mới dùng chung order version, actor + idempotency key, command fingerprint và nhật ký với luồng đơn. `operation_id` liên kết phiếu kho/thu/nộp trong kết quả và event. Chống thu trùng bằng method + reference; đề nghị nộp có reference duy nhất. Các tham chiếu mẫu phải được cấp riêng, không dùng chung một mã cho nhiều khoản.
+Chín command mới dùng chung order version, actor + idempotency key, command fingerprint và nhật ký với luồng đơn. `operation_id` liên kết phiếu kho/thu/nộp trong kết quả và event. Biên nhận/phiếu nội bộ được domain cấp số theo loại và ngày Việt Nam: BN (biên nhận), NQ (nộp quỹ), PX (xuất/cấp), SD (sử dụng), HT (đề nghị trả), PN (kho nhận trả). Mẫu PREFIX-YYYYMMDD-0001 tăng độc lập theo ngày/loại. Cấp số trong cùng commit state/journal; replay không cấp lại, lệnh bị từ chối không tiêu số. Giữ số chứng từ cũ; nếu gặp số cũ trùng mẫu thì bỏ qua. Mã giao dịch ngoài được lưu riêng ở external_reference và chống trùng theo phương thức khi có cung cấp; ghi chú không bắt buộc. Các fixture command cũ gửi reference được đọc như mã giao dịch ngoài cho khoản thu, không quyết định số biên nhận nội bộ.
 
 LocalRepository và SheetsRepository sử dụng cùng domain; các phiếu mới nằm trong snapshot/journal hiện có. Kiểm thử local recovery xác nhận retry sau PREPARED không nhân đôi khoản thu. GAS build đóng gói cùng logic nhưng chưa nghiệm thu Google runtime.
 

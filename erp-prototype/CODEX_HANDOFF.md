@@ -17,7 +17,7 @@ Cập nhật 12/10/2026. Đây là chỉ dẫn bàn giao, không phải phê duy
 ## Đã có
 Kiểm toán 5 repo; metadata 5 workbook và 16 headers. Prototype offline có UI, 4 đơn mẫu, nhận đơn đa dòng, giao kỹ thuật, test/bàn giao, đề nghị doanh thu/Finance duyệt, hủy/hoàn fixture, nhật ký, tiến độ, search, export/reset.
 Domain dùng chung cho UI và output GAS. Cấp số ngày Việt Nam, idempotency/version/role guards. File local có journal/recovery; SheetsRepository đã test giả lập có chunks/checksum/manifest/recovery và guard staging.
-Kiểm thử mới nhất: 69 core + 21 browser scenarios PASS local. Browser CI đã có; kiểm tra run của HEAD trước khi báo trạng thái. Sửa UX gần nhất: Bước tiếp theo, nút chuyển vai trò và giữ đơn đang mở, sticky toolbar.
+Kiểm thử mới nhất: 71 core + 21 browser scenarios PASS local. Browser CI đã có; kiểm tra run của HEAD trước khi báo trạng thái. Sửa UX gần nhất: Bước tiếp theo, nút chuyển vai trò và giữ đơn đang mở, sticky toolbar.
 
 ## Chưa có
 Project/file staging thực tế; Apps Script UAT; auth/session server; masters persistence; API command/query; UI–Sheets staging integration; normalized tables, benchmark/quota; full payment workflows, hoàn tiền thực tế, POS settlement, technician stock nhiều kho và contract workflows. Kho thợ theo dòng đơn và đối soát thu/nộp quỹ đã có fixture/UI; xem BUSINESS_FRAMEWORK.md.
