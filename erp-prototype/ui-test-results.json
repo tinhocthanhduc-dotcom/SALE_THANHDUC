@@ -1,6 +1,6 @@
 {
-  "browser_tests": 15,
-  "pass": 15,
+  "browser_tests": 16,
+  "pass": 16,
   "fail": 0,
   "results": [
     {
@@ -9,6 +9,10 @@
     },
     {
       "name": "UI create multiple lines and correct total",
+      "pass": true
+    },
+    {
+      "name": "next-step handoff keeps current order open",
       "pass": true
     },
     {

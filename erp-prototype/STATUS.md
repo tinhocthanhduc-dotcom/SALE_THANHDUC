@@ -9,7 +9,7 @@ Cập nhật: 12/10/2026. Mốc hiện tại: bản thử nghiệm OFFLINE có g
 | Lưu trữ kỹ thuật | file local có journal; SheetsRepository có chunks/checksum/guard | Sheets repository mới test giả lập, chưa tạo staging thật |
 | Giao diện | tổng quan, đơn, việc, doanh thu, nhật ký, tiến độ, tìm kiếm, đa dòng, mobile | chọn vai trò demo, không phải auth server |
 | Dữ liệu giao diện | fixture localStorage, đồng bộ revision, export/reset có xác nhận | không kết nối Sheets, không có dữ liệu thật |
-| Kiểm thử | 58 core + 15 scenario trình duyệt local đạt; CI kiểm trên PR | chưa UAT Apps Script thực tế, quota/concurrency Google |
+| Kiểm thử | 58 core + 16 scenario trình duyệt local đạt; CI kiểm trên PR | chưa UAT Apps Script thực tế, quota/concurrency Google |
 | Triển khai | mã và docs trên branch riêng/PR #1 | chưa merge, deploy hoặc đổi quyền |
 
 ## Mốc bàn giao đã đạt trong lượt này
@@ -29,3 +29,6 @@ Review PR; xác nhận project/file staging và người có quyền duyệt. Kh
 
 ## Rủi ro còn lại
 Snapshot tổng state tăng nhanh, chỉ phù hợp pilot kỹ thuật nhỏ; cần normalized tables và benchmark. Bản HTML client-side không có auth bảo mật; dữ liệu localStorage có thể bị sửa/mất. Không dùng dữ liệu hoặc giao dịch thật trong demo.
+
+## Sửa sau phản hồi dùng thử
+Đơn đã xác nhận trước đây chỉ hiện thao tác của Kinh doanh nên người dùng tưởng luồng bị ngắt. Đã thêm Bước tiếp theo tại chi tiết, nút chuyển vai trò demo, giữ đơn đang mở khi đổi vai trò có quyền xem và cố định thanh chọn vai trò. Browser test xác nhận handoff sang Quản lý vẫn mở cùng đơn và hiện nút Giao kỹ thuật.

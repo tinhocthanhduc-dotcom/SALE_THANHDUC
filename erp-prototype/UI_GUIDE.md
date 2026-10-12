@@ -24,7 +24,7 @@ Hủy: trước xuất có Hủy trước xuất, bắt buộc lý do. Sau khi K
 - Chọn Tiến độ dự án để xuất JSON mẫu hoặc khôi phục dữ liệu ban đầu, có xác nhận trước khi thay thế fixture.
 
 ## Kiểm thử
-58/58 core test local và 15/15 browser scenario. UI được kiểm trên Chromium desktop 1440px và mobile 390px. Kịch bản gồm luồng đầy đủ, multi-line totals, persistent reload, cancel/reversal, self-approval, XSS escape, search, storage failure/corruption, stale command hai tab và không gọi mạng.
+58/58 core test local và 16/16 browser scenario. UI được kiểm trên Chromium desktop 1440px và mobile 390px. Kịch bản gồm luồng đầy đủ, multi-line totals, persistent reload, cancel/reversal, self-approval, XSS escape, search, storage failure/corruption, stale command hai tab và không gọi mạng.
 `npm ci --prefix erp-prototype --ignore-scripts`; `erp-prototype/node_modules/.bin/playwright install chromium`; `node erp-prototype/test/ui-browser.cjs`.
 
 ## Phạm vi còn thiếu trước pilot
