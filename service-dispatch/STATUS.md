@@ -34,3 +34,7 @@ Quyền kho/director, thợ được giao, replay/version, chặn tiếp tục k
 Theo mô tả người dùng: giao diện trước đăng nhập hiện được, trắng sau gửi form. Chưa có log/Console của phiên Google để xác nhận nguyên nhân cụ thể. Đã chặn native navigation, nút riêng/Enter handler, khóa nút trước bootstrap/trong login, chỉ ẩn form sau query/render thành công, kiểm tra cấu trúc dữ liệu trả về và thông báo lỗi bootstrap độc lập.
 
 28/28 Node và 25 kịch bản browser cũ vẫn đạt. Bộ browser mới kiểm gói GAS inline trong iframe sandbox với callback giả lập: 8 kịch bản, gồm đơn Chờ linh kiện hiện có, login/nút/Enter không điều hướng, lỗi bridge, null/malformed query giữ form và retry, bootstrap lỗi chặn submit và báo mã. Có kết quả `gas-ui-browser-results.json`. CI chạy thêm bộ này. Chưa xác minh đã hết lỗi trên Google thực tế; cần người dùng UAT bản cập nhật với phiên hiện tại.
+
+## Chẩn đoán lỗi bootstrap trên Google
+
+Người dùng thấy UI_RUNTIME_ERROR với nút đăng nhập bị khóa ngay khi tải: script chưa đến bước gắn handler. Artifact Index.html đã đối chiếu khớp nguồn, hai inline script parse được local. Chưa có dòng Console thực tế để xác định nguyên nhân. Bootstrap hiển thị thêm loại lỗi và dòng/cột; chỉ lỗi cú pháp hiển thị thông báo parser rút gọn, không log tài khoản/token/mật khẩu hoặc URL. Đây là bổ sung chẩn đoán, chưa phải xác nhận đã sửa nguyên nhân trên Google.
