@@ -60,8 +60,10 @@ Workflow create-service-staging dùng CLASPRC_JSON đã có để tạo một pr
 
 Mở web app trực tiếp (không cần đăng nhập Google), rồi đăng nhập admin bằng mật khẩu vừa chọn. Đây vẫn là staging; chưa nghiệm thu đầy đủ Google runtime để vận hành chính thức. Cấp thợ qua provisionDispatchUser theo mục trên. Không cần dán mật khẩu hoặc cấu hình app Finance/Care.
 
-## Tiếp nhận khi chưa có khách hoặc máy
-Trong Nhận đơn, bấm Tạo khách mới rồi lưu; app trở lại đơn đang nhập và chọn khách vừa tạo. Tiếp tục Thêm máy cho khách, lưu model/serial; app chọn máy vừa tạo và giữ các trường đơn. Hai danh sách chỉ chọn hồ sơ đã có; ô Tìm khách cho phép nhập tên/điện thoại. Máy chỉ hiện cho khách đang chọn. Không tự nhập khách từ Sale/Finance/Care hoặc gộp theo điện thoại.
+## Tiếp nhận đơn
+Tìm khách theo tên/điện thoại hoặc bấm Tạo khách mới; khi lưu, app trở lại đơn đang nhập và chọn khách vừa tạo. Không cần chọn hoặc tạo hồ sơ máy: ghi model và thông tin máy trong Lỗi / yêu cầu. Hồ sơ máy cũ vẫn giữ nguyên; tab Khách hàng vẫn cho phép quản lý hồ sơ máy riêng.
+
+Ngày đơn lấy từ thời gian máy chủ theo Việt Nam. Có thể để trống giờ, chọn Buổi sáng / Buổi chiều / Cả ngày, hoặc chọn khoảng giờ tùy chỉnh bằng hai ô giờ không có ngày. Nếu chọn giờ phải có đủ từ và đến, giờ đến sau giờ từ. Giao / giao lại thợ dùng Ghi chú tùy chọn; đề nghị chuyển thợ vẫn cần lý do.
 
 ## Cập nhật sau UAT
 
@@ -98,3 +100,10 @@ Nghiệm thu: chọn kết quả đã thực hiện, đánh dấu khách đã ng
 Xuất/nhận/trả hàng, chốt giờ, tiếp tục và bàn giao máy dùng checkbox xác nhận thay textarea; ghi chú dùng cho ngoại lệ. Checkbox không được tích sẵn. Form ghi dùng riêng tự điền số theo hàng đang chọn, có dropdown nội dung và chặn vượt số xuất. Với phần dư, Kho xác nhận lượng dư, không phải lượng đã xuất ban đầu.
 
 Chọn “Chưa sử dụng – trả kho” tự đưa số dùng về 0. Đổi hàng hoặc sửa số lượng sẽ bỏ dấu xác nhận lượng cũ; cần đánh dấu lại trước khi lưu.
+
+
+## Đề xuất nhiều linh kiện và ảnh tự tải
+
+Trong Đề xuất thêm / chờ linh kiện, dùng **+ Thêm loại linh kiện** để nhập nhiều dòng tên/mã và số lượng, chọn nhu cầu chung rồi lưu một lần. Một phiếu DX tự cấp cho toàn bộ dòng; kho xuất cả phiếu bằng một mã PX và thợ xác nhận nhận cả phiếu. Vẫn hỗ trợ đề xuất một dòng và dữ liệu cũ. Chưa hỗ trợ xuất từng phần; vật tư dư được kho kiểm nhận từng dòng. Tên vật tư có gợi ý từ lịch sử đơn được cấp quyền, chưa phải danh mục tồn kho của app Kho.
+
+Chọn loại ảnh trước rồi chọn/chụp ảnh: app tự nén và tải lên, hiển thị tiến trình và xác nhận đã lưu. Không cần bấm Tải ảnh lên. Nếu mất phản hồi mạng, dùng **Thử tải lại ảnh**; cùng mã yêu cầu tránh tạo ảnh trùng. Ảnh chờ thử lại chỉ giữ trong phiên trang hiện tại, không đóng/tải lại trang trước khi có thông báo đã lưu.

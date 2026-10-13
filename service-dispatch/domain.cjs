@@ -32,10 +32,12 @@ function execute(state,command,context){
   entity={id:fresh(),customer_id:payload.customer_id,model:required(payload.model),serial:typeof payload.serial==='string'?payload.serial.trim():'',version:1,created_at:at};next.machines[entity.id]=entity;
  }else if(command.type==='create_order'){
   const customer=next.customers[payload.customer_id],machine=next.machines[payload.machine_id];
-  if(!customer)fail('UNKNOWN_CUSTOMER');if(!machine||machine.customer_id!==customer.id)fail('MACHINE_CUSTOMER_MISMATCH');
+  if(!customer)fail('UNKNOWN_CUSTOMER');if(payload.machine_id&&(!machine||machine.customer_id!==customer.id))fail('MACHINE_CUSTOMER_MISMATCH');
   if(!['hotline','zalo','other'].includes(payload.source)||!['normal','urgent','critical'].includes(payload.priority))fail('INVALID_CATEGORY');
-  const hasStart=!!payload.appointment_start,hasEnd=!!payload.appointment_end;if(hasStart!==hasEnd)fail('INVALID_APPOINTMENT');const appointments=[];if(hasStart){const start=date(payload.appointment_start),end=date(payload.appointment_end);if(start>=end)fail('INVALID_APPOINTMENT');appointments.push({start,end,kind:'requested',at,actor_id:actor.id});}
-  order={id:fresh(),order_no:number(next,'TD',at),customer_id:customer.id,machine_id:machine.id,customer_snapshot:clone(customer),machine_snapshot:clone(machine),address:required(payload.address),request:required(payload.request),area:customer.area,terms:customer.terms,source:payload.source,priority:payload.priority,status:'new',version:1,created_at:at,updated_at:at,assignments:[],appointments,visits:[],transfers:[],parts_requests:[],evidence:[],payment_status:'unpaid',financial_scope:'not_implemented'};
+  const serviceDate=new Date(Date.parse(at)+7*3600000).toISOString().slice(0,10);let appointmentStart=payload.appointment_start,appointmentEnd=payload.appointment_end;
+  if(payload.appointment_time_start||payload.appointment_time_end){if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.appointment_time_start||'')||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.appointment_time_end||''))fail('INVALID_APPOINTMENT');appointmentStart=serviceDate+'T'+payload.appointment_time_start+':00+07:00';appointmentEnd=serviceDate+'T'+payload.appointment_time_end+':00+07:00';}
+  const hasStart=!!appointmentStart,hasEnd=!!appointmentEnd;if(hasStart!==hasEnd)fail('INVALID_APPOINTMENT');const appointments=[];if(hasStart){const start=date(appointmentStart),end=date(appointmentEnd);if(start>=end)fail('INVALID_APPOINTMENT');appointments.push({start,end,kind:'requested',at,actor_id:actor.id});}
+  order={id:fresh(),order_no:number(next,'TD',at),customer_id:customer.id,machine_id:machine?machine.id:null,customer_snapshot:clone(customer),machine_snapshot:machine?clone(machine):{model:'',serial:''},service_date:serviceDate,address:required(payload.address),request:required(payload.request),area:customer.area,terms:customer.terms,source:payload.source,priority:payload.priority,status:'new',version:1,created_at:at,updated_at:at,assignments:[],appointments,visits:[],transfers:[],parts_requests:[],evidence:[],payment_status:'unpaid',financial_scope:'not_implemented'};
   next.orders[order.id]=order;entity=order;
  }else{
   order=next.orders[payload.order_id];if(!order)fail('UNKNOWN_ORDER');
@@ -45,14 +47,15 @@ function execute(state,command,context){
   const hasCustody=()=>order.parts_requests.some(r=>['issued','received','usage_recorded'].includes(r.status))||(order.collected_machines||[]).some(m=>m.status==='with_technician');
   const noHandover=()=>{if(hasCustody())fail('HANDOVER_REQUIRED');};
   const part=()=>{const r=order.parts_requests.find(r=>r.id===payload.request_id);if(!r)fail('UNKNOWN_PARTS_REQUEST');return r;};
+  const parts=()=>{const ids=payload.request_ids===undefined?[payload.request_id]:payload.request_ids;if(!Array.isArray(ids)||!ids.length||ids.length>50||new Set(ids).size!==ids.length)fail('INVALID_PARTS_LIST');return ids.map(requestId=>{const r=order.parts_requests.find(r=>r.id===requestId);if(!r)fail('UNKNOWN_PARTS_REQUEST');return r;});};
   const recordUsage=(r,usedQty,note)=>{if(r.status!=='received')fail('INVALID_TRANSITION');if(r.technician_id!==actor.id)fail('FORBIDDEN');if(!Number.isSafeInteger(usedQty)||usedQty<0||usedQty>r.issued_qty)fail('INVALID_QUANTITY');r.used_qty=usedQty;r.surplus_qty=r.issued_qty-usedQty;r.usage_note=required(note);r.usage_recorded_at=at;r.status=r.surplus_qty?'usage_recorded':'resolved';};
   const setSchedule=()=>{const start=date(payload.start),end=date(payload.end);if(start>=end)fail('INVALID_APPOINTMENT');const confirmation=required(payload.customer_confirmation);if(order.appointments.some(a=>a.kind==='confirmed'))required(payload.reason);order.appointments.push({start,end,kind:'confirmed',customer_confirmation:confirmation,reason:payload.reason||'',at,actor_id:actor.id});order.status='scheduled';};
   switch(command.type){
    case 'assign':{
     requireState('new','assigned','accepted','scheduled','unable','waiting_parts');employee(directory,payload.technician_id);
-    if(order.technician_id){required(payload.reason);if(order.technician_id!==payload.technician_id)noHandover();}
-    if(assignment&&!assignment.ended_at){assignment.ended_at=at;assignment.end_reason=payload.reason||'Giao lại';}
-    order.technician_id=payload.technician_id;order.assignments.push({id:fresh(),technician_id:payload.technician_id,assigned_at:at,assigned_by:actor.id,reason:payload.reason||''});order.status='assigned';
+    const note=typeof payload.note==='string'?payload.note.trim():typeof payload.reason==='string'?payload.reason.trim():'';if(order.technician_id&&order.technician_id!==payload.technician_id)noHandover();
+    if(assignment&&!assignment.ended_at){assignment.ended_at=at;assignment.end_reason=note||'Giao lại';}
+    order.technician_id=payload.technician_id;order.assignments.push({id:fresh(),technician_id:payload.technician_id,assigned_at:at,assigned_by:actor.id,note,reason:note});order.status='assigned';
     for(const transfer of order.transfers.filter(t=>t.status==='pending')){transfer.status='superseded';transfer.resolved_at=at;}
     break;
    }
@@ -61,17 +64,18 @@ function execute(state,command,context){
    case 'start':requireState('accepted','scheduled');if(!partsReady())fail('PARTS_NOT_RECEIVED');if(order.technician_id!==actor.id)fail('FORBIDDEN');if(!order.appointments.length)fail('APPOINTMENT_REQUIRED');order.visits.push({id:fresh(),technician_id:actor.id,started_at:at});order.status='working';break;
    case 'wait_parts':{
     requireState('working','waiting_parts');if(order.technician_id!==actor.id)fail('FORBIDDEN');
-    const request={id:fresh(),item:required(payload.item),qty:payload.qty,reason:required(payload.reason),status:'requested',created_at:at};if(!Number.isSafeInteger(request.qty)||request.qty<=0)fail('INVALID_QUANTITY');order.parts_requests.push(request);order.status='waiting_parts';order.waiting_since=at;break;
+    const items=payload.items===undefined?[{item:payload.item,qty:payload.qty}]:payload.items;if(!Array.isArray(items)||!items.length||items.length>50)fail('INVALID_PARTS_LIST');const lines=items.map(line=>{if(!line||typeof line!=='object')fail('INVALID_PARTS_LIST');const item=required(line.item);if(!Number.isSafeInteger(line.qty)||line.qty<=0)fail('INVALID_QUANTITY');return {item,qty:line.qty};});if(new Set(lines.map(line=>line.item.toLocaleLowerCase())).size!==lines.length)fail('DUPLICATE_PARTS_LINE');const reason=required(payload.reason),proposal={id:fresh(),request_no:number(next,'DX',at),reason,created_at:at,created_by:actor.id,line_ids:[]};
+    for(const line of lines){const request={id:fresh(),...line,proposal_id:proposal.id,proposal_no:proposal.request_no,reason,status:'requested',created_at:at};proposal.line_ids.push(request.id);order.parts_requests.push(request);}order.parts_proposals=order.parts_proposals||[];order.parts_proposals.push(proposal);order.status='waiting_parts';order.waiting_since=at;break;
    }
    case 'issue_parts':{
-    requireState('waiting_parts','assigned','accepted','scheduled','working','unable');const r=part();if(r.status!=='requested')fail('INVALID_TRANSITION');employee(directory,order.technician_id);
-    r.issue_no=number(next,'PX',at);r.issued_qty=r.qty;r.issued_at=at;r.issued_by=actor.id;r.technician_id=order.technician_id;r.serial=typeof payload.serial==='string'?payload.serial.trim():'';r.warehouse_note=required(payload.warehouse_note);r.status='issued';break;
+    requireState('waiting_parts','assigned','accepted','scheduled','working','unable');const lines=parts();if(lines.some(r=>r.status!=='requested'))fail('INVALID_TRANSITION');employee(directory,order.technician_id);const note=required(payload.warehouse_note),issueNo=number(next,'PX',at);const serials=payload.serials||[];if(!Array.isArray(serials)||new Set(serials.map(s=>s&&s.request_id)).size!==serials.length||serials.some(s=>!s||!lines.some(r=>r.id===s.request_id)||typeof s.serial!=='string'))fail('INVALID_PARTS_LIST');
+    for(const r of lines){r.issue_no=issueNo;r.issued_qty=r.qty;r.issued_at=at;r.issued_by=actor.id;r.technician_id=order.technician_id;r.serial=(serials.find(s=>s.request_id===r.id)?.serial||(lines.length===1&&typeof payload.serial==='string'?payload.serial:'')).trim();r.warehouse_note=note;r.status='issued';}break;
    }
    case 'reject_parts':{
     requireState('waiting_parts','assigned','accepted','scheduled','working','unable');const r=part();if(r.status!=='requested')fail('INVALID_TRANSITION');r.status='rejected';r.rejection_reason=required(payload.reason);r.rejected_by=actor.id;r.rejected_at=at;break;
    }
    case 'receive_parts':{
-    requireState('waiting_parts','assigned','accepted','scheduled','working','unable');const r=part();if(order.technician_id!==actor.id||r.technician_id!==actor.id)fail('FORBIDDEN');if(r.status!=='issued')fail('INVALID_TRANSITION');r.receipt_confirmation=required(payload.receipt_confirmation);r.received_by=actor.id;r.received_at=at;r.status='received';break;
+    requireState('waiting_parts','assigned','accepted','scheduled','working','unable');const lines=parts();if(order.technician_id!==actor.id||lines.some(r=>r.technician_id!==actor.id))fail('FORBIDDEN');if(lines.some(r=>r.status!=='issued'))fail('INVALID_TRANSITION');const confirmation=required(payload.receipt_confirmation);for(const r of lines){r.receipt_confirmation=confirmation;r.received_by=actor.id;r.received_at=at;r.status='received';}break;
    }
    case 'report_parts_usage':{
     requireState('working','accepted_work','cancelled','unable');const r=part();if(order.technician_id!==actor.id||r.technician_id!==actor.id)fail('FORBIDDEN');if(r.status!=='received')fail('INVALID_TRANSITION');
@@ -142,7 +146,7 @@ function execute(state,command,context){
  const result={id:entity.id,order_id:order?.id,order_no:order?.order_no,version:entity.version,status:order?.status,replayed:false};
  if(command.type==='create_customer'&&Object.values(state.customers).some(c=>c.phone.replace(/\D/g,'')===entity.phone.replace(/\D/g,'')))result.warning='DUPLICATE_PHONE';
  if(command.type==='add_evidence'){result.file_id=payload.file_id;result.upload_digest=payload.upload_digest;}
- next.events.push({id:fresh(),entity_id:entity.id,order_id:order?.id,type:command.type,actor_id:actor.id,actor_name:actor.name||actor.id,at,version:entity.version,reason:payload.reason||''});next.commands[key]={fingerprint,result:clone(result)};return {state:next,result};
+ next.events.push({id:fresh(),entity_id:entity.id,order_id:order?.id,type:command.type,actor_id:actor.id,actor_name:actor.name||actor.id,at,version:entity.version,reason:payload.note||payload.reason||''});next.commands[key]={fingerprint,result:clone(result)};return {state:next,result};
 }
 function project(state,actor,directory){
  if(!permitted(actor,['dispatcher','director','technician','warehouse']))fail('FORBIDDEN');

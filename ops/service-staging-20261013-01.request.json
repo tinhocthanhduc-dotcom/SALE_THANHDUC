@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 12,
-  "update": "Explicit user request: allow web app access without Gmail sign-in (ANYONE_ANONYMOUS), retain employee password sessions and owner-only setup/provision guards. Reuse current staging deployment and preserve accounts/data."
+  "revision": 13,
+  "update": "User-authorized staging update: machine-free intake, optional same-day clock window, optional assignment notes, multi-line materials proposal/shared issue and receipt, automatic photo upload with replay-safe retry. Reuse current public deployment and preserve accounts/data."
 }

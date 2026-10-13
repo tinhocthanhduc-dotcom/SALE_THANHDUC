@@ -60,3 +60,14 @@ Lựa chọn Chưa sử dụng tự điền 0; sửa lượng sẽ bỏ xác nh�
 ## Mở web app không cần Gmail
 
 Theo yêu cầu người dùng, manifest webapp chuyển access sang ANYONE_ANONYMOUS, executeAs vẫn USER_DEPLOYING. Nhân viên vẫn phải đăng nhập user/password; quyền đọc đơn/ảnh/command dựa vào phiên máy chủ. Các hàm setup/provision/health/benchmark tiếp tục chặn Google active user trống hoặc khác effective user. Không đổi tài khoản, mật khẩu, Sheets/Drive hoặc 5 app legacy.
+
+
+## Tối giản tiếp nhận và thao tác thợ (2026-10-13)
+
+- Nhận đơn bỏ chọn/tạo máy; model được ghi trong yêu cầu. Domain nhận machine_id trống, không tự tạo hồ sơ giả; dữ liệu và API hồ sơ máy cũ giữ nguyên.
+- Giờ tiếp nhận tùy chọn: chưa chốt / sáng / chiều / cả ngày / khoảng tùy chỉnh. Hai ô chỉ chọn giờ; ngày do máy chủ lấy theo Việt Nam. Kiểm thử qua ranh giới ngày UTC, bỏ qua service_date do client gửi, chặn khoảng thiếu đầu hoặc sai thứ tự. Đơn chưa hẹn vẫn cần chốt lịch trước Bắt đầu.
+- Giao/giao lại thợ dùng Ghi chú không bắt buộc; lịch sử phân công và kiểm tra bàn giao tài sản giữ nguyên. Đề nghị chuyển thợ vẫn cần lý do.
+- Đề xuất nhiều loại trong một phiếu DX, thêm/xóa dòng và chọn nhu cầu. Kho xuất cả phiếu với một mã PX, thợ nhận cả phiếu một lần; kiểm tra toàn bộ dòng trước khi ghi, replay không cấp số trùng. Đề xuất cũ một dòng tương thích. Tên linh kiện gợi ý từ lịch sử được cấp quyền, chưa đồng bộ danh mục kho ngoài. Xuất/nhận từng phần chưa có; ghi dùng/trả dư vẫn theo dòng.
+- Chọn/chụp ảnh tự nén và tải, bỏ nút Tải ảnh lên. Loại ảnh, đơn và người tải được chốt khi chọn; kiểm tra lại quyền trước gửi. Mất phản hồi có nút Thử tải lại ảnh, giữ đúng payload/mã yêu cầu để không trùng file/ảnh. Hàng đợi ảnh chỉ ở bộ nhớ phiên trang, chưa có lưu offline lâu dài.
+
+Kiểm chứng bản này: 35/35 Node, 29 kịch bản HTTP Chromium không page error, 9 kịch bản GAS/document.write/CSP và 71/71 ERP đạt. Browser mô phỏng server đã nhận ảnh nhưng phản hồi bị mất: thử lại cùng key, vẫn chỉ một ảnh. Domain kiểm tra cả phiếu atomic, dòng lỗi không ghi một phần, số DX/PX không trùng và quyền nhận. Kết quả cập nhật trong ba file kiểm thử. Cần UAT thao tác mới trên Google thực tế; không chạy setup lại.
