@@ -51,3 +51,11 @@ Chưa có giá dịch vụ/phí 0–200k, dòng công/vật tư thực dùng, ch
 Hồ sơ snapshot và property auth chỉ phù hợp thử nghiệm nhỏ; cần normalized tables, dung lượng phiên và benchmarks trước vận hành. Upload thất bại sau file được tạo có thể còn file mồ côi khi process hard-crash; cần reconciliation theo file metadata trước pilot. Cả local và GAS dùng cùng PBKDF2, để kiểm tính tương thích hash; hiệu năng GAS chưa đo. Chỉ chống ghi lặp khi client giữ cùng command key; không suy đoán hai key khác nhau là cùng giao dịch.
 
 Không gọi môi trường ready hoặc app vận hành thật khi chưa có staging IDs, tài khoản thử nghiệm, quyền Google và kiểm thử thực tế. Mốc tiếp theo: chỉnh giá/phí và dòng công theo đặc tả, quản trị tài khoản, luồng vật tư, rồi đối soát tiền.
+
+## Khởi tạo nhanh ở project mới được workflow tạo
+
+Workflow create-service-staging dùng CLASPRC_JSON đã có để tạo một project riêng và triển khai web app. ID/link được lưu trong artifact SERVICE_DISPATCH_PROJECT_20261013_01 và SERVICE_DISPATCH_DEPLOYMENT_20261013_01; không chứa credential. Registry phải được giữ để lần chạy lại tái sử dụng project/deployment; nếu registry hết hạn cần khôi phục ID, không tự tạo trùng.
+
+Ở project MỚI này: mở Project Settings → Script Properties, thêm DISPATCH_INITIAL_PASSWORD là mật khẩu riêng tối thiểu 12 ký tự. Chọn hàm dispatchSetupStaging_ ở editor rồi Run và cấp quyền Google theo lời nhắc. Hàm tạo Sheets staging, marker/tabs, thư mục ảnh private và tài khoản admin (director + dispatcher), tự lưu cấu hình. Mật khẩu tạm được xóa sau chạy, chỉ giữ hash/salt. Không gửi mật khẩu vào chat. Hàm chặn 5 project/file legacy và không khởi tạo lên workbook chưa được helper tạo. Chạy lại sẽ giữ tài khoản và các tài nguyên đã tạo; không xóa dữ liệu. Nếu Google tạo file thành công nhưng chưa lưu được ID do lỗi, kiểm tra tài nguyên đã tạo trước retry để tránh file mồ côi.
+
+Mở web app bằng tài khoản Google có quyền truy cập deployment, rồi đăng nhập admin bằng mật khẩu vừa chọn. Đây vẫn là staging; chưa nghiệm thu Google runtime hoặc dùng dữ liệu thật. Cấp thợ qua dispatchProvisionUser_ theo mục trên. Không cần dán mật khẩu hoặc cấu hình app Finance/Care.

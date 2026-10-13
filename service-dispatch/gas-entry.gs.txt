@@ -7,6 +7,35 @@ function dispatchRuntime_(){
  if(!expected||actual!==expected||legacy.indexOf(actual)>=0)throw new Error('STAGING_PROJECT_MISMATCH');
  return props;
 }
+/** One-time editor setup for a NEW project. Does not run through the web API. */
+function dispatchSetupStaging_(){
+ var props=PropertiesService.getScriptProperties(),actual=ScriptApp.getScriptId();
+ var legacyScripts=['1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql','1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu','1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6','16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N','1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN'];
+ if(legacyScripts.indexOf(actual)>=0||props.getProperty('DISPATCH_SCRIPT_ID')&&props.getProperty('DISPATCH_SCRIPT_ID')!==actual)throw new Error('STAGING_PROJECT_MISMATCH');
+ var legacySheets=['1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU','1ACsqTWveQR3ksIwE3bkQcN7RNI1a7MymtOOgJRp72yw','1tHd_ypY36P0cyFFcPoDjVuPobU2y4k1__nR4cLZdsYY','1-j45sURspD4PvrymNp8P2gLwrebFRVt9Rbo3AwEiDWw','1R5YaLosDq7fhUJuulfjXoJYEOA4tZief5Ge5qaL_jrs'];
+ if(legacySheets.indexOf(props.getProperty('DISPATCH_SHEET_ID'))>=0)throw new Error('STAGING_TARGET_REJECTED');
+ if(props.getProperty('DISPATCH_SHEET_ID')&&props.getProperty('DISPATCH_SETUP_SHEET_ID')!==props.getProperty('DISPATCH_SHEET_ID'))throw new Error('STAGING_SETUP_TARGET_UNVERIFIED');
+ return dispatchLock_(function(){
+  var existing=props.getProperty('DISPATCH_USER_admin'),password=props.getProperty('DISPATCH_INITIAL_PASSWORD'),user;
+  try{
+  if(!existing){if(!password)throw new Error('INITIAL_PASSWORD_REQUIRED');user=DispatchBundle.createUser({id:'admin',username:'admin',name:'Quản trị Điều phối',roles:['director','dispatcher'],password:password,random:function(){return Utilities.getUuid().replace(/-/g,'');}});}
+   var sheetId=props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN')||Utilities.getUuid();
+   props.setProperty('DISPATCH_SCRIPT_ID',actual);props.setProperty('DISPATCH_MARKER_TOKEN',marker);
+   var workbook;
+   if(!sheetId){workbook=SpreadsheetApp.create('THANH_DUC_DIEU_PHOI_STAGING');sheetId=workbook.getId();props.setProperty('DISPATCH_SHEET_ID',sheetId);props.setProperty('DISPATCH_SETUP_SHEET_ID',sheetId);}else workbook=SpreadsheetApp.openById(sheetId);
+   var meta=workbook.getSheetByName('ERP_META');
+   if(!meta){var first=workbook.getSheets()[0];if(first&&first.getLastRow()===0)meta=first.setName('ERP_META');else meta=workbook.insertSheet('ERP_META');}
+   var markerValues=[['environment','token'],['STAGING',marker]];
+   if(meta.getLastRow()===0)meta.getRange(1,1,2,2).setValues(markerValues);else if(JSON.stringify(meta.getRange(1,1,2,2).getDisplayValues())!==JSON.stringify(markerValues))throw new Error('STAGING_MARKER_MISMATCH');
+   var headers=['attempt_id','kind','chunk_index','chunk_count','checksum','payload'];
+   ['ERP_STATE','ERP_JOURNAL'].forEach(function(name){var sheet=workbook.getSheetByName(name)||workbook.insertSheet(name);if(sheet.getLastRow()===0)sheet.getRange(1,1,1,6).setValues([headers]);else if(JSON.stringify(sheet.getRange(1,1,1,6).getDisplayValues()[0])!==JSON.stringify(headers))throw new Error('SCHEMA_MISMATCH');});
+   if(!props.getProperty('DISPATCH_IMAGE_FOLDER_ID'))props.setProperty('DISPATCH_IMAGE_FOLDER_ID',DriveApp.createFolder('THANH_DUC_DIEU_PHOI_STAGING_IMAGES').getId());
+   SpreadsheetApp.flush();if(user)props.setProperty('DISPATCH_USER_admin',JSON.stringify(user));
+   props.setProperty('DISPATCH_ENV','STAGING');props.setProperty('DISPATCH_ENABLE_WRITES','true');
+   return {configured:true,username:'admin',spreadsheetUrl:workbook.getUrl()};
+  }finally{props.deleteProperty('DISPATCH_INITIAL_PASSWORD');}
+ });
+}
 function dispatchLock_(fn){var lock=LockService.getScriptLock();lock.waitLock(10000);try{return fn();}finally{lock.releaseLock();}}
 function dispatchAuth_(props){
  var store={lock:dispatchLock_,read:function(){var all=props.getProperties(),state={users:{},sessions:{}};Object.keys(all).forEach(function(key){if(key.indexOf('DISPATCH_USER_')===0)state.users[key.slice(14)]=JSON.parse(all[key]);if(key.indexOf('DISPATCH_SESSION_')===0)state.sessions[key.slice(17)]=JSON.parse(all[key]);});return state;},write:function(state){var all=props.getProperties(),desired={};Object.keys(state.users).forEach(function(k){desired['DISPATCH_USER_'+k]=JSON.stringify(state.users[k]);});Object.keys(state.sessions).forEach(function(k){desired['DISPATCH_SESSION_'+k]=JSON.stringify(state.sessions[k]);});Object.keys(all).forEach(function(k){if((k.indexOf('DISPATCH_USER_')===0||k.indexOf('DISPATCH_SESSION_')===0)&&!Object.prototype.hasOwnProperty.call(desired,k))props.deleteProperty(k);});if(Object.keys(desired).length)props.setProperties(desired,false);}};
@@ -30,7 +59,7 @@ function dispatchService_(){
  var files={save:function(mime,base64){var folderId=props.getProperty('DISPATCH_IMAGE_FOLDER_ID');if(!folderId)throw new Error('IMAGE_STORAGE_REQUIRED');var bytes=Utilities.base64Decode(base64),positive=bytes.map(function(b){return (b+256)%256;});if(bytes.length<12||bytes.length>400000)throw new Error('INVALID_IMAGE');var valid=mime==='image/jpeg'?positive[0]===255&&positive[1]===216:mime==='image/png'?JSON.stringify(positive.slice(0,8))===JSON.stringify([137,80,78,71,13,10,26,10]):String.fromCharCode.apply(null,positive.slice(0,4))==='RIFF'&&String.fromCharCode.apply(null,positive.slice(8,12))==='WEBP';if(!valid)throw new Error('INVALID_IMAGE');var file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(bytes,mime,'evidence-'+Utilities.getUuid()));return file.getId();},remove:function(id){DriveApp.getFileById(id).setTrashed(true);},read:function(id){var blob=DriveApp.getFileById(id).getBlob();return {mime:blob.getContentType(),base64:Utilities.base64Encode(blob.getBytes())};}};
  return DispatchBundle.createService({auth:dispatchAuth_(props),repository:repository,files:files,now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();}});
 }
-function doGet(event){dispatchRuntime_();var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
+function doGet(event){try{dispatchRuntime_();}catch(error){if(error.message==='STAGING_WRITES_DISABLED')return HtmlService.createHtmlOutput('<h2>Thành Đức · Điều phối dịch vụ</h2><p>Project đã có mã ứng dụng, nhưng chưa khởi tạo dữ liệu và tài khoản.</p><p>Quản trị mở Project Settings, thêm Script Property DISPATCH_INITIAL_PASSWORD (mật khẩu riêng ít nhất 12 ký tự), rồi chạy dispatchSetupStaging_ trong editor. Tài khoản đầu tiên là admin. Không gửi mật khẩu vào chat.</p>');throw error;}var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
 function dispatchApi(input){
  try{
   dispatchRuntime_();if(!input||typeof input!=='object')throw new Error('INVALID_REQUEST');
