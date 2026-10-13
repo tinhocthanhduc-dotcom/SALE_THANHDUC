@@ -115,7 +115,7 @@ jobs:
           project.deployment_id=deployment.deploymentId;
           project.web_app_url='https://script.google.com/macros/s/'+deployment.deploymentId+'/exec';
           fs.writeFileSync(path.join(root,'project.json'),JSON.stringify(project,null,2));
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'### Separate service dispatch staging\n\nEditor: '+project.editor_url+'\n\nWeb app: '+project.web_app_url+'\n\nRequired: set DISPATCH_INITIAL_PASSWORD privately, then run dispatchSetupStaging_ from the editor. No sample passwords are provisioned.\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'### Separate service dispatch staging\n\nEditor: '+project.editor_url+'\n\nWeb app: '+project.web_app_url+'\n\nRequired: set DISPATCH_INITIAL_PASSWORD privately, then run setupDispatchStaging from the editor. No sample passwords are provisioned.\n');
           JS
       - name: Upload project links
         if: ${{ always() }}

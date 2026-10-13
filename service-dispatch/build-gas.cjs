@@ -7,6 +7,6 @@ const bundle=require('esbuild').buildSync({entryPoints:[path.join(__dirname,'bun
 fs.writeFileSync(path.join(destination,'Code.gs'),bundle+'\n'+fs.readFileSync(path.join(__dirname,'gas-entry.gs.txt'),'utf8'));
 const script=fs.readFileSync(path.join(__dirname,'ui.js.txt'),'utf8').replace(/<\/script/gi,'<\\/script');
 fs.writeFileSync(path.join(destination,'Index.html'),fs.readFileSync(path.join(__dirname,'ui.html.txt'),'utf8').replace('<script src="/app.js"></script>','<script>'+script+'</script>'));
-fs.writeFileSync(path.join(destination,'appsscript.json'),JSON.stringify({timeZone:'Asia/Ho_Chi_Minh',runtimeVersion:'V8',exceptionLogging:'STACKDRIVER',oauthScopes:['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive','https://www.googleapis.com/auth/script.storage'],webapp:{executeAs:'USER_DEPLOYING',access:'ANYONE'}},null,2));
+fs.writeFileSync(path.join(destination,'appsscript.json'),JSON.stringify({timeZone:'Asia/Ho_Chi_Minh',runtimeVersion:'V8',exceptionLogging:'STACKDRIVER',oauthScopes:['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive','https://www.googleapis.com/auth/script.storage','https://www.googleapis.com/auth/userinfo.email'],webapp:{executeAs:'USER_DEPLOYING',access:'ANYONE'}},null,2));
 fs.copyFileSync(path.join(__dirname,'README.md'),path.join(destination,'README.md'));
 console.log('Built isolated Apps Script package: '+destination);

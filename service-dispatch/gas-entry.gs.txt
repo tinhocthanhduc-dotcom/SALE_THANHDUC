@@ -7,6 +7,12 @@ function dispatchRuntime_(){
  if(!expected||actual!==expected||legacy.indexOf(actual)>=0)throw new Error('STAGING_PROJECT_MISMATCH');
  return props;
 }
+/** Visible in the editor; web callers must also be the effective Google user. */
+function setupDispatchStaging(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ return dispatchSetupStaging_();
+}
 /** One-time editor setup for a NEW project. Does not run through the web API. */
 function dispatchSetupStaging_(){
  var props=PropertiesService.getScriptProperties(),actual=ScriptApp.getScriptId();
@@ -59,7 +65,7 @@ function dispatchService_(){
  var files={save:function(mime,base64){var folderId=props.getProperty('DISPATCH_IMAGE_FOLDER_ID');if(!folderId)throw new Error('IMAGE_STORAGE_REQUIRED');var bytes=Utilities.base64Decode(base64),positive=bytes.map(function(b){return (b+256)%256;});if(bytes.length<12||bytes.length>400000)throw new Error('INVALID_IMAGE');var valid=mime==='image/jpeg'?positive[0]===255&&positive[1]===216:mime==='image/png'?JSON.stringify(positive.slice(0,8))===JSON.stringify([137,80,78,71,13,10,26,10]):String.fromCharCode.apply(null,positive.slice(0,4))==='RIFF'&&String.fromCharCode.apply(null,positive.slice(8,12))==='WEBP';if(!valid)throw new Error('INVALID_IMAGE');var file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(bytes,mime,'evidence-'+Utilities.getUuid()));return file.getId();},remove:function(id){DriveApp.getFileById(id).setTrashed(true);},read:function(id){var blob=DriveApp.getFileById(id).getBlob();return {mime:blob.getContentType(),base64:Utilities.base64Encode(blob.getBytes())};}};
  return DispatchBundle.createService({auth:dispatchAuth_(props),repository:repository,files:files,now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();}});
 }
-function doGet(event){try{dispatchRuntime_();}catch(error){if(error.message==='STAGING_WRITES_DISABLED')return HtmlService.createHtmlOutput('<h2>Thành Đức · Điều phối dịch vụ</h2><p>Project đã có mã ứng dụng, nhưng chưa khởi tạo dữ liệu và tài khoản.</p><p>Quản trị mở Project Settings, thêm Script Property DISPATCH_INITIAL_PASSWORD (mật khẩu riêng ít nhất 12 ký tự), rồi chạy dispatchSetupStaging_ trong editor. Tài khoản đầu tiên là admin. Không gửi mật khẩu vào chat.</p>');throw error;}var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
+function doGet(event){try{dispatchRuntime_();}catch(error){if(error.message==='STAGING_WRITES_DISABLED')return HtmlService.createHtmlOutput('<h2>Thành Đức · Điều phối dịch vụ</h2><p>Project đã có mã ứng dụng, nhưng chưa khởi tạo dữ liệu và tài khoản.</p><p>Quản trị mở Project Settings, thêm Script Property DISPATCH_INITIAL_PASSWORD (mật khẩu riêng ít nhất 12 ký tự), rồi chạy setupDispatchStaging trong editor. Tài khoản đầu tiên là admin. Không gửi mật khẩu vào chat.</p>');throw error;}var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
 function dispatchApi(input){
  try{
   dispatchRuntime_();if(!input||typeof input!=='object')throw new Error('INVALID_REQUEST');
