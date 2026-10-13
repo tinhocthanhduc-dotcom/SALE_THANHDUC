@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 9,
-  "update": "Fix Google document.write startup syntax failure by transporting normalized frontend source as inert base64 payload and installing script text via DOM with nonce inheritance. Test actual document.write path and strict CSP. Preserve staging accounts/data/deployment."
+  "revision": 10,
+  "update": "Reduce repetitive entry: checkbox confirmations, preset usage notes and quantities, checklist acceptance with inline atomic material usage. Preserve evidence, authorization and quantity/replay guards, staging data/accounts/deployment."
 }

@@ -75,7 +75,7 @@ Nhận đơn có thể bỏ trống cả hai giờ hẹn; nếu nhập phải nh
 
 Với đơn đang Chờ linh kiện, không tạo lại đơn. Dùng admin (vai trò director) hoặc tài khoản warehouse: mở đơn → **Kho xác nhận xuất hàng**, chọn đề xuất, ghi serial nếu có và ghi chú bàn giao thực tế. Phiếu PX được tạo tự động; bản này xuất đủ số lượng đề xuất, chưa hỗ trợ xuất từng phần. Phong KT/thợ được giao mở cùng đơn → **Xác nhận đã nhận hàng**. Sau khi mọi đề xuất đã được nhận hoặc từ chối, thợ chọn **Tiếp tục tại khách**, hoặc **Hẹn lại sau khi có linh kiện** nếu phải quay lại ngày khác.
 
-Thợ ghi **Ghi vật tư / hàng thực dùng** trước nghiệm thu (đối với máy giao khách: số lượng đã giao). Phần dư được giữ ở thợ đến khi Kho/Giám đốc chọn **Kho xác nhận nhận hàng dư**, tạo phiếu PN. Số thực dùng không vượt số xuất; vật tư hỏng cần quy trình riêng chưa có trong bản này.
+Thợ có thể ghi số thực dùng ngay trong **Nghiệm thu công việc**, hoặc dùng form **Ghi vật tư / hàng thực dùng** riêng (đối với máy giao khách: số lượng đã giao). Phần dư được giữ ở thợ đến khi Kho/Giám đốc chọn **Kho xác nhận nhận hàng dư**, tạo phiếu PN. Số thực dùng không vượt số xuất; vật tư hỏng cần quy trình riêng chưa có trong bản này.
 
 Nếu thu máy cũ, thợ chọn **Ghi nhận máy cũ thu về**, ghi model/serial, tình trạng/phụ kiện, mục đích đổi máy hoặc mang về sửa và xác nhận của khách. Biên nhận BN tự tạo. Kho/Giám đốc chọn **Kho nhận máy cũ**, ghi vị trí và tình trạng kiểm nhận, tạo phiếu NK. Ghi nhận này là bàn giao tài sản theo đơn, không tự kết luận quyền sở hữu, giá mua hoặc tạo đơn sửa riêng.
 
@@ -90,3 +90,9 @@ Nút đăng nhập dùng type=button và form chặn điều hướng mặc đ�
 Kiểm thử `node service-dispatch/test/gas-ui-browser.cjs` chạy gói Index.html đã build trong iframe sandbox với giao thức callback google.script.run giả lập và auth/repository thật local. Kiểm tra này bổ sung cho runner HTTP; không có phiên Google để xác định nguyên nhân lỗi trong trình duyệt người dùng. Sau cập nhật cần UAT đăng nhập trên Google, và gửi mã lỗi hiển thị nếu còn lỗi.
 
 Gói GAS chuẩn hóa frontend bằng esbuild ES2017/ASCII, lưu nguồn thành payload base64 tĩnh và dùng loader nhỏ gắn script.text vào DOM (kế thừa nonce). Cách này tách mã ứng dụng/chuỗi HTML lồng nhau khỏi HTML được Google đưa qua document.write; không dùng eval hoặc nguồn mã từ dữ liệu người dùng. Bộ gas-ui-browser kiểm qua document.write và CSP nonce, thay vì chỉ nạp HTML trực tiếp.
+
+## Chọn và đánh dấu thay nhập xác nhận nhiều lần
+
+Nghiệm thu: chọn kết quả đã thực hiện, đánh dấu khách đã nghiệm thu; số thực dùng/giao khách hiện ngay từ phiếu xuất, sửa nếu còn dư và đánh dấu xác nhận lượng. Không cần nhập “1 máy” vào mô tả hoặc mở form ghi dùng riêng. Ghi chú bổ sung không bắt buộc. Lưu nghiệm thu ghi lượng và kết quả cùng một lần; nếu ảnh/kiểm tra thất bại thì không ghi lượng trước, retry cùng command không ghi trùng. Ảnh sau làm và biên bản của đúng lần thực hiện vẫn bắt buộc.
+
+Xuất/nhận/trả hàng, chốt giờ, tiếp tục và bàn giao máy dùng checkbox xác nhận thay textarea; ghi chú dùng cho ngoại lệ. Checkbox không được tích sẵn. Form ghi dùng riêng tự điền số theo hàng đang chọn, có dropdown nội dung và chặn vượt số xuất. Với phần dư, Kho xác nhận lượng dư, không phải lượng đã xuất ban đầu.

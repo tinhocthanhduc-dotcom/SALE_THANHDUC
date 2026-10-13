@@ -25,7 +25,9 @@
     "warehouse permission and numbered issue",
     "technician receipt and resume",
     "usage and surplus return",
-    "old machine collection and warehouse receipt"
+    "old machine collection and warehouse receipt",
+    "checkbox confirmations and usage defaults",
+    "atomic inline usage and checklist completion without typing"
   ],
   "page_errors": []
 }

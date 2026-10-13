@@ -13,7 +13,7 @@ App có máy chủ local và Apps Script staging riêng; Google đã khởi tạ
 
 ## Kiểm chứng
 
-28/28 kiểm thử Node đạt, không bỏ qua; gồm domain, HTTP/auth, recovery và GAS bundle/bridge với workbook giả lập. 25 kịch bản Chromium end-to-end đạt, không có page error. 71/71 kiểm thử ERP cũ đạt. Kết quả lưu `test-results.txt` và `browser-results.json`. Đây là kiểm chứng local/giả lập GAS, không thay thế nghiệm thu runtime Google.
+31/31 kiểm thử Node đạt, không bỏ qua; gồm domain, HTTP/auth, recovery và GAS bundle/bridge với workbook giả lập. 27 kịch bản Chromium end-to-end đạt, không có page error. 71/71 kiểm thử ERP cũ đạt. Kết quả lưu `test-results.txt` và `browser-results.json`. Đây là kiểm chứng local/giả lập GAS, không thay thế nghiệm thu runtime Google.
 
 Quyền command/query/ảnh kiểm tra trên máy chủ. Số đơn TD tự cấp; phân công/lịch/lần đến được lưu; chuyển thợ giữ trách nhiệm người cũ đến khi duyệt rồi thu hồi quyền. Nghiệm thu cần ảnh sau và biên bản của lần đến hiện tại. Ảnh private, replay/recovery giữ file đã được journal nhận. Các guard staging/marker và chặn 5 project legacy vẫn giữ.
 
@@ -46,3 +46,11 @@ Console người dùng xác nhận `SyntaxError: Failed to execute write on Docu
 Đã đổi đóng gói GAS: frontend được esbuild chuẩn hóa ES2017/ASCII, bỏ template literals; nguồn nằm trong payload base64 tĩnh và được loader nhỏ gắn qua script.text vào DOM. HTML truyền qua document.write không còn chứa mã ứng dụng với các chuỗi HTML lồng nhau. Loader kế thừa nonce nếu có; không eval mã từ người dùng hoặc tải thêm dịch vụ ngoài.
 
 Kiểm thử GAS UI đổi sang document.write trong iframe sandbox, chạy đăng nhập, đơn Chờ linh kiện cũ, Enter, retry, dữ liệu lỗi và lỗi cú pháp thực sự ở bootstrap; thêm CSP nonce. 9 kịch bản đạt cùng 28/28 Node; cần người dùng UAT lại trên Google để xác nhận lỗi thực tế đã hết. Giữ nguyên cấu hình, tài khoản, dữ liệu và deployment.
+
+## Giảm nhập tay ở các xác nhận nghiệp vụ
+
+Người dùng yêu cầu thông tin chuẩn chỉ cần chọn/đánh dấu. Nghiệm thu chuyển sang checklist giao máy/cài đặt/sửa chữa/vệ sinh/chạy thử/hướng dẫn, xác nhận khách nghiệm thu và ghi chú ngoại lệ tùy chọn. Hàng status received hiện ngay trong form, số thực dùng/giao điền sẵn theo số xuất và sửa được (0 đến số đã nhận); cần đánh dấu xác nhận, không mặc định đã dùng hay đã nghiệm thu. Số dùng và nghiệm thu lưu trong một command/version/journal, không cần mở form ghi dùng riêng. Phần dư vẫn chờ kho nhận.
+
+Xác nhận xuất, nhận, trả hàng, chốt giờ, tiếp tục, khách giao máy và kho kiểm nhận chuyển thành checkbox; ghi chú ngoại lệ tùy chọn. Form ghi dùng riêng có dropdown nội dung và số lượng điền sẵn; đổi hàng cập nhật giới hạn/số mặc định và bỏ dấu xác nhận cũ. Form nghiệm thu hiển thị tình trạng ảnh của đúng lần đến và chặn lưu nếu chưa đủ ảnh hoặc còn giao hàng/chuyển thợ chưa xử lý. Model/serial, lỗi thực tế và vị trí kho vẫn cần thông tin đúng, không tự dựng danh mục.
+
+Kiểm chứng: 31/31 Node đạt, gồm complete gộp atomic/replay, lỗi ảnh không trừ vật tư, sai lượng/thiếu/trùng dòng/xác nhận bị chặn; 27 kịch bản HTTP browser đạt, gồm checklist không gõ mô tả, số lượng tự điền và lưu một version; 9 kịch bản gói GAS/document.write/CSP đạt. Dữ liệu cũ và API complete với work_summary cũ vẫn tương thích, không chạy setup lại. Cần UAT form mới trên Google.

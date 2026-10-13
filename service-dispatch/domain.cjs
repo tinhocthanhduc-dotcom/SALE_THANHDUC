@@ -45,6 +45,7 @@ function execute(state,command,context){
   const hasCustody=()=>order.parts_requests.some(r=>['issued','received','usage_recorded'].includes(r.status))||(order.collected_machines||[]).some(m=>m.status==='with_technician');
   const noHandover=()=>{if(hasCustody())fail('HANDOVER_REQUIRED');};
   const part=()=>{const r=order.parts_requests.find(r=>r.id===payload.request_id);if(!r)fail('UNKNOWN_PARTS_REQUEST');return r;};
+  const recordUsage=(r,usedQty,note)=>{if(r.status!=='received')fail('INVALID_TRANSITION');if(r.technician_id!==actor.id)fail('FORBIDDEN');if(!Number.isSafeInteger(usedQty)||usedQty<0||usedQty>r.issued_qty)fail('INVALID_QUANTITY');r.used_qty=usedQty;r.surplus_qty=r.issued_qty-usedQty;r.usage_note=required(note);r.usage_recorded_at=at;r.status=r.surplus_qty?'usage_recorded':'resolved';};
   const setSchedule=()=>{const start=date(payload.start),end=date(payload.end);if(start>=end)fail('INVALID_APPOINTMENT');const confirmation=required(payload.customer_confirmation);if(order.appointments.some(a=>a.kind==='confirmed'))required(payload.reason);order.appointments.push({start,end,kind:'confirmed',customer_confirmation:confirmation,reason:payload.reason||'',at,actor_id:actor.id});order.status='scheduled';};
   switch(command.type){
    case 'assign':{
@@ -74,7 +75,7 @@ function execute(state,command,context){
    }
    case 'report_parts_usage':{
     requireState('working','accepted_work','cancelled','unable');const r=part();if(order.technician_id!==actor.id||r.technician_id!==actor.id)fail('FORBIDDEN');if(r.status!=='received')fail('INVALID_TRANSITION');
-    if(!Number.isSafeInteger(payload.used_qty)||payload.used_qty<0||payload.used_qty>r.issued_qty)fail('INVALID_QUANTITY');r.used_qty=payload.used_qty;r.surplus_qty=r.issued_qty-r.used_qty;r.usage_note=required(payload.usage_note);r.usage_recorded_at=at;r.status=r.surplus_qty?'usage_recorded':'resolved';break;
+    if(payload.usage_confirmed!==undefined&&payload.usage_confirmed!==true)fail('USAGE_CONFIRMATION_REQUIRED');recordUsage(r,payload.used_qty,payload.usage_note);break;
    }
    case 'return_parts':{
     const r=part();if(r.status==='issued'&&order.status==='cancelled'){r.used_qty=0;r.surplus_qty=r.issued_qty;}else if(r.status!=='usage_recorded'||!r.surplus_qty)fail('INVALID_TRANSITION');r.return_confirmation=required(payload.return_confirmation);r.return_no=number(next,'PN',at);r.returned_qty=r.surplus_qty;r.returned_at=at;r.returned_by=actor.id;r.status='resolved';break;
@@ -117,10 +118,22 @@ function execute(state,command,context){
    case 'complete':{
     requireState('working');if(order.technician_id!==actor.id)fail('FORBIDDEN');
     if(order.transfers.some(t=>t.status==='pending'))fail('TRANSFER_PENDING');if(order.parts_requests.some(r=>!['received','usage_recorded','resolved','rejected'].includes(r.status)))fail('OPEN_PARTS_REQUEST');
+    if(payload.part_usages!==undefined){
+     if(payload.usage_confirmed!==true)fail('USAGE_CONFIRMATION_REQUIRED');
+     const pending=order.parts_requests.filter(r=>r.status==='received');const usages=payload.part_usages;
+     if(!Array.isArray(usages)||usages.length!==pending.length||new Set(usages.map(u=>u&&u.request_id)).size!==usages.length||usages.some(u=>!u||!pending.some(r=>r.id===u.request_id)))fail('INVALID_USAGE_SET');
+     for(const usage of usages)recordUsage(pending.find(r=>r.id===usage.request_id),usage.used_qty,'Số thực dùng / giao khách được thợ xác nhận khi nghiệm thu');
+    }
     if(order.parts_requests.some(r=>r.status==='received'))fail('MATERIAL_USAGE_REQUIRED');
     const visit=order.visits.at(-1);const currentEvidence=order.evidence.filter(e=>e.actor_id===actor.id&&e.visit_id===visit.id);
     if(!currentEvidence.some(e=>e.kind==='after')||!currentEvidence.some(e=>e.kind==='handover'))fail('EVIDENCE_REQUIRED');
-    order.work_summary=required(payload.work_summary);order.status='accepted_work';order.accepted_at=at;visit.ended_at=at;visit.result='accepted';order.dossier_status='awaiting_reconciliation';break;
+    if(payload.completion_checks!==undefined){
+     const checks={delivered:'Đã giao hàng / máy',installed:'Đã lắp đặt / cài đặt',repaired:'Đã sửa chữa / thay thế',cleaned:'Đã vệ sinh / bảo dưỡng',tested:'Đã kiểm tra / chạy thử',guided:'Đã hướng dẫn khách sử dụng'};
+     if(!Array.isArray(payload.completion_checks)||!payload.completion_checks.length||new Set(payload.completion_checks).size!==payload.completion_checks.length||payload.completion_checks.some(key=>!Object.hasOwn(checks,key))||payload.customer_accepted!==true)fail('INVALID_COMPLETION');
+     const note=typeof payload.work_summary==='string'?payload.work_summary.trim():'';
+     order.completion_checks=clone(payload.completion_checks);order.customer_acceptance={confirmed:true,at,actor_id:actor.id};order.work_summary=payload.completion_checks.map(key=>checks[key]).join('; ')+'; Khách xác nhận nghiệm thu'+(note?' · '+note:'');
+    }else order.work_summary=required(payload.work_summary);
+    order.status='accepted_work';order.accepted_at=at;visit.ended_at=at;visit.result='accepted';order.dossier_status='awaiting_reconciliation';break;
    }
    case 'cancel':if((order.parts_requests.some(r=>r.issue_no)||(order.collected_machines||[]).length)&&!permitted(actor,['director']))fail('DIRECTOR_APPROVAL_REQUIRED');requireState('new','assigned','accepted','scheduled','working','waiting_parts','unable');order.cancel_reason=required(payload.reason);order.status='cancelled';for(const visit of order.visits.filter(v=>!v.ended_at)){visit.ended_at=at;visit.result='cancelled';}break;
   }
