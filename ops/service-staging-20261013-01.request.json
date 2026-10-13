@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 13,
-  "update": "User-authorized staging update: machine-free intake, optional same-day clock window, optional assignment notes, multi-line materials proposal/shared issue and receipt, automatic photo upload with replay-safe retry. Reuse current public deployment and preserve accounts/data."
+  "revision": 14,
+  "update": "User-authorized UAT follow-up: clock-only quick appointment with atomic schedule/start, selected multi-material usage and quick used-all/return-all actions, batch warehouse return, accepted-work tab and prominent reassignment notes. Preserve staging identity, public access, users and data."
 }

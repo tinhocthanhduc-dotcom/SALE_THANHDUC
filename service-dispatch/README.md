@@ -71,7 +71,7 @@ Tạo tài khoản thợ trong editor: Project Settings → Script Properties, t
 
 Đo thời gian băm thực tế: chủ project chọn **benchmarkDispatchPassword** → Run, xem `hash_ms` trong Nhật ký thực thi. Phép đo dùng chuỗi tổng hợp, không đọc mật khẩu hoặc thay đổi tài khoản. Chưa có số đo runtime GAS trong lần sửa này; giữ PBKDF2-SHA256 600.000 vòng và định dạng hash cũ. Login băm ngoài ScriptLock, sau đó đọc lại phiên bản/hash/trạng thái khóa trước khi ghi phiên hoặc số lần thất bại. Chỉ cân nhắc đổi thuật toán/tham số khi có số đo GAS và kế hoạch tương thích tài khoản cũ.
 
-Nhận đơn có thể bỏ trống cả hai giờ hẹn; nếu nhập phải nhập đủ khoảng hợp lệ. Thợ nhận đơn đã có giờ hẹn có thể Bắt đầu ngay; đơn chưa hẹn cần Chốt lịch trước. Khu vực khách không bắt buộc. Điện thoại được kiểm tra ngay trong form; chi tiết đơn có liên kết gọi và Google Maps, lịch sử tiếng Việt và giờ không có giây. Thợ dùng tab Việc của tôi; mở đơn sẽ đưa chi tiết vào tầm nhìn.
+Nhận đơn có thể bỏ trống cả hai giờ hẹn; nếu nhập phải nhập đủ khoảng hợp lệ. Thợ chọn Chốt giờ và bắt đầu, có thể dùng giờ đã có hoặc đổi khung giờ; đơn chưa hẹn chọn Chốt giờ và bắt đầu. Khu vực khách không bắt buộc. Điện thoại được kiểm tra ngay trong form; chi tiết đơn có liên kết gọi và Google Maps, lịch sử tiếng Việt và giờ không có giây. Thợ dùng tab Việc của tôi; mở đơn sẽ đưa chi tiết vào tầm nhìn.
 
 ## Hàng mang theo và máy thu về
 
@@ -107,3 +107,12 @@ Chọn “Chưa sử dụng – trả kho” tự đưa số dùng về 0. Đổ
 Trong Đề xuất thêm / chờ linh kiện, dùng **+ Thêm loại linh kiện** để nhập nhiều dòng tên/mã và số lượng, chọn nhu cầu chung rồi lưu một lần. Một phiếu DX tự cấp cho toàn bộ dòng; kho xuất cả phiếu bằng một mã PX và thợ xác nhận nhận cả phiếu. Vẫn hỗ trợ đề xuất một dòng và dữ liệu cũ. Chưa hỗ trợ xuất từng phần; vật tư dư được kho kiểm nhận từng dòng. Tên vật tư có gợi ý từ lịch sử đơn được cấp quyền, chưa phải danh mục tồn kho của app Kho.
 
 Chọn loại ảnh trước rồi chọn/chụp ảnh: app tự nén và tải lên, hiển thị tiến trình và xác nhận đã lưu. Không cần bấm Tải ảnh lên. Nếu mất phản hồi mạng, dùng **Thử tải lại ảnh**; cùng mã yêu cầu tránh tạo ảnh trùng. Ảnh chờ thử lại chỉ giữ trong phiên trang hiện tại, không đóng/tải lại trang trước khi có thông báo đã lưu.
+
+
+## Thao tác sau UAT ngày 14/10/2026
+
+Thợ dùng **Chốt giờ và bắt đầu**: chọn sáng/chiều/cả ngày hoặc hai ô giờ, xác nhận đã liên hệ khách và lưu một lần để vào Đang làm. Ngày lấy theo hôm nay tại Việt Nam; giờ có sẵn được điền để chọn lại nhanh. Lý do đổi hẹn vẫn cần khi đơn đã có lịch xác nhận. Không còn hai nút chốt hẹn và bắt đầu riêng trên UI; API cũ tương thích.
+
+**Ghi vật tư / hàng thực dùng** hiển thị nhiều món: chọn những món cần ghi, bấm Dùng hết/Trả hết cho từng món hoặc tất cả, hoặc sửa lượng thực dùng. Chỉ món đã chọn được lưu; lượng trả = đã nhận − thực dùng. Trong nghiệm thu cũng có nút dùng/trả nhanh, nhưng cần quyết toán đủ mọi món đã nhận. Kho chọn từng món dư hoặc Chọn tất cả món trả, xác nhận đã kiểm nhận và lưu một phiếu PN chung. Thợ ghi trả không tự xác nhận hàng đã về kho.
+
+Đơn nghiệm thu chuyển sang tab **Đã nghiệm thu**, rời danh sách việc mở. Kho vẫn thấy đơn có hàng/máy để bàn giao. Ghi chú phân công mới nhất hiển thị trên thẻ và đầu chi tiết; giao lần 2 trở đi ghi rõ số lần giao, không phải tìm trong lịch sử.

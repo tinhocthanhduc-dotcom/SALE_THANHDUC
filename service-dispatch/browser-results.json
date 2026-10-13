@@ -9,7 +9,7 @@
     "custom work address preserved",
     "create order without machine profile",
     "assign and accept",
-    "start directly with existing appointment",
+    "combined clock schedule and start",
     "request and approve transfer",
     "old technician denied",
     "new technician accepts",
@@ -29,7 +29,10 @@
     "checkbox confirmations and usage defaults",
     "atomic inline usage and checklist completion without typing",
     "multi-line proposal and shared issue receipt",
-    "lost upload response retries without duplicates"
+    "lost upload response retries without duplicates",
+    "selected usage and per-item return shortcuts",
+    "accepted orders in separate tab",
+    "assignment notes visible to technician"
   ],
   "page_errors": []
 }

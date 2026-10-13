@@ -71,3 +71,15 @@ Theo yêu cầu người dùng, manifest webapp chuyển access sang ANYONE_ANON
 - Chọn/chụp ảnh tự nén và tải, bỏ nút Tải ảnh lên. Loại ảnh, đơn và người tải được chốt khi chọn; kiểm tra lại quyền trước gửi. Mất phản hồi có nút Thử tải lại ảnh, giữ đúng payload/mã yêu cầu để không trùng file/ảnh. Hàng đợi ảnh chỉ ở bộ nhớ phiên trang, chưa có lưu offline lâu dài.
 
 Kiểm chứng bản này: 35/35 Node, 29 kịch bản HTTP Chromium không page error, 9 kịch bản GAS/document.write/CSP và 71/71 ERP đạt. Browser mô phỏng server đã nhận ảnh nhưng phản hồi bị mất: thử lại cùng key, vẫn chỉ một ảnh. Domain kiểm tra cả phiếu atomic, dòng lỗi không ghi một phần, số DX/PX không trùng và quyền nhận. Kết quả cập nhật trong ba file kiểm thử. Cần UAT thao tác mới trên Google thực tế; không chạy setup lại.
+
+
+## Điều chỉnh sau UAT 14/10/2026
+
+Người dùng xác nhận đã test hết tiến trình trước bản điều chỉnh này.
+
+- Chốt/đổi hẹn và hẹn lại dùng giờ-only, chọn nhanh sáng/chiều/cả ngày/tùy chỉnh; ngày do máy chủ lấy theo hôm nay tại Việt Nam. Gộp Chốt giờ và Bắt đầu tại khách thành schedule_start atomic: một command/version, một lần đến, replay không tạo visit trùng; giữ kiểm tra quyền, vật tư và xác nhận khách. API schedule/start cũ giữ tương thích. Đây là thao tác dùng khi đến khách; không đánh dấu bắt đầu chỉ vì nhận đơn.
+- Ghi dùng/trả hiển thị nhiều món, chọn từng món, nút Dùng hết/Trả hết từng dòng hoặc toàn bộ, lượng thực dùng sửa được. Món không chọn không thay đổi. Có xác nhận lượng, chỉnh lượng hoặc shortcut bỏ tích cũ. Trong nghiệm thu vẫn ghi đủ dòng nhận. Trả vật tư chỉ ghi dư cần trả; kho xác nhận chọn một/nhiều/tất cả món, PN chung trong một command, không tự báo hàng đã về kho.
+- Đơn accepted_work rời Bảng điều phối/Việc của tôi và nằm ở tab Đã nghiệm thu; quyền đọc máy chủ giữ nguyên. Kho vẫn thấy đơn cần bàn giao hàng/máy sau nghiệm thu. Hồ sơ tài chính còn chờ đối soát.
+- Ghi chú phân công hiện trên thẻ và đầu chi tiết; lần giao lại có tiêu đề và số lần rõ, nội dung được escape. Browser thử giao cùng thợ lần 2, xác nhận ghi chú hiện bên thợ trước và sau mở đơn.
+
+Kiểm chứng local: 38/38 Node, 32 kịch bản HTTP browser không page error, 9 kịch bản GAS/document.write/CSP đạt. Bao gồm giờ theo ngày Việt Nam, schedule/start atomic/replay, không vượt chờ vật tư, chọn dòng/dùng hết/trả hết, hàng không chọn giữ nguyên, dòng lỗi không ghi một phần, batch PN/replay, tab nghiệm thu và ghi chú lần 2. Kết quả cập nhật trong các file kiểm thử. Giữ nguyên project/deployment, public access, tài khoản và dữ liệu; không chạy setup. Cần UAT thao tác mới trên Google.
