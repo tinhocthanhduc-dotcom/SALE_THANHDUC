@@ -13,12 +13,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
  const submit=async(type,values={})=>{await page.locator(`[data-form="${type}"]`).click();for(const [key,value] of Object.entries(values)){const element=page.locator('#'+key);if(await element.evaluate(e=>e.tagName==='SELECT'))await element.selectOption(value);else await element.fill(value);}await page.locator('#command-form button.primary').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);};
  try{
   await page.goto(base);await login('dispatch');
-  await page.locator('[data-page="customers"]').click();
-  await submit('create_customer',{name:'Khách browser mẫu',phone:'0901234000',address:'Địa chỉ giả',area:'Tuyến 1'});
+  await page.locator('[data-form="create_order"]').click();
+  assert.equal(await page.locator('#customer_id').inputValue(),'');assert.equal(await page.locator('#machine_id').isDisabled(),true);
+  await page.locator('#address').fill('Địa chỉ làm giả');await page.locator('#request').fill('Máy không in');await page.locator('#source').selectOption('zalo');await page.locator('#priority').selectOption('urgent');await page.locator('#appointment_start').fill('2026-10-13T09:00');await page.locator('#appointment_end').fill('2026-10-13T10:00');
+  const originalKey=await page.locator('#command-form').getAttribute('data-key');
+  await page.locator('[data-inline-customer]').click();
+  for(const [key,value] of Object.entries({name:'Khách browser mẫu',phone:'0901234000',address:'Địa chỉ khách mặc định',area:'Tuyến 1'}))await page.locator('#'+key).fill(value);
+  await page.locator('#command-form button.primary').click();await page.waitForFunction(()=>document.getElementById('command-form')?.dataset.type==='create_order');
   const customer=Object.values(app.business.snapshot().state.customers)[0];
-  await submit('create_machine',{customer_id:customer.id,model:'Model giả'});
-  const machine=Object.values(app.business.snapshot().state.machines)[0];
-  await submit('create_order',{customer_id:customer.id,machine_id:machine.id,address:'Địa chỉ làm giả',request:'Máy không in',source:'zalo',priority:'urgent',appointment_start:'2026-10-13T09:00',appointment_end:'2026-10-13T10:00'});
+  assert.equal(await page.locator('#customer_id').inputValue(),customer.id);assert.equal(await page.locator('#request').inputValue(),'Máy không in');assert.equal(await page.locator('#address').inputValue(),'Địa chỉ làm giả');assert.equal(await page.locator('#source').inputValue(),'zalo');assert.equal(await page.locator('#command-form').getAttribute('data-key'),originalKey);
+  await page.locator('[data-inline-machine]').click();assert.equal(await page.locator('#customer_id').inputValue(),customer.id);await page.locator('#model').fill('Model giả');await page.locator('#command-form button.primary').click();await page.waitForFunction(()=>document.getElementById('command-form')?.dataset.type==='create_order');
+  const machine=Object.values(app.business.snapshot().state.machines)[0];assert.equal(await page.locator('#machine_id').inputValue(),machine.id);assert.equal(await page.locator('#request').inputValue(),'Máy không in');assert.equal(await page.locator('#appointment_start').inputValue(),'2026-10-13T09:00');
+  await page.locator('[data-inline-customer]').click();await page.locator('[data-close]').click();assert.equal(await page.locator('#request').inputValue(),'Máy không in');assert.equal(await page.locator('#machine_id').inputValue(),machine.id);
+  await page.locator('#command-form button.primary').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
   const order=Object.values(app.business.snapshot().state.orders)[0];assert.match(order.order_no,/^TD-\d{8}-0001$/);
   await submit('assign',{technician_id:'tech1'});await logout();await login('tech1');await page.locator(`[data-open="${order.id}"]`).click();
   assert.equal(await page.locator('[data-form="assign"]').count(),0);await submit('accept');
@@ -38,7 +45,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await page.reload();await page.waitForFunction(()=>!document.getElementById('app').hidden);await page.locator(`[data-open="${order.id}"]`).click();assert((await page.locator('#detail').textContent()).includes('Đã nghiệm thu'));
   await page.locator('[data-image]').first().click();await page.waitForSelector('#image-view img');
   await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  // A second customer's machine must never appear under the first customer.
+  await logout();await login('dispatch');await page.locator('[data-page="customers"]').click();
+  await submit('create_customer',{name:'Khách khác mẫu',phone:'0901234999',address:'Địa chỉ khác',area:'Tuyến 2'});
+  const other=Object.values(app.business.snapshot().state.customers).find(c=>c.id!==customer.id);
+  await submit('create_machine',{customer_id:other.id,model:'Máy của khách khác'});
+  await page.locator('[data-form="create_order"]').click();await page.locator('#customer-search').fill('0901234000');assert.equal(await page.locator('#customer_id option').count(),2);await page.locator('#customer_id').selectOption(customer.id);assert.equal(await page.locator('#machine_id option').count(),2);assert.equal(await page.locator('#machine_id').textContent().then(t=>t.includes('Máy của khách khác')),false);assert.equal(await page.locator('#address').inputValue(),'Địa chỉ khách mặc định');
+  await page.locator('#address').fill('Địa chỉ công việc riêng');await page.locator('#customer-search').fill('');await page.locator('#customer_id').selectOption(other.id);assert.equal(await page.locator('#address').inputValue(),'Địa chỉ công việc riêng');assert.equal(await page.locator('#machine_id').inputValue(),'');await page.locator('[data-close]').click();
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({pass:true,scenarios:['login server-side','create customer/machine/order','assign and accept','schedule/start','request and approve transfer','old technician denied','new technician accepts','upload private evidence','accept work','reload durability','authorized image','mobile layout'],page_errors:errors},null,2));
+  console.log(JSON.stringify({pass:true,scenarios:['login server-side','empty customer lists give inline creation','inline customer and machine retain order draft','inline cancel preserves draft','customer phone search and machine ownership filter','custom work address preserved','create customer/machine/order','assign and accept','schedule/start','request and approve transfer','old technician denied','new technician accepts','upload private evidence','accept work','reload durability','authorized image','mobile layout'],page_errors:errors},null,2));
  }finally{await browser.close();await new Promise(r=>app.server.close(r));fs.rmSync(dir,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exit(1);});

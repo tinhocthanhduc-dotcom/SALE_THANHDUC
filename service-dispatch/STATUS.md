@@ -34,3 +34,6 @@ Chưa khởi tạo Sheets/Drive/account trên Google vì mật khẩu admin ph�
 
 ## Sửa lỗi sau khởi tạo Google
 Đã bổ sung snapshot() vào SheetsRepository để app đọc được dữ liệu sau đăng nhập, đồng nhất interface với runner local. Kiểm thử mới chạy toàn bộ GAS bridge + auth + workbook giả lập: đăng nhập, query, tạo khách/máy/đơn và query lại. checkDispatchStaging dành cho quản trị Google, chỉ ghi boolean/mã lỗi, không log credential hoặc dữ liệu khách. Không chạy lại setup hoặc đổi mật khẩu khi cập nhật bản sửa.
+
+## Nhận đơn khi danh mục còn trống
+Form nhận đơn đã có tìm khách theo tên/điện thoại, tạo khách và thêm máy ngay trong cùng luồng. Máy lọc theo khách, không chọn nhầm máy khách khác. Giữ yêu cầu, địa chỉ riêng, nguồn, ưu tiên, giờ hẹn và command key của bản nháp khi thêm/cancel thêm hồ sơ. Chọn khách điền địa chỉ mặc định chỉ nếu chưa sửa địa chỉ công việc. Browser test chuyển từ danh mục rỗng sang tạo khách/máy/đơn; giữ bản nháp, tìm theo điện thoại và kiểm lọc máy.

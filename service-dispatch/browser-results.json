@@ -2,6 +2,11 @@
   "pass": true,
   "scenarios": [
     "login server-side",
+    "empty customer lists give inline creation",
+    "inline customer and machine retain order draft",
+    "inline cancel preserves draft",
+    "customer phone search and machine ownership filter",
+    "custom work address preserved",
     "create customer/machine/order",
     "assign and accept",
     "schedule/start",
