@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 10,
-  "update": "Reduce repetitive entry: checkbox confirmations, preset usage notes and quantities, checklist acceptance with inline atomic material usage. Preserve evidence, authorization and quantity/replay guards, staging data/accounts/deployment."
+  "revision": 11,
+  "update": "Finalize choice-based confirmations: unused material auto-fills zero; changing item or quantity clears prior acknowledgment. Keep checklist/atomic acceptance, staging data/accounts/deployment."
 }

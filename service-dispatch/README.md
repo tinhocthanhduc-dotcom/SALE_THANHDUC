@@ -96,3 +96,5 @@ Gói GAS chuẩn hóa frontend bằng esbuild ES2017/ASCII, lưu nguồn thành 
 Nghiệm thu: chọn kết quả đã thực hiện, đánh dấu khách đã nghiệm thu; số thực dùng/giao khách hiện ngay từ phiếu xuất, sửa nếu còn dư và đánh dấu xác nhận lượng. Không cần nhập “1 máy” vào mô tả hoặc mở form ghi dùng riêng. Ghi chú bổ sung không bắt buộc. Lưu nghiệm thu ghi lượng và kết quả cùng một lần; nếu ảnh/kiểm tra thất bại thì không ghi lượng trước, retry cùng command không ghi trùng. Ảnh sau làm và biên bản của đúng lần thực hiện vẫn bắt buộc.
 
 Xuất/nhận/trả hàng, chốt giờ, tiếp tục và bàn giao máy dùng checkbox xác nhận thay textarea; ghi chú dùng cho ngoại lệ. Checkbox không được tích sẵn. Form ghi dùng riêng tự điền số theo hàng đang chọn, có dropdown nội dung và chặn vượt số xuất. Với phần dư, Kho xác nhận lượng dư, không phải lượng đã xuất ban đầu.
+
+Chọn “Chưa sử dụng – trả kho” tự đưa số dùng về 0. Đổi hàng hoặc sửa số lượng sẽ bỏ dấu xác nhận lượng cũ; cần đánh dấu lại trước khi lưu.

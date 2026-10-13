@@ -54,3 +54,5 @@ Người dùng yêu cầu thông tin chuẩn chỉ cần chọn/đánh dấu. Ng
 Xác nhận xuất, nhận, trả hàng, chốt giờ, tiếp tục, khách giao máy và kho kiểm nhận chuyển thành checkbox; ghi chú ngoại lệ tùy chọn. Form ghi dùng riêng có dropdown nội dung và số lượng điền sẵn; đổi hàng cập nhật giới hạn/số mặc định và bỏ dấu xác nhận cũ. Form nghiệm thu hiển thị tình trạng ảnh của đúng lần đến và chặn lưu nếu chưa đủ ảnh hoặc còn giao hàng/chuyển thợ chưa xử lý. Model/serial, lỗi thực tế và vị trí kho vẫn cần thông tin đúng, không tự dựng danh mục.
 
 Kiểm chứng: 31/31 Node đạt, gồm complete gộp atomic/replay, lỗi ảnh không trừ vật tư, sai lượng/thiếu/trùng dòng/xác nhận bị chặn; 27 kịch bản HTTP browser đạt, gồm checklist không gõ mô tả, số lượng tự điền và lưu một version; 9 kịch bản gói GAS/document.write/CSP đạt. Dữ liệu cũ và API complete với work_summary cũ vẫn tương thích, không chạy setup lại. Cần UAT form mới trên Google.
+
+Lựa chọn Chưa sử dụng tự điền 0; sửa lượng sẽ bỏ xác nhận cũ, tránh giữ dấu tích cho số khác. Browser test kiểm tra lựa chọn, chỉnh lại lượng và checkbox trước khi lưu.
