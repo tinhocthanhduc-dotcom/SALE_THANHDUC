@@ -41,7 +41,15 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/project-registry" "$RUNNER_TEMP/dispatch-project"
           gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts" --jq '.artifacts[] | select(.name == "SERVICE_DISPATCH_PROJECT_20261013_01") | [.workflow_run.id, .expired] | @tsv' > "$RUNNER_TEMP/registry-candidates.tsv"
-          if [ -s "$RUNNER_TEMP/registry-candidates.tsv" ]; then
+          if [ -f "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.project.json" ]; then
+            cp "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.project.json" "$RUNNER_TEMP/project-registry/project.json"
+            node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const project=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/project.json'),'utf8'));
+          if(project.request_id!=='20261013-01'||!project.script_id)throw Error('INVALID_PROJECT_REGISTRY');
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'dispatch-project/.clasp.json'),JSON.stringify({scriptId:project.script_id,rootDir:'.'}));
+          JS
+          elif [ -s "$RUNNER_TEMP/registry-candidates.tsv" ]; then
             read -r registry_run registry_expired < "$RUNNER_TEMP/registry-candidates.tsv"
             if [ "$registry_expired" = 'true' ]; then
               echo 'Existing project registry expired; recover the original project ID instead of creating a duplicate.'

@@ -25,3 +25,9 @@ GAS UAT/triển khai, thư mục/project/file staging thực tế, tài khoản 
 4. Staging Google riêng và UAT: cài gói, cấu hình marker/properties/tài khoản qua editor, chạy fixture/auth/concurrency/recovery/ảnh/quota/backup. Không dùng secret GitHub CLASPRC_JSON làm phiên nhân viên hoặc tự deploy legacy.
 
 README ghi cách tải/chạy local và cấu hình GAS. Tài khoản local là fixture công khai, không đưa lên Google. Tham chiếu docs/service-dispatch/SPEC_V1_1.md; các hạn mức/quyền còn mở không được xem là phê duyệt vận hành.
+
+## Project Google đã tạo – 13/10/2026
+
+Theo yêu cầu tạo Apps Script của người dùng, workflow Create separate service dispatch Apps Script staging (run 38404000213) đã tạo project riêng, push mã và deploy web app thành công. Metadata ID/link không có credential lưu ở ops/service-staging-20261013-01.project.json; registry dùng lại project/deployment khi chạy lại, không đụng 5 app legacy. Workflow kiểm thử cùng commit thành công.
+
+Chưa khởi tạo Sheets/Drive/account trên Google vì mật khẩu admin phải được chủ project chọn trong Script Properties DISPATCH_INITIAL_PASSWORD, rồi chạy dispatchSetupStaging_ từ editor và cấp quyền theo lời nhắc. Chưa nghiệm thu nghiệp vụ Google runtime hoặc dữ liệu thật. Helper chặn legacy/unknown setup workbook, giữ tài nguyên đã được helper tạo, xóa mật khẩu tạm và chỉ lưu hash/salt. Username khởi tạo là admin; không dùng mật khẩu mẫu local.
