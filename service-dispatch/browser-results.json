@@ -9,7 +9,7 @@
     "custom work address preserved",
     "create customer/machine/order",
     "assign and accept",
-    "schedule/start",
+    "start directly with existing appointment",
     "request and approve transfer",
     "old technician denied",
     "new technician accepts",
@@ -17,7 +17,11 @@
     "accept work",
     "reload durability",
     "authorized image",
-    "mobile layout"
+    "mobile detail navigation",
+    "optional appointment and area",
+    "immediate phone validation",
+    "call and maps links",
+    "Vietnamese history and minute display"
   ],
   "page_errors": []
 }

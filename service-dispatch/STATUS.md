@@ -1,39 +1,24 @@
-# Điều phối dịch vụ – mốc 1, ngày 13/10/2026
+# Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
-Đã xây mã chạy local có máy chủ, khác bản ERP HTML offline. Client không tự chọn vai trò, máy chủ xác thực nhân viên và kiểm quyền truy vấn/command/ảnh. Chưa triển khai Apps Script hoặc chạy dữ liệu thật.
+App có máy chủ local và Apps Script staging riêng; Google đã khởi tạo và người dùng đã kiểm tra luồng nhận đơn, giao/nhận/hẹn/bắt đầu, chuyển thợ, ảnh và nghiệm thu. Project/deployment hiện tại lưu trong `ops/service-staging-20261013-01.project.json`. Cập nhật dùng lại project/deployment này, giữ nguyên Sheets, Drive, Script Properties và tài khoản.
 
-| Đã có | Kiểm chứng |
-|---|---|
-| Mật khẩu PBKDF2 với salt, phiên/khóa/logout/thu hồi | Hash khớp Node crypto; khóa 5 lần, hết phiên và inactive/version bị chặn |
-| Khách/máy/đơn có số TD tự cấp | FK, snapshot, version/idempotency và quyền máy chủ |
-| Giao, nhận, hẹn, bắt đầu, không làm được, chờ linh kiện | Lưu phân công/lịch/lần đến; không giả xác nhận kho |
-| Chuyển thợ | Chờ điều phối duyệt; giữ lịch sử; thợ cũ mất quyền cả replay |
-| Ảnh sau và biên bản nghiệm thu | File private, đúng đơn/actor/lần đến; replay/recovery không mất file đã được journal nhận |
-| Gói GAS staging | Bundle parse trong Node VM; route default deny và 5 project legacy bị chặn |
+## Sửa sau UAT
 
-16 kiểm thử Node mới đạt local. 12 kịch bản trong một luồng Chromium end-to-end đạt: đăng nhập, tạo hồ sơ, giao/nhận/hẹn/bắt đầu, chuyển thợ, chặn người cũ, ảnh, nghiệm thu, reload và mobile. 71 kiểm thử ERP cũ đạt sau khi repository nhận domain injection; ERP UI không đổi.
+- Có hàm public `provisionDispatchUser`, kiểm tra Google active/effective user giống `setupDispatchStaging`. Cấp thợ qua hai Script Properties tạm, xóa sau xử lý; README hướng dẫn đúng hàm public. Chưa có màn hình quản trị tài khoản.
+- Login băm ngoài ScriptLock, rồi đọc lại tài khoản, version, hash, salt, tham số và lockout trong khóa trước khi ghi. Kiểm thử thay đổi tài khoản/khóa đồng thời và số lần thất bại không bị ghi đè. Giữ PBKDF2-SHA256 600.000 vòng, tương thích tài khoản cũ.
+- Thêm `benchmarkDispatchPassword` chỉ chủ project chạy được; đo chuỗi tổng hợp và log `hash_ms`, không đọc mật khẩu nhân viên. **Chưa có số đo thời gian GAS thực tế**: môi trường này không có phiên OAuth cục bộ để gọi function trên Google; workflow clasp chỉ push/deploy. Cần chạy phép đo trong editor trước khi quyết định thay thuật toán hoặc số vòng.
+- Nhận đơn cho phép bỏ trống cả hai giờ, khu vực khách không bắt buộc. Khoảng giờ nhập một đầu hoặc sai thứ tự bị chặn. Thợ đã nhận đơn có giờ hẹn được Bắt đầu ngay; chưa hẹn cần chốt lịch trước.
+- Điện thoại có link gọi, địa chỉ có Google Maps, lịch sử tiếng Việt và tên nhân viên, giờ không có giây, máy không serial không có dấu phân cách thừa.
+- Form điện thoại báo lỗi ngay khi nhập chữ. Thợ chỉ thấy tab Việc của tôi; mở đơn đưa chi tiết vào tầm nhìn và có nút quay lại danh sách trên điện thoại.
 
-## Chưa có
+## Kiểm chứng
 
-GAS UAT/triển khai, thư mục/project/file staging thực tế, tài khoản thử nghiệm trên Google, benchmark PBKDF2/Sheets/Drive, cấu hình/quản trị tài khoản trên UI, line công/giá/phí, vật tư thực dùng/cấp/nhận/trả, tiếp tục sau chờ linh kiện, thu/nộp quỹ, ký vẽ, backup lịch, nhập dữ liệu nguồn và đóng hồ sơ tài chính. Nghiệm thu mốc này giữ hồ sơ Chờ đối soát, không đồng nghĩa hoàn tất toàn bộ SPEC_V1_1.
+23/23 kiểm thử Node đạt, không bỏ qua; gồm domain, HTTP/auth, recovery và GAS bundle/bridge với workbook giả lập. 21 kịch bản Chromium end-to-end đạt, không có page error. 71/71 kiểm thử ERP cũ đạt. Kết quả lưu `test-results.txt` và `browser-results.json`. Đây là kiểm chứng local/giả lập GAS, không thay thế nghiệm thu runtime Google.
 
-## Mốc tiếp theo
+Quyền command/query/ảnh kiểm tra trên máy chủ. Số đơn TD tự cấp; phân công/lịch/lần đến được lưu; chuyển thợ giữ trách nhiệm người cũ đến khi duyệt rồi thu hồi quyền. Nghiệm thu cần ảnh sau và biên bản của lần đến hiện tại. Ảnh private, replay/recovery giữ file đã được journal nhận. Các guard staging/marker và chặn 5 project legacy vẫn giữ.
 
-1. Giá/phí 0–200k và dòng công theo đặc tả; báo giá khách đồng ý và quyền duyệt được chốt.
-2. Quản trị tài khoản/cấu hình, danh mục và định mức, nhận/cấp/trả vật tư.
-3. Thu/nộp quỹ, đối soát và điều kiện đóng hồ sơ.
-4. Staging Google riêng và UAT: cài gói, cấu hình marker/properties/tài khoản qua editor, chạy fixture/auth/concurrency/recovery/ảnh/quota/backup. Không dùng secret GitHub CLASPRC_JSON làm phiên nhân viên hoặc tự deploy legacy.
+## Phần còn lại
 
-README ghi cách tải/chạy local và cấu hình GAS. Tài khoản local là fixture công khai, không đưa lên Google. Tham chiếu docs/service-dispatch/SPEC_V1_1.md; các hạn mức/quyền còn mở không được xem là phê duyệt vận hành.
+Giá/phí kiểm tra 0–200k, báo giá và duyệt; dòng công; định mức/cấp/nhận/trả vật tư và tiếp tục sau Chờ linh kiện; thu tiền/nộp quỹ/đối soát; quản trị tài khoản trên UI; ký vẽ, backup lịch và nhập dữ liệu nguồn. Nghiệm thu hiện giữ hồ sơ Chờ đối soát, không đồng nghĩa đóng hồ sơ tài chính hoặc hoàn thành toàn bộ SPEC_V1_1.
 
-## Project Google đã tạo – 13/10/2026
-
-Theo yêu cầu tạo Apps Script của người dùng, workflow Create separate service dispatch Apps Script staging (run 38404000213) đã tạo project riêng, push mã và deploy web app thành công. Metadata ID/link không có credential lưu ở ops/service-staging-20261013-01.project.json; registry dùng lại project/deployment khi chạy lại, không đụng 5 app legacy. Workflow kiểm thử cùng commit thành công.
-
-Chưa khởi tạo Sheets/Drive/account trên Google vì mật khẩu admin phải được chủ project chọn trong Script Properties DISPATCH_INITIAL_PASSWORD, rồi chạy setupDispatchStaging từ editor và cấp quyền theo lời nhắc. Chưa nghiệm thu nghiệp vụ Google runtime hoặc dữ liệu thật. Helper chặn legacy/unknown setup workbook, giữ tài nguyên đã được helper tạo, xóa mật khẩu tạm và chỉ lưu hash/salt. Username khởi tạo là admin; không dùng mật khẩu mẫu local.
-
-## Sửa lỗi sau khởi tạo Google
-Đã bổ sung snapshot() vào SheetsRepository để app đọc được dữ liệu sau đăng nhập, đồng nhất interface với runner local. Kiểm thử mới chạy toàn bộ GAS bridge + auth + workbook giả lập: đăng nhập, query, tạo khách/máy/đơn và query lại. checkDispatchStaging dành cho quản trị Google, chỉ ghi boolean/mã lỗi, không log credential hoặc dữ liệu khách. Không chạy lại setup hoặc đổi mật khẩu khi cập nhật bản sửa.
-
-## Nhận đơn khi danh mục còn trống
-Form nhận đơn đã có tìm khách theo tên/điện thoại, tạo khách và thêm máy ngay trong cùng luồng. Máy lọc theo khách, không chọn nhầm máy khách khác. Giữ yêu cầu, địa chỉ riêng, nguồn, ưu tiên, giờ hẹn và command key của bản nháp khi thêm/cancel thêm hồ sơ. Chọn khách điền địa chỉ mặc định chỉ nếu chưa sửa địa chỉ công việc. Browser test chuyển từ danh mục rỗng sang tạo khách/máy/đơn; giữ bản nháp, tìm theo điện thoại và kiểm lọc máy.
+Tiếp tục UAT Google với tài khoản thợ được cấp bằng `provisionDispatchUser`, kiểm tra các điểm sửa và chạy benchmark trong editor. Không cần chạy lại setup hoặc đổi mật khẩu sau cập nhật mã. Tài khoản fixture local công khai không được đưa lên Google.

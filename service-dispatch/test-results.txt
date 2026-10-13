@@ -1,24 +1,31 @@
-✔ service order reaches acceptance with registered photos and keeps financial dossier open (3.698626ms)
-✔ technician cannot spoof actor, assignment, prices or public evidence registration (0.858562ms)
-✔ transfer keeps old technician responsible until approval, then revokes even old replay access (0.586332ms)
-✔ stale writes fail, exact replay is a no-op, and changed payload conflicts (1.075769ms)
-✔ appointments preserve requested and confirmed history and reject invalid ranges (0.642196ms)
-✔ waiting parts cannot pretend warehouse delivery is complete in this milestone (0.459682ms)
-✔ GAS bundle parses and all routes default deny before Sheets or Drive (102.778416ms)
-✔ GAS project mismatch rejects before workbook access and legacy apps are explicitly blocked (105.589707ms)
-✔ PBKDF2 implementation matches Node crypto including unicode passwords (612.515834ms)
-✔ unauthenticated and cross-origin commands are denied (27.366699ms)
-✔ server sessions never leak tokens or password hashes in query projections (543.760426ms)
-✔ five failed attempts lock the account; expiry restores login, disabling revokes session (3693.143913ms)
-✔ wrong technician and forged role cannot access order or upload photos (1078.666605ms)
-✔ local recovery preserves service customers without creating duplicates (1.278055ms)
-✔ session expiry requires login again (528.376571ms)
-✔ prepared image command recovery retains its owned evidence file (1070.748028ms)
-ℹ tests 16
+✔ login derives outside lock, rereads before writing and stores only session digest (2.102031ms)
+✔ credential changes, deactivation and concurrent lockout block login after derivation (1.310091ms)
+✔ failed login uses latest failure count and cannot overwrite a concurrent attempt (0.199219ms)
+✔ service order reaches acceptance with registered photos and keeps financial dossier open (2.803777ms)
+✔ technician cannot spoof actor, assignment, prices or public evidence registration (0.670599ms)
+✔ transfer keeps old technician responsible until approval, then revokes even old replay access (1.234197ms)
+✔ stale writes fail, exact replay is a no-op, and changed payload conflicts (0.321874ms)
+✔ appointments preserve requested and confirmed history and reject invalid ranges (0.512822ms)
+✔ waiting parts cannot pretend warehouse delivery is complete in this milestone (0.411789ms)
+✔ intake permits no area or appointment, but start requires a complete appointment (0.921797ms)
+✔ accepted order can start with existing requested appointment without duplicating schedule (0.225259ms)
+✔ GAS bundle parses and all routes default deny before Sheets or Drive (133.599674ms)
+✔ GAS project mismatch rejects before workbook access and legacy apps are explicitly blocked (90.182177ms)
+✔ visible setup entrypoint rejects other Google users and delegates for the editor user (86.46726ms)
+✔ GAS bridge login, Sheets query and commands share the repository contract (5562.430153ms)
+✔ PBKDF2 implementation matches Node crypto including unicode passwords (661.902854ms)
+✔ unauthenticated and cross-origin commands are denied (32.821339ms)
+✔ server sessions never leak tokens or password hashes in query projections (562.184634ms)
+✔ five failed attempts lock the account; expiry restores login, disabling revokes session (3779.601721ms)
+✔ wrong technician and forged role cannot access order or upload photos (1095.171622ms)
+✔ local recovery preserves service customers without creating duplicates (1.475637ms)
+✔ session expiry requires login again (534.706223ms)
+✔ prepared image command recovery retains its owned evidence file (1077.75758ms)
+ℹ tests 23
 ℹ suites 0
-ℹ pass 16
+ℹ pass 23
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 9807.786818
+ℹ duration_ms 10205.05646

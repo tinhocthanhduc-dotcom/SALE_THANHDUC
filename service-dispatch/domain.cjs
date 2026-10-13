@@ -26,7 +26,7 @@ function execute(state,command,context){
  const requireState=(...statuses)=>{if(!statuses.includes(order.status))fail('INVALID_TRANSITION');};
  if(command.type==='create_customer'){
   const phone=required(payload.phone);if(!/^[+\d ()-]{7,25}$/.test(phone))fail('INVALID_PHONE');
-  entity={id:fresh(),customer_no:number(next,'KH',at),name:required(payload.name),phone,address:required(payload.address),area:required(payload.area),terms:payload.terms==='credit'?'credit':'immediate',version:1,created_at:at};next.customers[entity.id]=entity;
+  entity={id:fresh(),customer_no:number(next,'KH',at),name:required(payload.name),phone,address:required(payload.address),area:typeof payload.area==='string'?payload.area.trim():'',terms:payload.terms==='credit'?'credit':'immediate',version:1,created_at:at};next.customers[entity.id]=entity;
  }else if(command.type==='create_machine'){
   if(!next.customers[payload.customer_id])fail('UNKNOWN_CUSTOMER');
   entity={id:fresh(),customer_id:payload.customer_id,model:required(payload.model),serial:typeof payload.serial==='string'?payload.serial.trim():'',version:1,created_at:at};next.machines[entity.id]=entity;
@@ -34,8 +34,8 @@ function execute(state,command,context){
   const customer=next.customers[payload.customer_id],machine=next.machines[payload.machine_id];
   if(!customer)fail('UNKNOWN_CUSTOMER');if(!machine||machine.customer_id!==customer.id)fail('MACHINE_CUSTOMER_MISMATCH');
   if(!['hotline','zalo','other'].includes(payload.source)||!['normal','urgent','critical'].includes(payload.priority))fail('INVALID_CATEGORY');
-  const appointmentStart=date(payload.appointment_start),appointmentEnd=date(payload.appointment_end);if(appointmentStart>=appointmentEnd)fail('INVALID_APPOINTMENT');
-  order={id:fresh(),order_no:number(next,'TD',at),customer_id:customer.id,machine_id:machine.id,customer_snapshot:clone(customer),machine_snapshot:clone(machine),address:required(payload.address),request:required(payload.request),area:customer.area,terms:customer.terms,source:payload.source,priority:payload.priority,status:'new',version:1,created_at:at,updated_at:at,assignments:[],appointments:[{start:appointmentStart,end:appointmentEnd,kind:'requested',at,actor_id:actor.id}],visits:[],transfers:[],parts_requests:[],evidence:[],payment_status:'unpaid',financial_scope:'not_implemented'};
+  const hasStart=!!payload.appointment_start,hasEnd=!!payload.appointment_end;if(hasStart!==hasEnd)fail('INVALID_APPOINTMENT');const appointments=[];if(hasStart){const start=date(payload.appointment_start),end=date(payload.appointment_end);if(start>=end)fail('INVALID_APPOINTMENT');appointments.push({start,end,kind:'requested',at,actor_id:actor.id});}
+  order={id:fresh(),order_no:number(next,'TD',at),customer_id:customer.id,machine_id:machine.id,customer_snapshot:clone(customer),machine_snapshot:clone(machine),address:required(payload.address),request:required(payload.request),area:customer.area,terms:customer.terms,source:payload.source,priority:payload.priority,status:'new',version:1,created_at:at,updated_at:at,assignments:[],appointments,visits:[],transfers:[],parts_requests:[],evidence:[],payment_status:'unpaid',financial_scope:'not_implemented'};
   next.orders[order.id]=order;entity=order;
  }else{
   order=next.orders[payload.order_id];if(!order)fail('UNKNOWN_ORDER');
@@ -54,7 +54,7 @@ function execute(state,command,context){
    }
    case 'accept':requireState('assigned');if(order.technician_id!==actor.id)fail('FORBIDDEN');assignment.accepted_at=at;order.status='accepted';break;
    case 'schedule':requireState('accepted','scheduled','unable');if(order.technician_id!==actor.id)fail('FORBIDDEN');setSchedule();break;
-   case 'start':requireState('scheduled');if(order.technician_id!==actor.id)fail('FORBIDDEN');order.visits.push({id:fresh(),technician_id:actor.id,started_at:at});order.status='working';break;
+   case 'start':requireState('accepted','scheduled');if(order.technician_id!==actor.id)fail('FORBIDDEN');if(!order.appointments.length)fail('APPOINTMENT_REQUIRED');order.visits.push({id:fresh(),technician_id:actor.id,started_at:at});order.status='working';break;
    case 'wait_parts':{
     requireState('working');if(order.technician_id!==actor.id)fail('FORBIDDEN');
     const request={id:fresh(),item:required(payload.item),qty:payload.qty,reason:required(payload.reason),status:'requested',created_at:at};if(!Number.isSafeInteger(request.qty)||request.qty<=0)fail('INVALID_QUANTITY');order.parts_requests.push(request);order.status='waiting_parts';order.waiting_since=at;break;
@@ -94,7 +94,7 @@ function execute(state,command,context){
  const result={id:entity.id,order_id:order?.id,order_no:order?.order_no,version:entity.version,status:order?.status,replayed:false};
  if(command.type==='create_customer'&&Object.values(state.customers).some(c=>c.phone.replace(/\D/g,'')===entity.phone.replace(/\D/g,'')))result.warning='DUPLICATE_PHONE';
  if(command.type==='add_evidence'){result.file_id=payload.file_id;result.upload_digest=payload.upload_digest;}
- next.events.push({id:fresh(),entity_id:entity.id,order_id:order?.id,type:command.type,actor_id:actor.id,at,version:entity.version,reason:payload.reason||''});next.commands[key]={fingerprint,result:clone(result)};return {state:next,result};
+ next.events.push({id:fresh(),entity_id:entity.id,order_id:order?.id,type:command.type,actor_id:actor.id,actor_name:actor.name||actor.id,at,version:entity.version,reason:payload.reason||''});next.commands[key]={fingerprint,result:clone(result)};return {state:next,result};
 }
 function project(state,actor,directory){
  if(!permitted(actor,['dispatcher','director','technician']))fail('FORBIDDEN');

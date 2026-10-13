@@ -16,12 +16,13 @@ class Auth {
  constructor({store,random,now=()=>Date.now(),sessionMs=8*3600000,lockMs=15*60000,maxAttempts=5}){Object.assign(this,{store,random,now,sessionMs,lockMs,maxAttempts});}
  login(username,password){
   if(typeof username!=='string'||typeof password!=='string'||username.length>60||password.length>128)fail('INVALID_LOGIN');
+  const snapshot=this.store.read(),candidate=Object.values(snapshot.users).find(u=>u.username===username.toLowerCase().trim());
+  // Expensive work runs outside the shared ScriptLock. Recheck credentials and lockout inside it.
+  const target=candidate||{salt:'0'.repeat(32),iterations:600000,password_hash:'0'.repeat(64)};
+  const valid=equal(passwordHash(password,target.salt,target.iterations),target.password_hash);
   return this.store.lock(()=>{
-   const state=this.store.read(),user=Object.values(state.users).find(u=>u.username===username.toLowerCase().trim()),at=this.now();
-   // Same slow derivation for unknown users. Only a generic error is returned.
-   const target=user||{salt:'0'.repeat(32),iterations:600000,password_hash:'0'.repeat(64)};
-   const valid=equal(passwordHash(password,target.salt,target.iterations),target.password_hash);
-   if(!user||user.active===false||user.locked_until>at)fail('INVALID_LOGIN');
+   const state=this.store.read(),user=candidate&&state.users[candidate.id],at=this.now();
+   if(!user||user.active===false||user.locked_until>at||user.version!==candidate.version||user.salt!==candidate.salt||user.password_hash!==candidate.password_hash||user.iterations!==candidate.iterations)fail('INVALID_LOGIN');
    if(!valid){user.failed=(user.failed||0)+1;if(user.failed>=this.maxAttempts){user.locked_until=at+this.lockMs;user.failed=0;}this.store.write(state);fail('INVALID_LOGIN');}
    user.failed=0;user.locked_until=0;state.sessions=state.sessions||{};
    for(const [key,session] of Object.entries(state.sessions))if(session.expires_at<=at)delete state.sessions[key];

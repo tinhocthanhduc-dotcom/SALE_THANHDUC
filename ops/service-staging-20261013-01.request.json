@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 4,
-  "update": "Improve intake with inline customer/machine creation, customer search, machine ownership filtering, and preserved order drafts. Reuse the existing staging app and keep accounts/data."
+  "revision": 5,
+  "update": "Apply service dispatch UAT fixes: public owner-only user provisioning, password derivation outside shared lock, optional appointment and area, existing appointment start, phone/maps/history/mobile usability. Reuse staging project/deployment and preserve accounts/data."
 }
