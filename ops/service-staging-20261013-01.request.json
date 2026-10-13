@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 5,
-  "update": "Apply service dispatch UAT fixes: public owner-only user provisioning, password derivation outside shared lock, optional appointment and area, existing appointment start, phone/maps/history/mobile usability. Reuse staging project/deployment and preserve accounts/data."
+  "revision": 6,
+  "update": "Add staging order warehouse handoff: numbered issue and technician receipt, resume or reschedule, record usage and surplus return, numbered old-machine collection and warehouse receipt. Preserve existing project/deployment/accounts/orders; no external stock app writes."
 }

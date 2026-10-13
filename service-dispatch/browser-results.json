@@ -21,7 +21,11 @@
     "optional appointment and area",
     "immediate phone validation",
     "call and maps links",
-    "Vietnamese history and minute display"
+    "Vietnamese history and minute display",
+    "warehouse permission and numbered issue",
+    "technician receipt and resume",
+    "usage and surplus return",
+    "old machine collection and warehouse receipt"
   ],
   "page_errors": []
 }
