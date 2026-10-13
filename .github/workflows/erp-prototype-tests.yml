@@ -36,6 +36,7 @@ jobs:
       - run: erp-prototype/node_modules/.bin/playwright install --with-deps chromium
       - run: node erp-prototype/test/ui-browser.cjs
       - run: node service-dispatch/test/browser.cjs
+      - run: node service-dispatch/test/gas-ui-browser.cjs
       - name: Build service dispatch staging package
         run: node service-dispatch/build-gas.cjs "${{ runner.temp }}/service-dispatch-gas"
       - name: Upload service dispatch Apps Script package

@@ -1,0 +1,14 @@
+{
+  "pass": true,
+  "scenarios": [
+    "built GAS inline HTML in sandbox frame",
+    "Google callback login does not navigate",
+    "existing waiting order renders with legacy fields",
+    "Enter logs in once",
+    "failed bridge preserves login and permits retry",
+    "null query stays visible with diagnostic",
+    "invalid query stays visible with diagnostic",
+    "bootstrap failure blocks native submission and shows error"
+  ],
+  "page_errors": []
+}

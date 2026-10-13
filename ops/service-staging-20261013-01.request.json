@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 6,
-  "update": "Add staging order warehouse handoff: numbered issue and technician receipt, resume or reschedule, record usage and surplus return, numbered old-machine collection and warehouse receipt. Preserve existing project/deployment/accounts/orders; no external stock app writes."
+  "revision": 7,
+  "update": "Prevent native login form navigation, preserve login UI on callback/render failure, add bootstrap diagnostics and built GAS sandbox-frame browser regression. Reuse existing staging app and keep accounts/data."
 }

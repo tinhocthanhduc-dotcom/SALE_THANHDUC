@@ -82,3 +82,9 @@ Nếu thu máy cũ, thợ chọn **Ghi nhận máy cũ thu về**, ghi model/ser
 Chuyển thợ bị chặn khi còn hàng/máy đang giữ: ghi thực dùng, trả phần dư và bàn giao máy về kho trước khi duyệt chuyển trong bản này. Đơn từng xuất hàng phải Giám đốc duyệt hủy; hủy không tự xóa hàng hoặc xác nhận đã trả. Kho vẫn nhận lại hàng/máy của đơn hủy.
 
 Các phiếu nằm trong Sheets staging của Điều phối; **chưa trừ/cộng tồn kho của QL_KHO_THANH_DUC**. Đơn cũ không cần migration/setup lại, đề xuất cũ status requested tiếp tục dùng được. Cấp tài khoản kho bằng provisionDispatchUser với roles `["warehouse"]`; admin hiện tại đã có quyền director để kiểm tra luồng ngay.
+
+## Chẩn đoán màn hình trắng sau đăng nhập
+
+Nút đăng nhập dùng type=button và form chặn điều hướng mặc định; Enter vẫn đăng nhập một lần. Nút chỉ bật sau khi gắn handler. Giao diện giữ form đến khi query và render thành công, hiển thị lỗi khi callback/query trả null hoặc dữ liệu không hợp lệ (`BAD_SERVER_RESPONSE`). Bootstrap độc lập hiển thị `UI_RUNTIME_ERROR` / `UI_ASYNC_ERROR` nếu script gặp lỗi, thay vì để form gửi mặc định và mất giao diện. Không log username/password/token.
+
+Kiểm thử `node service-dispatch/test/gas-ui-browser.cjs` chạy gói Index.html đã build trong iframe sandbox với giao thức callback google.script.run giả lập và auth/repository thật local. Kiểm tra này bổ sung cho runner HTTP; không có phiên Google để xác định nguyên nhân lỗi trong trình duyệt người dùng. Sau cập nhật cần UAT đăng nhập trên Google, và gửi mã lỗi hiển thị nếu còn lỗi.
