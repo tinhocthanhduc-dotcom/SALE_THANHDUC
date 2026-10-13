@@ -56,3 +56,7 @@ Xác nhận xuất, nhận, trả hàng, chốt giờ, tiếp tục, khách giao
 Kiểm chứng: 31/31 Node đạt, gồm complete gộp atomic/replay, lỗi ảnh không trừ vật tư, sai lượng/thiếu/trùng dòng/xác nhận bị chặn; 27 kịch bản HTTP browser đạt, gồm checklist không gõ mô tả, số lượng tự điền và lưu một version; 9 kịch bản gói GAS/document.write/CSP đạt. Dữ liệu cũ và API complete với work_summary cũ vẫn tương thích, không chạy setup lại. Cần UAT form mới trên Google.
 
 Lựa chọn Chưa sử dụng tự điền 0; sửa lượng sẽ bỏ xác nhận cũ, tránh giữ dấu tích cho số khác. Browser test kiểm tra lựa chọn, chỉnh lại lượng và checkbox trước khi lưu.
+
+## Mở web app không cần Gmail
+
+Theo yêu cầu người dùng, manifest webapp chuyển access sang ANYONE_ANONYMOUS, executeAs vẫn USER_DEPLOYING. Nhân viên vẫn phải đăng nhập user/password; quyền đọc đơn/ảnh/command dựa vào phiên máy chủ. Các hàm setup/provision/health/benchmark tiếp tục chặn Google active user trống hoặc khác effective user. Không đổi tài khoản, mật khẩu, Sheets/Drive hoặc 5 app legacy.
