@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 2,
-  "update": "Add visible owner-guarded setupDispatchStaging editor entrypoint; reuse the existing staging project and deployment."
+  "revision": 3,
+  "update": "Fix Sheets repository snapshot contract after login; retain existing accounts and data, reuse project/deployment, add owner-only safe diagnostics."
 }

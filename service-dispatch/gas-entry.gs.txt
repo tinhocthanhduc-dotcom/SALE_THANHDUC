@@ -13,6 +13,22 @@ function setupDispatchStaging(){
  if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
  return dispatchSetupStaging_();
 }
+/** Owner-only health check. Logs booleans/codes, never credentials or customer rows. */
+function checkDispatchStaging(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ var report={configuration_ok:false,admin_account_present:false,storage_ok:false,step:'configuration'};
+ try{
+  var props=dispatchRuntime_();report.configuration_ok=true;report.step='account';
+  var users=dispatchAuth_(props).store.read().users;
+  report.admin_account_present=Object.keys(users).some(function(key){return users[key].username==='admin'&&users[key].active!==false;});
+  report.step='storage';
+  var sheetId=props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN');
+  var repo=new DispatchBundle.SheetsRepository({workbook:SpreadsheetApp.openById(sheetId),stagingId:sheetId,markerToken:marker,domain:DispatchBundle.Domain,id:function(){return Utilities.getUuid();},hash:DispatchBundle.digest,flush:function(){SpreadsheetApp.flush();},withLock:dispatchLock_});
+  repo.snapshot();report.storage_ok=true;report.step='complete';
+ }catch(error){var allowed=['STAGING_WRITES_DISABLED','STAGING_PROJECT_MISMATCH','STAGING_CONFIG_REQUIRED','STAGING_TARGET_REJECTED','STAGING_MARKER_REQUIRED','STAGING_MARKER_MISMATCH','SCHEMA_MISMATCH','RECOVERY_CONFLICT','STAGING_CAPACITY_EXCEEDED'];var code=error.code||error.message;report.error=allowed.indexOf(code)>=0?code:'UNEXPECTED_SERVER_FAILURE';}
+ console.log(JSON.stringify(report));return report;
+}
 /** One-time editor setup for a NEW project. Does not run through the web API. */
 function dispatchSetupStaging_(){
  var props=PropertiesService.getScriptProperties(),actual=ScriptApp.getScriptId();

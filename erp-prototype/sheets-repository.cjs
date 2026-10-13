@@ -75,6 +75,7 @@ class SheetsRepository {
     return current;
   }
   recover(){return this.withLock(()=>this.recoverLocked());}
+  snapshot(){return this.recover();}
   submit(command,context){return this.withLock(()=>{
     const before=this.recoverLocked();const output=this.domain.execute(before.state,command,context);
     if(output.result.replayed)return output.result;
