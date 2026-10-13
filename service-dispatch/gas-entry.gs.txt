@@ -1,0 +1,48 @@
+/** All public endpoints are disabled until a separate staging project is verified. */
+function dispatchRuntime_(){
+ var props=PropertiesService.getScriptProperties();
+ if(props.getProperty('DISPATCH_ENV')!=='STAGING'||props.getProperty('DISPATCH_ENABLE_WRITES')!=='true')throw new Error('STAGING_WRITES_DISABLED');
+ var actual=ScriptApp.getScriptId(),expected=props.getProperty('DISPATCH_SCRIPT_ID');
+ var legacy=['1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql','1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu','1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6','16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N','1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN'];
+ if(!expected||actual!==expected||legacy.indexOf(actual)>=0)throw new Error('STAGING_PROJECT_MISMATCH');
+ return props;
+}
+function dispatchLock_(fn){var lock=LockService.getScriptLock();lock.waitLock(10000);try{return fn();}finally{lock.releaseLock();}}
+function dispatchAuth_(props){
+ var store={lock:dispatchLock_,read:function(){var all=props.getProperties(),state={users:{},sessions:{}};Object.keys(all).forEach(function(key){if(key.indexOf('DISPATCH_USER_')===0)state.users[key.slice(14)]=JSON.parse(all[key]);if(key.indexOf('DISPATCH_SESSION_')===0)state.sessions[key.slice(17)]=JSON.parse(all[key]);});return state;},write:function(state){var all=props.getProperties(),desired={};Object.keys(state.users).forEach(function(k){desired['DISPATCH_USER_'+k]=JSON.stringify(state.users[k]);});Object.keys(state.sessions).forEach(function(k){desired['DISPATCH_SESSION_'+k]=JSON.stringify(state.sessions[k]);});Object.keys(all).forEach(function(k){if((k.indexOf('DISPATCH_USER_')===0||k.indexOf('DISPATCH_SESSION_')===0)&&!Object.prototype.hasOwnProperty.call(desired,k))props.deleteProperty(k);});if(Object.keys(desired).length)props.setProperties(desired,false);}};
+ return new DispatchBundle.Auth({store:store,random:function(){return Utilities.getUuid().replace(/-/g,'');},now:function(){return Date.now();}});
+}
+/** Editor-only provisioning. Never call from the browser or keep passwords in source. */
+function dispatchProvisionUser_(){
+ var props=dispatchRuntime_(),raw=props.getProperty('DISPATCH_PROVISION_USER'),password=props.getProperty('DISPATCH_PROVISION_PASSWORD');
+ try{
+  if(!raw||!password)throw new Error('PROVISION_CONFIG_REQUIRED');
+  var config=JSON.parse(raw);config.password=password;config.random=function(){return Utilities.getUuid().replace(/-/g,'');};
+  var user=DispatchBundle.createUser(config),auth=dispatchAuth_(props);
+  auth.store.lock(function(){var state=auth.store.read();if(state.users[user.id]||Object.keys(state.users).some(function(id){return state.users[id].username===user.username;}))throw new Error('DUPLICATE_USER');state.users[user.id]=user;auth.store.write(state);});
+  return {id:user.id,username:user.username,created:true};
+ }finally{props.deleteProperty('DISPATCH_PROVISION_PASSWORD');props.deleteProperty('DISPATCH_PROVISION_USER');}
+}
+function dispatchService_(){
+ var props=dispatchRuntime_(),sheetId=props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN');
+ if(!sheetId||!marker)throw new Error('STAGING_CONFIG_REQUIRED');
+ var repository=new DispatchBundle.SheetsRepository({workbook:SpreadsheetApp.openById(sheetId),stagingId:sheetId,markerToken:marker,domain:DispatchBundle.Domain,id:function(){return Utilities.getUuid();},hash:function(raw){return DispatchBundle.digest(raw);},flush:function(){SpreadsheetApp.flush();},withLock:function(fn){return dispatchLock_(function(){try{return fn();}finally{SpreadsheetApp.flush();}});}});
+ var files={save:function(mime,base64){var folderId=props.getProperty('DISPATCH_IMAGE_FOLDER_ID');if(!folderId)throw new Error('IMAGE_STORAGE_REQUIRED');var bytes=Utilities.base64Decode(base64),positive=bytes.map(function(b){return (b+256)%256;});if(bytes.length<12||bytes.length>400000)throw new Error('INVALID_IMAGE');var valid=mime==='image/jpeg'?positive[0]===255&&positive[1]===216:mime==='image/png'?JSON.stringify(positive.slice(0,8))===JSON.stringify([137,80,78,71,13,10,26,10]):String.fromCharCode.apply(null,positive.slice(0,4))==='RIFF'&&String.fromCharCode.apply(null,positive.slice(8,12))==='WEBP';if(!valid)throw new Error('INVALID_IMAGE');var file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(bytes,mime,'evidence-'+Utilities.getUuid()));return file.getId();},remove:function(id){DriveApp.getFileById(id).setTrashed(true);},read:function(id){var blob=DriveApp.getFileById(id).getBlob();return {mime:blob.getContentType(),base64:Utilities.base64Encode(blob.getBytes())};}};
+ return DispatchBundle.createService({auth:dispatchAuth_(props),repository:repository,files:files,now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();}});
+}
+function doGet(event){dispatchRuntime_();var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
+function dispatchApi(input){
+ try{
+  dispatchRuntime_();if(!input||typeof input!=='object')throw new Error('INVALID_REQUEST');
+  // Login must not open Sheets or Drive. Tokens are returned only to the caller, never logged.
+  if(input.action==='login')return dispatchAuth_(PropertiesService.getScriptProperties()).login(input.username,input.password);
+  if(input.action==='logout'){dispatchAuth_(PropertiesService.getScriptProperties()).logout(input.token);return {ok:true};}
+  var auth=dispatchAuth_(PropertiesService.getScriptProperties());auth.actor(input.token);
+  var service=dispatchService_();
+  if(input.action==='query'){var projection=service.query(input.token,input.order_id);projection.app_url=ScriptApp.getService().getUrl();return projection;}
+  if(input.action==='command')return service.command(input.token,input.command);
+  if(input.action==='upload')return service.upload(input.token,input.payload);
+  if(input.action==='image')return service.image(input.token,input.order_id,input.evidence_id);
+  return {error:'UNKNOWN_ACTION'};
+ }catch(error){var code=error.code||error.message;var allowed=['STAGING_WRITES_DISABLED','STAGING_PROJECT_MISMATCH','STAGING_CONFIG_REQUIRED','AUTH_REQUIRED','INVALID_LOGIN','FORBIDDEN','VERSION_CONFLICT','REQUIRED_FIELD','INVALID_TRANSITION','EVIDENCE_REQUIRED','INVALID_IMAGE','TRANSFER_PENDING','TRANSFER_STALE','UNKNOWN_TRANSFER','UNKNOWN_TECHNICIAN','MACHINE_CUSTOMER_MISMATCH','INVALID_APPOINTMENT','INVALID_DATE','INVALID_CATEGORY','INVALID_PHONE','INVALID_QUANTITY','IDEMPOTENCY_CONFLICT','OPEN_PARTS_REQUEST','WAREHOUSE_INTEGRATION_REQUIRED','IMAGE_STORAGE_REQUIRED','STAGING_CAPACITY_EXCEEDED','RECOVERY_CONFLICT','SCHEMA_MISMATCH','STAGING_MARKER_MISMATCH'];return {error:allowed.indexOf(code)>=0?code:'SERVER_ERROR'};}
+}

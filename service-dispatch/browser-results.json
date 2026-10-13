@@ -1,0 +1,18 @@
+{
+  "pass": true,
+  "scenarios": [
+    "login server-side",
+    "create customer/machine/order",
+    "assign and accept",
+    "schedule/start",
+    "request and approve transfer",
+    "old technician denied",
+    "new technician accepts",
+    "upload private evidence",
+    "accept work",
+    "reload durability",
+    "authorized image",
+    "mobile layout"
+  ],
+  "page_errors": []
+}

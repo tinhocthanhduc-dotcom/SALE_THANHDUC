@@ -1,13 +1,13 @@
 'use strict';
 // Local fixture persistence only. No Sheets API and no GAS deployment integration.
 const fs=require('node:fs');const path=require('node:path');const crypto=require('node:crypto');
-const {emptyState,execute}=require('./order-work.cjs');
+const DefaultDomain=require('./order-work.cjs');
 const hash=v=>crypto.createHash('sha256').update(JSON.stringify(v)).digest('hex');
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 class LocalRepository {
-  constructor(directory,{fault=()=>{}}={}) {
+  constructor(directory,{fault=()=>{},domain=DefaultDomain}={}) {
     if(!path.isAbsolute(directory))fail('ABSOLUTE_FIXTURE_PATH_REQUIRED');
-    this.directory=directory;this.fault=fault;
+    this.directory=directory;this.fault=fault;this.domain=domain;
     fs.mkdirSync(directory,{recursive:true});
     const marker=path.join(directory,'FIXTURE_ONLY');
     try{fs.writeFileSync(marker,'THANHDUC_LOCAL_FIXTURE_ONLY\n',{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;}
@@ -29,7 +29,7 @@ class LocalRepository {
   }
   recoverLocked() {
     const journal=this.load('journal.json',null);
-    const current=this.load('state.json',{revision:0,state:emptyState()});
+    const current=this.load('state.json',{revision:0,state:this.domain.emptyState()});
     if(!journal)return current;
     if(journal.status==='COMMITTED'){if(hash(journal.after)!==journal.after_hash||current.revision!==journal.after.revision||hash(current)!==journal.after_hash)fail('RECOVERY_CONFLICT');return current;}
     if(journal.status!=='PREPARED'||hash(journal.after)!==journal.after_hash)fail('RECOVERY_CONFLICT');
@@ -42,7 +42,7 @@ class LocalRepository {
   submit(command,context) {
     return this.lock(()=>{
       const before=this.recoverLocked();
-      const output=execute(before.state,command,context);
+      const output=this.domain.execute(before.state,command,context);
       if(output.result.replayed)return output.result;
       const after={revision:before.revision+1,state:output.state};
       const journal={status:'PREPARED',before_revision:before.revision,before_hash:hash(before),after,after_hash:hash(after),receipt:output.result};

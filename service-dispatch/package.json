@@ -1,0 +1,1 @@
+{"name":"thanhduc-service-dispatch-staging","version":"0.1.0","private":true,"scripts":{"test":"node --test test/*.test.cjs","start":"node server.cjs","build:gas":"node build-gas.cjs"},"dependencies":{"@noble/hashes":"1.8.0"},"devDependencies":{"esbuild":"0.25.12"}}

@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path');
+const destination=path.resolve(process.argv[2]||'/tmp/thanhduc-dispatch-gas');
+const root=path.resolve(__dirname,'..');if(destination===root||destination.startsWith(root+path.sep))throw Error('OUTPUT_MUST_BE_OUTSIDE_CHECKOUT');
+fs.mkdirSync(destination,{recursive:true});
+const bundle=require('esbuild').buildSync({entryPoints:[path.join(__dirname,'bundle-entry.cjs')],bundle:true,platform:'neutral',format:'iife',globalName:'DispatchBundle',target:'es2020',write:false,minify:false}).outputFiles[0].text;
+fs.writeFileSync(path.join(destination,'Code.gs'),bundle+'\n'+fs.readFileSync(path.join(__dirname,'gas-entry.gs.txt'),'utf8'));
+const script=fs.readFileSync(path.join(__dirname,'ui.js.txt'),'utf8').replace(/<\/script/gi,'<\\/script');
+fs.writeFileSync(path.join(destination,'Index.html'),fs.readFileSync(path.join(__dirname,'ui.html.txt'),'utf8').replace('<script src="/app.js"></script>','<script>'+script+'</script>'));
+fs.writeFileSync(path.join(destination,'appsscript.json'),JSON.stringify({timeZone:'Asia/Ho_Chi_Minh',runtimeVersion:'V8',exceptionLogging:'STACKDRIVER',oauthScopes:['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive','https://www.googleapis.com/auth/script.storage'],webapp:{executeAs:'USER_DEPLOYING',access:'ANYONE'}},null,2));
+fs.copyFileSync(path.join(__dirname,'README.md'),path.join(destination,'README.md'));
+console.log('Built isolated Apps Script package: '+destination);

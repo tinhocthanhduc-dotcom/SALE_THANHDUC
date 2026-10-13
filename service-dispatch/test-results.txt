@@ -1,0 +1,24 @@
+✔ service order reaches acceptance with registered photos and keeps financial dossier open (3.698626ms)
+✔ technician cannot spoof actor, assignment, prices or public evidence registration (0.858562ms)
+✔ transfer keeps old technician responsible until approval, then revokes even old replay access (0.586332ms)
+✔ stale writes fail, exact replay is a no-op, and changed payload conflicts (1.075769ms)
+✔ appointments preserve requested and confirmed history and reject invalid ranges (0.642196ms)
+✔ waiting parts cannot pretend warehouse delivery is complete in this milestone (0.459682ms)
+✔ GAS bundle parses and all routes default deny before Sheets or Drive (102.778416ms)
+✔ GAS project mismatch rejects before workbook access and legacy apps are explicitly blocked (105.589707ms)
+✔ PBKDF2 implementation matches Node crypto including unicode passwords (612.515834ms)
+✔ unauthenticated and cross-origin commands are denied (27.366699ms)
+✔ server sessions never leak tokens or password hashes in query projections (543.760426ms)
+✔ five failed attempts lock the account; expiry restores login, disabling revokes session (3693.143913ms)
+✔ wrong technician and forged role cannot access order or upload photos (1078.666605ms)
+✔ local recovery preserves service customers without creating duplicates (1.278055ms)
+✔ session expiry requires login again (528.376571ms)
+✔ prepared image command recovery retains its owned evidence file (1070.748028ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9807.786818

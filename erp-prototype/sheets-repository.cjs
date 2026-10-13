@@ -6,11 +6,11 @@ const LEGACY_IDS=['1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU','1ACsqTWveQR3ks
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 function splitText(raw){const chunks=[];for(let start=0;start<raw.length;){let end=Math.min(start+16000,raw.length);const last=raw.charCodeAt(end-1);if(end<raw.length&&last>=0xD800&&last<=0xDBFF)end--;chunks.push(raw.slice(start,end));start=end;}return chunks;}
 class SheetsRepository {
-  constructor({workbook,stagingId,markerToken,withLock,hash,id,flush=()=>{},fault=()=>{},maxRows=10000,maxChars=1000000}) {
+  constructor({workbook,stagingId,markerToken,withLock,hash,id,flush=()=>{},fault=()=>{},maxRows=10000,maxChars=1000000,domain=Domain}) {
     if(!stagingId||LEGACY_IDS.includes(stagingId)||workbook.getId()!==stagingId)fail('STAGING_TARGET_REJECTED');
     if(!markerToken||typeof withLock!=='function'||typeof hash!=='function'||typeof id!=='function')fail('STAGING_CONFIG_REQUIRED');
     if(!Number.isSafeInteger(maxRows)||maxRows<2||!Number.isSafeInteger(maxChars)||maxChars<1)fail('INVALID_LIMIT');
-    Object.assign(this,{workbook,markerToken,withLock,hash,id,flush,fault,maxRows,maxChars});
+    Object.assign(this,{workbook,markerToken,withLock,hash,id,flush,fault,maxRows,maxChars,domain});
     this.validate();
   }
   validate(){
@@ -60,7 +60,7 @@ class SheetsRepository {
   recoverLocked(){
     this.validate();
     const stateEntry=this.latest('ERP_STATE',['SNAPSHOT']);
-    let current=stateEntry?stateEntry.value:{revision:0,state:Domain.emptyState()};
+    let current=stateEntry?stateEntry.value:{revision:0,state:this.domain.emptyState()};
     const intent=this.latest('ERP_JOURNAL',['PREPARED','COMMITTED']);
     if(!intent){if(current.revision!==0)fail('RECOVERY_CONFLICT');return current;}
     let meta;try{meta=JSON.parse(intent.manifest.cells[5]);}catch(e){fail('RECOVERY_CONFLICT');}
@@ -76,7 +76,7 @@ class SheetsRepository {
   }
   recover(){return this.withLock(()=>this.recoverLocked());}
   submit(command,context){return this.withLock(()=>{
-    const before=this.recoverLocked();const output=Domain.execute(before.state,command,context);
+    const before=this.recoverLocked();const output=this.domain.execute(before.state,command,context);
     if(output.result.replayed)return output.result;
     const after={revision:before.revision+1,state:output.state};
     // Preflight capacity on both tabs before recording durable intent.
