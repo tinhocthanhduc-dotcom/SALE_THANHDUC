@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 23,
-  "update": "User-authorized customer machine management: atomic customer + multiple machine profiles with model/serial/location, existing active machine selection only at intake and auto-select single machine, inline draft preservation, profile edits/retirement/history, authorized later attachment and duplicate serial warnings. Preserve legacy quick-create API and historic snapshots. Add profile domain/browser/GAS bridge tests, keep existing delivery/photo/live flows and staging accounts/data."
+  "revision": 24,
+  "update": "User-authorized customer machine management: atomic customer + multiple machine profiles with model/serial/location, existing active machine selection only at intake and auto-select single machine, inline draft preservation, profile edits/retirement/history, authorized later attachment and duplicate serial warnings. Preserve legacy quick-create API and historic snapshots. Add profile domain/browser/GAS bridge tests, keep existing delivery/photo/live flows and staging accounts/data. Follow-up: keep command dialog open until foreground refresh completes, eliminating stale detail race exposed by CI; retain key/form on query failure."
 }

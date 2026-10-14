@@ -186,3 +186,5 @@ Toàn bộ orders/events/commands và journal/state vẫn trong snapshot; domain
 - Kiểm chứng: 63/63 Node (thêm 7 case hồ sơ/quyền/atomic/legacy), 10 kịch bản trình duyệt hồ sơ mới; 48 UI cũ cập nhật bài tạo máy nhanh thành chọn hồ sơ, 9 giao hàng, 9 GAS iframe, kiểm ảnh/queue và 9 đồng bộ. GAS VM bridge cũng tạo khách kèm hai máy, ngừng máy và attach đơn; đây là kiểm thử local/CI, cần UAT tính năng trên Google.
 
 Bổ sung giữ lựa chọn Chưa chọn máy nếu người nhận đơn đã chủ động bỏ chọn rồi mở/hủy form tạo khách inline; chỉ tự chọn máy duy nhất khi chuyển khách hoặc lưu khách mới.
+
+CI bắt được race đóng form trước refresh: có khoảng trống giao diện vẫn là đơn cũ sau khi server đã lưu. submitForm nay chỉ đóng dialog sau foreground refresh thành công; nếu query lỗi, form/key còn nguyên để retry không ghi trùng. Không nới kiểm thử hay thay nghiệp vụ.
