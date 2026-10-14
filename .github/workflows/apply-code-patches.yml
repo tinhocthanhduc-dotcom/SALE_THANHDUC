@@ -47,7 +47,7 @@ jobs:
               BEFORE="$(git rev-parse "$AFTER^")"
             fi
 
-            PATCHES="$(git diff --name-only "$BEFORE" "$AFTER" -- 'tools/patches/*.py' || true)"
+            PATCHES="$(git diff --diff-filter=AMR --name-only "$BEFORE" "$AFTER" -- 'tools/patches/*.py' || true)"
           fi
 
           if [ -z "$PATCHES" ]; then
@@ -57,6 +57,10 @@ jobs:
 
           printf '%s\n' "$PATCHES" | while IFS= read -r patch; do
             [ -z "$patch" ] && continue
+            if [ ! -f "$patch" ]; then
+              echo "Skipping deleted patch: $patch"
+              continue
+            fi
             echo "Running $patch"
             python "$patch"
           done
