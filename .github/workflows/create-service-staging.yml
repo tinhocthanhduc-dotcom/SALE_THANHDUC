@@ -124,14 +124,19 @@ jobs:
           cd "$RUNNER_TEMP/dispatch-project"
           benchmark_exit=0
           timeout 45s clasp --json run benchmarkDispatchChanges > "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" 2> "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" || benchmark_exit=$?
+          cp "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" "$RUNNER_TEMP/project-registry/changes-benchmark-dev.json"
+          cp "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" "$RUNNER_TEMP/project-registry/changes-benchmark-dev-error.txt"
+          # A deployed execution context can differ from devMode; try both without changing API access.
+          timeout 45s clasp --json run benchmarkDispatchChanges --nondev > "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" 2> "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" || benchmark_exit=$?
           export DISPATCH_BENCHMARK_EXIT="$benchmark_exit"
           node - <<'JS'
           const fs=require('node:fs'),path=require('node:path');
           const root=path.join(process.env.RUNNER_TEMP,'project-registry');
           let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(root,'changes-benchmark-raw.json'),'utf8'));}catch(ignore){}
-          const report=raw.response||raw.result||raw;
+          let dev={};try{dev=JSON.parse(fs.readFileSync(path.join(root,'changes-benchmark-dev.json'),'utf8'));}catch(ignore){}
+          const report=dev.response&&Array.isArray(dev.response.samples_ms)?dev.response:(raw.response||raw.result||raw);
           const measured=Array.isArray(report.samples_ms)&&Number.isFinite(report.average_ms);
-          fs.writeFileSync(path.join(root,'changes-benchmark-status.json'),JSON.stringify({measured,exit_code:Number(process.env.DISPATCH_BENCHMARK_EXIT),report:measured?report:undefined,reason:measured?undefined:'Execution API unavailable or did not return timing; owner can run benchmarkDispatchChanges in editor.'},null,2));
+          fs.writeFileSync(path.join(root,'changes-benchmark-status.json'),JSON.stringify({measured,errors:[dev.error?.message,raw.error?.message].filter(Boolean),exit_code:Number(process.env.DISPATCH_BENCHMARK_EXIT),report:measured?report:undefined,reason:measured?undefined:'Execution API unavailable or did not return timing; owner can run benchmarkDispatchChanges in editor.'},null,2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nChanges timing: '+(measured?report.average_ms+' ms average (GAS)':'not measured; Execution API did not return timing. Owner can run benchmarkDispatchChanges in editor.')+'\n');
           JS
       - name: Upload project links
