@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 21,
-  "update": "User-requested friendly Vietnamese labels: Bắt đầu công việc, Tiếp tục công việc, Nhận máy về xử lý. Update UI/history/toast and README; business commands and APIs unchanged."
+  "revision": 22,
+  "update": "User-authorized delivery at intake: atomic create_order + multi-line PX, warehouse 58/145, creator audit, edit/cancel before pickup, packing tab, serial-checked full/partial pickup, full pickup required before work, delivered vs used/bring-back PN, preserve supplemental DX and transfer custody guards. Add domain/browser/GAS bridge tests; actual inventory/catalogue TD integration remains required before real use. Preserve staging project/accounts/data."
 }

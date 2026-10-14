@@ -12,9 +12,9 @@
     "expired session returns to login"
   ],
   "metrics": {
-    "assignment_ms": 20105,
-    "start_ms": 41,
-    "completion_ms": 19901,
+    "assignment_ms": 20067,
+    "start_ms": 20402,
+    "completion_ms": 19907,
     "backoff_ms": [
       20000,
       40000,

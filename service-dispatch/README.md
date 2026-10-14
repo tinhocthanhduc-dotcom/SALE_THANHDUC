@@ -149,3 +149,13 @@ Lỗi polling im lặng, chu kỳ 20/40/80/120 giây; phiên hết hạn đóng 
 Chọn loại ảnh, chọn một hoặc nhiều ảnh/chụp tiếp: xem preview với Đang tải, Đã lưu hoặc Lỗi - thử lại; không cần chờ để chụp ảnh tiếp. Nghiệm thu bật khi ảnh sau và biên bản/chữ ký đã lưu. Nếu lỗi, thử lại ngay trong trang để giữ nguyên mã chống trùng; chưa có queue offline lưu qua đóng/tải lại trang. Danh sách tải ảnh nhỏ 320px, bấm ảnh mới tải bản đầy đủ qua kiểm quyền.
 
 [Báo cáo đo local trước/sau, cách đọc log GAS và bước trước pilot](docs/photo-performance-20261014/README.md). Console chỉ log số thời gian/kích thước; upload không gọi query toàn bộ. Persistence cần chuyển sang normalized tables trước pilot.
+
+## Đơn kèm giao hàng
+
+Khi tiếp nhận, thêm Hàng giao kèm nếu cần: nhiều dòng mã/tên, số lượng, kho 58/145; máy đánh dấu Máy, mỗi máy một dòng SL 1, serial nếu đã biết. Lưu đơn tạo luôn một PX, không cần thợ đề xuất lại. Người tạo PX/kho/giám đốc sửa hoặc hủy có lý do trước lần lấy đầu; lịch sử sửa nằm trong chi tiết đơn.
+
+Kho mở Cần soạn hàng, xem PX theo giờ hẹn và có thể báo Đã soạn. Thợ nhận/hẹn đơn, mở Xác nhận lấy hàng → Đã lấy đủ, bỏ tích hàng thiếu hoặc sửa số thực lấy, nhập/chọn serial máy và xác nhận. Lấy thiếu ghi nhận số đã lấy nhưng chưa bật Bắt đầu công việc; lần sau chỉ lấy phần còn lại. Sau lần lấy đầu PX bị khóa sửa; giao lại/chuyển thợ khi còn hàng đang giữ bị chặn.
+
+Nghiệm thu ghi Đã giao khách cho hàng giao kèm; chọn Mang về nếu khách không nhận. Kho nhận phần mang về bằng PN ở luồng trả hàng hiện có. Vật tư tiêu hao vẫn ghi Đã dùng, và đề xuất phát sinh của thợ vẫn theo DX → kho xuất → thợ nhận.
+
+Bản staging này chỉ ghi PX/PN trong Điều phối, chưa trừ tồn app Kho. Cần nối mã TD và tự ghi phiếu sang QL_KHO_THANH_DUC trước dùng thật để không nhập hai lần.

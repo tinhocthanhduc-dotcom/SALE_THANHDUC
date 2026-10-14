@@ -2,66 +2,75 @@
 > thanhduc-service-dispatch-staging@0.1.0 test
 > node --test test/*.test.cjs
 
-✔ SLA thresholds follow priority, latest assignment and Vietnam day boundaries (1.354192ms)
-✔ report uses creation day in Vietnam, current receipt duration, unique late orders and excludes missing samples (5.925669ms)
-✔ transfer report attributes current receipt and visits to responsible technician (0.178219ms)
-✔ login derives outside lock, rereads before writing and stores only session digest (19.570402ms)
-✔ credential changes, deactivation and concurrent lockout block login after derivation (1.546633ms)
-✔ failed login uses latest failure count and cannot overwrite a concurrent attempt (0.21844ms)
-✔ service order reaches acceptance with registered photos and keeps financial dossier open (5.116989ms)
-✔ technician cannot spoof actor, assignment, prices or public evidence registration (2.105906ms)
-✔ transfer keeps old technician responsible until approval, then revokes even old replay access (0.683952ms)
-✔ stale writes fail, exact replay is a no-op, and changed payload conflicts (0.420755ms)
-✔ appointments preserve requested and confirmed history and reject invalid ranges (0.668759ms)
-✔ waiting parts cannot resume before confirmed warehouse handoff (0.733697ms)
-✔ intake permits no area or appointment, but start requires a complete appointment (3.95145ms)
-✔ accepted order can start with existing requested appointment without duplicating schedule (0.380354ms)
-✔ warehouse issue and technician receipt are distinct, guarded and replay-safe (1.820637ms)
-✔ surplus stays with technician until warehouse acknowledges return; transfer cannot abandon custody (1.928119ms)
-✔ requested stock cannot be bypassed by reassignment, and rescheduling requires all receipts (1.958935ms)
-✔ old machine receipt numbers are automatic and warehouse confirms physical custody separately (1.166139ms)
-✔ director cancellation preserves issued goods until warehouse confirms physical return (1.208313ms)
-✔ checklist completion records usage and acceptance in one atomic replay-safe command without free text (1.004185ms)
-✔ missing evidence leaves received stock and usage unchanged when combined completion fails (0.523129ms)
-✔ combined completion rejects unknown, duplicate, missing or excessive usage and unconfirmed checklists (1.644941ms)
-✔ machine-free intake uses server Vietnam day for clock windows and creates no catalogue records (0.593555ms)
-✔ assignment and reassignment accept blank notes while keeping history (0.795229ms)
-✔ multi-line proposals, issue and receipt are atomic and replay does not duplicate numbers (1.019558ms)
-✔ bad proposal rows leave no partial request, number or event (0.540676ms)
-✔ clock-only schedule and start are one replay-safe transaction on Vietnam current day (0.361865ms)
-✔ combined start cannot bypass missing materials or invalid clock range (0.440635ms)
-✔ selected material usage and batch return stay atomic and keep unselected items (0.796372ms)
-✔ intake and schedule allow tomorrow/custom date and reject past or impossible dates (0.816301ms)
-✔ quick machine creation and intake are atomic, linked and replay-safe (0.344169ms)
-✔ GAS bundle parses and all routes default deny before Sheets or Drive (381.955321ms)
-✔ GAS project mismatch rejects before workbook access and legacy apps are explicitly blocked (183.292768ms)
-✔ visible setup entrypoint rejects other Google users and delegates for the editor user (113.848861ms)
-✔ GAS bridge login, Sheets query and commands share the repository contract (6136.618281ms)
-✔ PBKDF2 implementation matches Node crypto including unicode passwords (820.709564ms)
-✔ unauthenticated and cross-origin commands are denied (48.53835ms)
-✔ server sessions never leak tokens or password hashes in query projections (641.256767ms)
-✔ five failed attempts lock the account; expiry restores login, disabling revokes session (3764.53281ms)
-dispatch-upload-timing {"auth_ms":0.03771700000106648,"snapshot_ms":0.21255199999905017,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.16029300000082003,"total_ms":0.5577240000002348}
-✔ wrong technician and forged role cannot access order or upload photos (1081.70818ms)
-✔ local recovery preserves service customers without creating duplicates (1.218274ms)
-✔ session expiry requires login again (522.612924ms)
-✔ prepared image command recovery retains its owned evidence file (1106.766857ms)
-✔ changes authenticates without snapshot, publishes committed revision and keeps replay stable (3736.415785ms)
-dispatch-upload-timing {"auth_ms":0.015443000000004758,"snapshot_ms":0.14594099999999344,"locked_snapshot_ms":0,"drive_ms":0.015904000000006135,"sheets_ms":0.4423189999999977,"projection_ms":0.22075499999999693,"total_ms":1.4708969999999937}
-dispatch-upload-timing {"auth_ms":0.002273000000002412,"snapshot_ms":0.09045700000000068,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.059570000000007894,"total_ms":0.33561799999999664}
-dispatch-upload-timing {"auth_ms":0.0017629999999968504,"snapshot_ms":0.10136400000000378,"locked_snapshot_ms":0,"drive_ms":0.004086000000000922,"sheets_ms":1.5345849999999928,"projection_ms":0.0847880000000174,"total_ms":1.9060560000000066}
-dispatch-upload-timing {"auth_ms":0.0022030000000086147,"snapshot_ms":0.06923500000000615,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.03741699999999071,"total_ms":0.21315300000000548}
-✔ upload reads auth once and snapshots once plus locked version check; returns single order without persisted projection (13.767499ms)
-✔ concurrent same-key upload replays across distinct private file ids and removes only unowned files (4.829504ms)
-✔ stale version cleans both files; prepared journal recovery retains both; reassignment removes thumbnail access (22.294232ms)
-ℹ tests 47
+✔ SLA thresholds follow priority, latest assignment and Vietnam day boundaries (1.723604ms)
+✔ report uses creation day in Vietnam, current receipt duration, unique late orders and excludes missing samples (9.007039ms)
+✔ transfer report attributes current receipt and visits to responsible technician (0.291508ms)
+✔ login derives outside lock, rereads before writing and stores only session digest (3.37464ms)
+✔ credential changes, deactivation and concurrent lockout block login after derivation (2.151819ms)
+✔ failed login uses latest failure count and cannot overwrite a concurrent attempt (0.376907ms)
+✔ create_order creates two delivery lines and exactly one PX/version atomically; replay reuses sequence (3.286277ms)
+✔ invalid delivery rows reject entire order, machine creation and PX sequence (1.095148ms)
+✔ creator and warehouse can replace/add/remove before first pickup; history retained and preparation cleared (0.736309ms)
+✔ PX can be cancelled before pickup without stock movement, and does not block start (1.583103ms)
+✔ technician schedules before packing; missing pickup blocks field work; serial/count errors are atomic (0.775227ms)
+✔ partial pickup records actual custody, locks PX and blocks start until remaining pickup; replay does not double quantity (0.675807ms)
+✔ delivery acceptance distinguishes delivered from consumed; customer refusal is returned with PN (1.041268ms)
+✔ transfer before pickup moves planned PX to new technician; actual custody blocks reassignment/approval (0.866013ms)
+✔ director cancellation after partial pickup returns only actual taken quantities (1.073546ms)
+✔ service order reaches acceptance with registered photos and keeps financial dossier open (3.318796ms)
+✔ technician cannot spoof actor, assignment, prices or public evidence registration (1.532037ms)
+✔ transfer keeps old technician responsible until approval, then revokes even old replay access (0.530058ms)
+✔ stale writes fail, exact replay is a no-op, and changed payload conflicts (0.360362ms)
+✔ appointments preserve requested and confirmed history and reject invalid ranges (0.551871ms)
+✔ waiting parts cannot resume before confirmed warehouse handoff (0.607755ms)
+✔ intake permits no area or appointment, but start requires a complete appointment (1.106495ms)
+✔ accepted order can start with existing requested appointment without duplicating schedule (0.277738ms)
+✔ warehouse issue and technician receipt are distinct, guarded and replay-safe (1.936996ms)
+✔ surplus stays with technician until warehouse acknowledges return; transfer cannot abandon custody (1.306636ms)
+✔ requested stock cannot be bypassed by reassignment, and rescheduling requires all receipts (1.452426ms)
+✔ old machine receipt numbers are automatic and warehouse confirms physical custody separately (0.753865ms)
+✔ director cancellation preserves issued goods until warehouse confirms physical return (1.1359ms)
+✔ checklist completion records usage and acceptance in one atomic replay-safe command without free text (1.065003ms)
+✔ missing evidence leaves received stock and usage unchanged when combined completion fails (0.612492ms)
+✔ combined completion rejects unknown, duplicate, missing or excessive usage and unconfirmed checklists (1.579929ms)
+✔ machine-free intake uses server Vietnam day for clock windows and creates no catalogue records (1.032724ms)
+✔ assignment and reassignment accept blank notes while keeping history (0.286381ms)
+✔ multi-line proposals, issue and receipt are atomic and replay does not duplicate numbers (1.041888ms)
+✔ bad proposal rows leave no partial request, number or event (0.626423ms)
+✔ clock-only schedule and start are one replay-safe transaction on Vietnam current day (0.335935ms)
+✔ combined start cannot bypass missing materials or invalid clock range (0.542927ms)
+✔ selected material usage and batch return stay atomic and keep unselected items (0.89712ms)
+✔ intake and schedule allow tomorrow/custom date and reject past or impossible dates (0.917201ms)
+✔ quick machine creation and intake are atomic, linked and replay-safe (0.351058ms)
+✔ GAS bundle parses and all routes default deny before Sheets or Drive (143.279053ms)
+✔ GAS project mismatch rejects before workbook access and legacy apps are explicitly blocked (131.650603ms)
+✔ visible setup entrypoint rejects other Google users and delegates for the editor user (116.793239ms)
+✔ GAS bridge login, Sheets query and commands share the repository contract (6146.099734ms)
+✔ PBKDF2 implementation matches Node crypto including unicode passwords (603.854933ms)
+✔ unauthenticated and cross-origin commands are denied (29.897775ms)
+✔ server sessions never leak tokens or password hashes in query projections (544.722756ms)
+✔ five failed attempts lock the account; expiry restores login, disabling revokes session (3740.696166ms)
+dispatch-upload-timing {"auth_ms":0.03595400000085647,"snapshot_ms":0.17002599999977974,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.1527699999987817,"total_ms":0.494433999998364}
+✔ wrong technician and forged role cannot access order or upload photos (1064.601884ms)
+✔ local recovery preserves service customers without creating duplicates (1.591815ms)
+✔ session expiry requires login again (515.272284ms)
+✔ prepared image command recovery retains its owned evidence file (1072.182592ms)
+✔ changes authenticates without snapshot, publishes committed revision and keeps replay stable (3706.724432ms)
+dispatch-upload-timing {"auth_ms":0.011206999999998857,"snapshot_ms":0.12173299999999898,"locked_snapshot_ms":0,"drive_ms":0.015883999999999787,"sheets_ms":0.35962200000000166,"projection_ms":0.18565900000000113,"total_ms":1.273496999999999}
+dispatch-upload-timing {"auth_ms":0.0017619999999993752,"snapshot_ms":0.07985000000000042,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.04786200000000207,"total_ms":0.23476400000000552}
+dispatch-upload-timing {"auth_ms":0.0017029999999991219,"snapshot_ms":0.055723999999997886,"locked_snapshot_ms":0,"drive_ms":0.0027139999999974407,"sheets_ms":0.31948100000000323,"projection_ms":0.05092699999999439,"total_ms":0.5272940000000048}
+dispatch-upload-timing {"auth_ms":0.0020230000000012183,"snapshot_ms":0.06600999999999857,"locked_snapshot_ms":0,"drive_ms":0,"sheets_ms":0,"projection_ms":0.05231800000000675,"total_ms":0.2062000000000026}
+✔ upload reads auth once and snapshots once plus locked version check; returns single order without persisted projection (7.667943ms)
+✔ concurrent same-key upload replays across distinct private file ids and removes only unowned files (2.445942ms)
+✔ stale version cleans both files; prepared journal recovery retains both; reassignment removes thumbnail access (2.953316ms)
+ℹ tests 56
 ℹ suites 0
-ℹ pass 47
+ℹ pass 56
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 11329.483409
+ℹ duration_ms 10600.882304
 npm notice
 npm notice New major version of npm available! 11.9.0 -> 12.2.0
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
