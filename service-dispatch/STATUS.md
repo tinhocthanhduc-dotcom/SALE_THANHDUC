@@ -158,3 +158,7 @@ CI phát hiện race ở harness clock.pauseAt dùng thời gian Node, có thể
 ### Bắt buộc trước pilot: thay persistence snapshot
 
 Toàn bộ orders/events/commands và journal/state vẫn trong snapshot; domain clone và transaction đọc/ghi/chứng thực chunks sẽ chậm khi số đơn/journal tăng, còn giới hạn dung lượng/rows staging. Cần normalized tables theo orders, evidence, events, idempotency receipts và material movements; đọc/ghi theo đơn, index, retention/archive, migration/backup/recovery có kiểm thử. Tối ưu upload hiện tại không thay thế bước này. Cùng mốc còn phải xử lý lạm dụng login/quota của ANYONE_ANONYMOUS và nối vật tư theo mã TD của app Kho trước khi trừ tồn thật.
+
+## Từ ngữ giao diện
+
+Đổi nhãn nút/lịch sử: Bắt đầu công việc, Tiếp tục công việc, Nhận máy về xử lý; thông báo bắt đầu dùng cùng từ ngữ. Không đổi mã command, trạng thái hoặc nghiệp vụ.

@@ -75,11 +75,11 @@ Nhận đơn có thể bỏ trống cả hai giờ hẹn; nếu nhập phải nh
 
 ## Hàng mang theo và máy thu về
 
-Với đơn đang Chờ linh kiện, không tạo lại đơn. Dùng admin (vai trò director) hoặc tài khoản warehouse: mở đơn → **Kho xác nhận xuất hàng**, chọn đề xuất, ghi serial nếu có và ghi chú bàn giao thực tế. Phiếu PX được tạo tự động; bản này xuất đủ số lượng đề xuất, chưa hỗ trợ xuất từng phần. Phong KT/thợ được giao mở cùng đơn → **Xác nhận đã nhận hàng**. Sau khi mọi đề xuất đã được nhận hoặc từ chối, thợ chọn **Tiếp tục tại khách**, hoặc **Hẹn lại sau khi có linh kiện** nếu phải quay lại ngày khác.
+Với đơn đang Chờ linh kiện, không tạo lại đơn. Dùng admin (vai trò director) hoặc tài khoản warehouse: mở đơn → **Kho xác nhận xuất hàng**, chọn đề xuất, ghi serial nếu có và ghi chú bàn giao thực tế. Phiếu PX được tạo tự động; bản này xuất đủ số lượng đề xuất, chưa hỗ trợ xuất từng phần. Phong KT/thợ được giao mở cùng đơn → **Xác nhận đã nhận hàng**. Sau khi mọi đề xuất đã được nhận hoặc từ chối, thợ chọn **Tiếp tục công việc**, hoặc **Hẹn lại sau khi có linh kiện** nếu phải quay lại ngày khác.
 
 Thợ có thể ghi số thực dùng ngay trong **Nghiệm thu công việc**, hoặc dùng form **Ghi vật tư / hàng thực dùng** riêng (đối với máy giao khách: số lượng đã giao). Phần dư được giữ ở thợ đến khi Kho/Giám đốc chọn **Kho xác nhận nhận hàng dư**, tạo phiếu PN. Số thực dùng không vượt số xuất; vật tư hỏng cần quy trình riêng chưa có trong bản này.
 
-Nếu thu máy cũ, thợ chọn **Ghi nhận máy cũ thu về**, ghi model/serial, tình trạng/phụ kiện, mục đích đổi máy hoặc mang về sửa và xác nhận của khách. Biên nhận BN tự tạo. Kho/Giám đốc chọn **Kho nhận máy cũ**, ghi vị trí và tình trạng kiểm nhận, tạo phiếu NK. Ghi nhận này là bàn giao tài sản theo đơn, không tự kết luận quyền sở hữu, giá mua hoặc tạo đơn sửa riêng.
+Nếu thu máy cũ, thợ chọn **Nhận máy về xử lý**, ghi model/serial, tình trạng/phụ kiện, mục đích đổi máy hoặc mang về sửa và xác nhận của khách. Biên nhận BN tự tạo. Kho/Giám đốc chọn **Kho nhận máy cũ**, ghi vị trí và tình trạng kiểm nhận, tạo phiếu NK. Ghi nhận này là bàn giao tài sản theo đơn, không tự kết luận quyền sở hữu, giá mua hoặc tạo đơn sửa riêng.
 
 Chuyển thợ bị chặn khi còn hàng/máy đang giữ: ghi thực dùng, trả phần dư và bàn giao máy về kho trước khi duyệt chuyển trong bản này. Đơn từng xuất hàng phải Giám đốc duyệt hủy; hủy không tự xóa hàng hoặc xác nhận đã trả. Kho vẫn nhận lại hàng/máy của đơn hủy.
 
@@ -123,7 +123,7 @@ Tab **Đã kết thúc** gom đơn Đã nghiệm thu và Đã hủy, lọc Tất
 
 ## Ngày hẹn, máy và báo cáo (cập nhật 14/10/2026)
 
-Thay hướng dẫn gộp bước ở bản v15: **Hẹn giờ** chỉ lưu lịch và chuyển Đã hẹn; **Bắt đầu tại khách** một chạm khi đã có lịch. Chốt giờ và bắt đầu còn dành cho đến ngay khi chưa có lịch. Ngày chọn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo máy chủ Việt Nam; vẫn chọn khung sáng/chiều/cả ngày hoặc giờ tùy chỉnh. Máy chủ chặn ngày quá khứ và ngày không tồn tại, cả với API giờ ISO cũ. Không sửa ngày hẹn đã lưu của đơn cũ khi cập nhật mã.
+Thay hướng dẫn gộp bước ở bản v15: **Hẹn giờ** chỉ lưu lịch và chuyển Đã hẹn; **Bắt đầu công việc** một chạm khi đã có lịch. Chốt giờ và bắt đầu còn dành cho đến ngay khi chưa có lịch. Ngày chọn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo máy chủ Việt Nam; vẫn chọn khung sáng/chiều/cả ngày hoặc giờ tùy chỉnh. Máy chủ chặn ngày quá khứ và ngày không tồn tại, cả với API giờ ISO cũ. Không sửa ngày hẹn đã lưu của đơn cũ khi cập nhật mã.
 
 Nhận đơn chọn máy của đúng khách nếu đã có, hoặc để trống. Nhập model/serial mới để tạo hồ sơ máy và liên kết với đơn trong cùng một lần lưu; replay không tạo máy trùng. Giữ machine_id và snapshot model/serial để theo dõi lịch sử theo máy. Chọn máy cũ sẽ bỏ các trường tạo mới khỏi yêu cầu gửi.
 

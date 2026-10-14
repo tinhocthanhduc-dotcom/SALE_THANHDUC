@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 20,
-  "update": "User-authorized photo optimization: numeric safe timings, 1280px JPEG under 200KB + private 320px thumbnail, one shared auth/preflight read and locked version check, single-order upload projection, background sequential multi-photo queue and replay-safe retry. Add upload/race/recovery/GAS/browser tests and local before/after report; normalized tables required before pilot. Preserve staging identity/accounts/data."
+  "revision": 21,
+  "update": "User-requested friendly Vietnamese labels: Bắt đầu công việc, Tiếp tục công việc, Nhận máy về xử lý. Update UI/history/toast and README; business commands and APIs unchanged."
 }
