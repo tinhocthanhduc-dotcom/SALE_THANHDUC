@@ -36,7 +36,7 @@ function createApp(directory){
    else if(input.action==='query')result=service.query(token,input.order_id);
    else if(input.action==='command')result=service.command(token,input.command);
    else if(input.action==='upload')result=service.upload(token,input.payload);
-   else if(input.action==='image'){const file=service.image(token,input.order_id,input.evidence_id);result={mime:file.mime,base64:file.data.toString('base64')};}
+   else if(input.action==='image'){const file=service.image(token,input.order_id,input.evidence_id,input.variant);result=file.missing?file:{mime:file.mime,base64:file.data.toString('base64')};}
    else{respond(400,{error:'UNKNOWN_ACTION'});return;}
    respond(200,result);
   }catch(e){const error=e.code||(['INVALID_IMAGE'].includes(e.message)?e.message:'SERVER_ERROR');respond(['AUTH_REQUIRED','INVALID_LOGIN'].includes(error)?401:error==='FORBIDDEN'?403:400,{error});}

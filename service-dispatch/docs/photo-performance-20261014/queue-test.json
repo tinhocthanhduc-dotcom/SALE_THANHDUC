@@ -1,0 +1,126 @@
+{
+  "mode": "after",
+  "synthetic_orders": 200,
+  "input_pixels": [
+    4000,
+    3000
+  ],
+  "queries_after_selection": 0,
+  "uploads": 4,
+  "samples": [
+    {
+      "upload_ms": 14.650611000000026,
+      "snapshot_ms": 1.0338949999995748,
+      "snapshot_reads": 2,
+      "auth_reads": 1,
+      "replayed": false,
+      "auth_ms": 0.2143530000003011,
+      "locked_snapshot_ms": 1,
+      "drive_ms": 0.3647879999998622,
+      "sheets_ms": 5.8697400000000926,
+      "projection_ms": 0.12246500000037486,
+      "total_ms": 14.2793929999998
+    },
+    {
+      "upload_ms": 17.504963999999745,
+      "snapshot_ms": 2.982594999999492,
+      "snapshot_reads": 2,
+      "auth_reads": 1,
+      "replayed": false,
+      "auth_ms": 0.2003819999999905,
+      "locked_snapshot_ms": 3,
+      "drive_ms": 0.13439199999993434,
+      "sheets_ms": 5.5951960000002146,
+      "projection_ms": 0.09048600000005536,
+      "total_ms": 17.368819999999687
+    },
+    {
+      "upload_ms": 10.782576999999947,
+      "snapshot_ms": 3.268344999999499,
+      "snapshot_reads": 1,
+      "auth_reads": 1,
+      "replayed": true,
+      "auth_ms": 0.1316480000004958,
+      "locked_snapshot_ms": 0,
+      "drive_ms": 0,
+      "sheets_ms": 0,
+      "projection_ms": 0.1275820000000749,
+      "total_ms": 10.661215000000084
+    },
+    {
+      "upload_ms": 20.190937000000304,
+      "snapshot_ms": 3.4947060000004058,
+      "snapshot_reads": 2,
+      "auth_reads": 1,
+      "replayed": false,
+      "auth_ms": 0.2543120000000272,
+      "locked_snapshot_ms": 3,
+      "drive_ms": 0.34588999999959924,
+      "sheets_ms": 6.039464999999836,
+      "projection_ms": 0.09360100000048988,
+      "total_ms": 20.091126999999688
+    }
+  ],
+  "browser_timings": [
+    {
+      "compression_ms": 489.7000000178814,
+      "bytes": 132820,
+      "thumbnail_bytes": 27244,
+      "quality": 0.2,
+      "long_edge": 1280
+    },
+    {
+      "send_ms": 32.70000001788139,
+      "auth_ms": 0.2143530000003011,
+      "snapshot_ms": 1.0338949999995748,
+      "locked_snapshot_ms": 1,
+      "drive_ms": 0.3647879999998622,
+      "sheets_ms": 5.8697400000000926,
+      "projection_ms": 0.12246500000037486,
+      "total_ms": 14.2793929999998,
+      "refresh_ms": 0,
+      "full_query_count": 0
+    },
+    {
+      "compression_ms": 218.19999998807907,
+      "bytes": 132820,
+      "thumbnail_bytes": 27244,
+      "quality": 0.2,
+      "long_edge": 1280
+    },
+    {
+      "send_ms": 22.099999994039536,
+      "auth_ms": 0.1316480000004958,
+      "snapshot_ms": 3.268344999999499,
+      "locked_snapshot_ms": 0,
+      "drive_ms": 0,
+      "sheets_ms": 0,
+      "projection_ms": 0.1275820000000749,
+      "total_ms": 10.661215000000084,
+      "refresh_ms": 0,
+      "full_query_count": 0
+    },
+    {
+      "compression_ms": 202.30000001192093,
+      "bytes": 132820,
+      "thumbnail_bytes": 27244,
+      "quality": 0.2,
+      "long_edge": 1280
+    },
+    {
+      "send_ms": 32.19999998807907,
+      "auth_ms": 0.2543120000000272,
+      "snapshot_ms": 3.4947060000004058,
+      "locked_snapshot_ms": 3,
+      "drive_ms": 0.34588999999959924,
+      "sheets_ms": 6.039464999999836,
+      "projection_ms": 0.09360100000048988,
+      "total_ms": 20.091126999999688,
+      "refresh_ms": 0,
+      "full_query_count": 0
+    }
+  ],
+  "full_reads": 1,
+  "thumbnail_reads": 3,
+  "page_errors": []
+}

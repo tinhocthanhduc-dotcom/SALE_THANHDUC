@@ -41,15 +41,15 @@ class LocalRepository {
   recover(){return this.lock(()=>this.recoverLocked());}
   submit(command,context) {
     return this.lock(()=>{
-      const before=this.recoverLocked();
+      const readStarted=Date.now(),before=this.recoverLocked();if(context.onSnapshotRead)context.onSnapshotRead(Date.now()-readStarted);
       const output=this.domain.execute(before.state,command,context);
-      if(output.result.replayed)return output.result;
+      if(output.result.replayed){if(context.onCommitted)context.onCommitted(before);return output.result;}
       const after={revision:before.revision+1,state:output.state};
       const journal={status:'PREPARED',before_revision:before.revision,before_hash:hash(before),after,after_hash:hash(after),receipt:output.result};
       this.atomic('journal.json',journal);this.fault('after_prepare');
       this.atomic('state.json',after);this.fault('after_state');
       this.atomic('journal.json',{...journal,status:'COMMITTED'});this.fault('after_commit');
-      return output.result;
+      if(context.onCommitted)context.onCommitted(after);return output.result;
     });
   }
   snapshot(){return this.lock(()=>this.recoverLocked());}

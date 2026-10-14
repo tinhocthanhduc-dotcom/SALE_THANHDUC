@@ -143,3 +143,9 @@ Trang hiển thị hỏi mỗi 20 giây; visibilitychange/focus hỏi ngay khi q
 Lỗi polling im lặng, chu kỳ 20/40/80/120 giây; phiên hết hạn đóng dialog và về login. Điện thoại tắt màn hình/ẩn trình duyệt không nhận cập nhật cho đến mở lại. Zalo OA/Telegram để báo khi màn hình tắt chưa triển khai.
 
 Đo trên GAS: chủ project chọn **benchmarkDispatchChanges** trong editor → Run. Hàm tạo phiên benchmark tạm, gọi changes 5 lần và xóa phiên/người dùng tạm trong finally, log samples_ms/average_ms; không dùng mật khẩu nhân viên hoặc mở Sheets. Workflow thử cùng hàm qua Execution API; nếu API chưa cho phép thì artifact changes-benchmark-status.json ghi chưa đo, không coi số đo local/VM là GAS thật.
+
+## Ảnh tải nền và đo thời gian
+
+Chọn loại ảnh, chọn một hoặc nhiều ảnh/chụp tiếp: xem preview với Đang tải, Đã lưu hoặc Lỗi - thử lại; không cần chờ để chụp ảnh tiếp. Nghiệm thu bật khi ảnh sau và biên bản/chữ ký đã lưu. Nếu lỗi, thử lại ngay trong trang để giữ nguyên mã chống trùng; chưa có queue offline lưu qua đóng/tải lại trang. Danh sách tải ảnh nhỏ 320px, bấm ảnh mới tải bản đầy đủ qua kiểm quyền.
+
+[Báo cáo đo local trước/sau, cách đọc log GAS và bước trước pilot](docs/photo-performance-20261014/README.md). Console chỉ log số thời gian/kích thước; upload không gọi query toàn bộ. Persistence cần chuyển sang normalized tables trước pilot.

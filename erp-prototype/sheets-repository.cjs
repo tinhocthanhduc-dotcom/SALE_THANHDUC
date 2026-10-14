@@ -77,8 +77,8 @@ class SheetsRepository {
   recover(){return this.withLock(()=>this.recoverLocked());}
   snapshot(){return this.recover();}
   submit(command,context){return this.withLock(()=>{
-    const before=this.recoverLocked();const output=this.domain.execute(before.state,command,context);
-    if(output.result.replayed)return output.result;
+    const readStarted=Date.now(),before=this.recoverLocked();if(context.onSnapshotRead)context.onSnapshotRead(Date.now()-readStarted);const output=this.domain.execute(before.state,command,context);
+    if(output.result.replayed){if(context.onCommitted)context.onCommitted(before);return output.result;}
     const after={revision:before.revision+1,state:output.state};
     // Preflight capacity on both tabs before recording durable intent.
     const raw=JSON.stringify(after);if(raw.length>this.maxChars)fail('STAGING_CAPACITY_EXCEEDED');
@@ -88,7 +88,7 @@ class SheetsRepository {
     const journal=this.append('ERP_JOURNAL',after,'PREPARED',meta);this.fault('after_prepare');
     this.append('ERP_STATE',after,'SNAPSHOT');this.fault('after_state');
     this.workbook.getSheetByName('ERP_JOURNAL').getRange(journal.row,2,1,1).setValues([['COMMITTED']]);this.flush();this.fault('after_commit');
-    return output.result;
+    if(context.onCommitted)context.onCommitted(after);return output.result;
   });}
 }
 module.exports={SheetsRepository,HEADERS};

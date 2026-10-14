@@ -1,0 +1,49 @@
+{
+  "mode": "after-measurement",
+  "synthetic_orders": 200,
+  "input_pixels": [
+    4000,
+    3000
+  ],
+  "queries_after_selection": 0,
+  "uploads": 1,
+  "samples": [
+    {
+      "upload_ms": 14.539770999999746,
+      "snapshot_ms": 0.9156280000006518,
+      "snapshot_reads": 2,
+      "auth_reads": 1,
+      "replayed": false,
+      "auth_ms": 0.18932500000028085,
+      "locked_snapshot_ms": 1,
+      "drive_ms": 0.4453610000000481,
+      "sheets_ms": 6.446605000001,
+      "projection_ms": 0.14307599999938247,
+      "total_ms": 14.203685000000405
+    }
+  ],
+  "browser_timings": [
+    {
+      "compression_ms": 302.10000002384186,
+      "bytes": 132820,
+      "thumbnail_bytes": 27244,
+      "quality": 0.2,
+      "long_edge": 1280
+    },
+    {
+      "send_ms": 37.39999997615814,
+      "auth_ms": 0.18932500000028085,
+      "snapshot_ms": 0.9156280000006518,
+      "locked_snapshot_ms": 1,
+      "drive_ms": 0.4453610000000481,
+      "sheets_ms": 6.446605000001,
+      "projection_ms": 0.14307599999938247,
+      "total_ms": 14.203685000000405,
+      "refresh_ms": 0,
+      "full_query_count": 0
+    }
+  ],
+  "full_reads": 0,
+  "thumbnail_reads": 0,
+  "page_errors": []
+}

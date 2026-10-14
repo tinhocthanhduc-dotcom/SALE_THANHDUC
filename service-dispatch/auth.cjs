@@ -31,12 +31,13 @@ class Auth {
    return {token,actor:{id:user.id,name:user.name,roles:user.roles,active:true},expires_at:at+this.sessionMs};
   });
  }
- actor(token){
+ context(token){
   if(typeof token!=='string'||!/^[a-f0-9]{64,128}$/.test(token))fail('AUTH_REQUIRED');
   const state=this.store.read(),session=state.sessions?.[digest(token)],user=session&&state.users[session.user_id];
   if(!session||session.expires_at<=this.now()||!user||user.active===false||user.version!==session.user_version)fail('AUTH_REQUIRED');
-  return {id:user.id,name:user.name,roles:user.roles,active:true};
+  return {actor:{id:user.id,name:user.name,roles:user.roles,active:true},directory:Object.fromEntries(Object.values(state.users).map(u=>[u.id,{id:u.id,name:u.name,roles:u.roles,active:u.active,area:u.area||''}]))};
  }
+ actor(token){return this.context(token).actor;}
  logout(token){this.store.lock(()=>{const state=this.store.read();if(typeof token==='string')delete state.sessions?.[digest(token)];this.store.write(state);});}
  directory(){return Object.fromEntries(Object.values(this.store.read().users).map(u=>[u.id,{id:u.id,name:u.name,roles:u.roles,active:u.active,area:u.area||''}]));}
 }

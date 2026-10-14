@@ -20,7 +20,7 @@ function execute(state,command,context){
  if(!command||!Object.hasOwn(roles,command.type))fail('UNKNOWN_COMMAND');
  if(!actor?.id||!permitted(actor,roles[command.type]))fail('FORBIDDEN');
  const payload=command.payload||{},key=actor.id+':'+required(command.idempotency_key);
- const fingerprint=canonical({type:command.type,payload,expected_version:command.expected_version});
+ const fingerprint=canonical(command.type==='add_evidence'&&context.evidence_verified&&payload.upload_digest?{type:command.type,upload_digest:payload.upload_digest,expected_version:command.expected_version}:{type:command.type,payload,expected_version:command.expected_version});
  const previous=state.commands[key];
  // Reassignment removes access even to replay receipts from the old technician.
  if(payload.order_id&&(!state.orders[payload.order_id]||!canRead(actor,state.orders[payload.order_id])))fail('FORBIDDEN');
@@ -122,7 +122,7 @@ function execute(state,command,context){
    case 'cannot_complete':requireState('scheduled','working');if(order.technician_id!==actor.id)fail('FORBIDDEN');order.unable_reason=required(payload.reason);order.status='unable';for(const visit of order.visits.filter(v=>!v.ended_at)){visit.ended_at=at;visit.result='unable';}break;
    case 'add_evidence':{
     requireState('working');if(order.technician_id!==actor.id||context.evidence_verified!==true)fail('FORBIDDEN');if(!['after','handover'].includes(payload.kind))fail('INVALID_EVIDENCE_KIND');
-    order.evidence.push({id:fresh(),visit_id:order.visits.at(-1).id,file_id:required(payload.file_id),kind:payload.kind,mime:required(payload.mime),at,actor_id:actor.id});break;
+    order.evidence.push({id:fresh(),visit_id:order.visits.at(-1).id,file_id:required(payload.file_id),...(payload.thumbnail_file_id?{thumbnail_file_id:payload.thumbnail_file_id}:{}),kind:payload.kind,mime:required(payload.mime),at,actor_id:actor.id});break;
    }
    case 'complete':{
     requireState('working');if(order.technician_id!==actor.id)fail('FORBIDDEN');

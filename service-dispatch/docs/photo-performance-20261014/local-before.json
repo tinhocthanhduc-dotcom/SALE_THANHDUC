@@ -1,0 +1,34 @@
+{
+  "mode": "before",
+  "synthetic_orders": 200,
+  "input_pixels": [
+    4000,
+    3000
+  ],
+  "queries_after_selection": 1,
+  "uploads": 1,
+  "samples": [
+    {
+      "upload_ms": 21.23406299999988,
+      "snapshot_ms": 2.578020999999353,
+      "snapshot_reads": 3,
+      "auth_reads": 2,
+      "replayed": false,
+      "local_drive_ms": 0.11720700000023498,
+      "local_submit_ms": 7.092445999999654
+    }
+  ],
+  "browser_timings": [
+    {
+      "compression_ms": 269.80000001192093,
+      "bytes": 367449
+    },
+    {
+      "send_ms": 80.40000000596046,
+      "refresh_ms": 44.900000005960464
+    }
+  ],
+  "full_reads": 0,
+  "thumbnail_reads": 0,
+  "page_errors": []
+}
