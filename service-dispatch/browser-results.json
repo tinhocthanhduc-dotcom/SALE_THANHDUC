@@ -33,7 +33,13 @@
     "selected usage and per-item return shortcuts",
     "accepted orders in separate tab",
     "assignment notes visible to technician",
-    "ended orders grouped and filtered by status"
+    "ended orders grouped and filtered by status",
+    "future appointments do not start work",
+    "one tap start",
+    "optional machine profile",
+    "technical version hidden for technician",
+    "report and overdue board",
+    "quick machine creation in intake"
   ],
   "page_errors": []
 }

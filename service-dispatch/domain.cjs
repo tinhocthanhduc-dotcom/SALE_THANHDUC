@@ -1,9 +1,13 @@
 'use strict';
 // No authentication or IO here. Actor and employee directory must come from the server.
+const Analytics=require('./analytics.cjs');
 const clone=value=>JSON.parse(JSON.stringify(value));
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 function required(v){if(typeof v!=='string'||!v.trim())fail('REQUIRED_FIELD');return v.trim();}
 function date(v){if(typeof v!=='string'||!/^\d{4}-\d\d-\d\dT/.test(v)||!Number.isFinite(Date.parse(v)))fail('INVALID_DATE');return new Date(v).toISOString();}
+function vietnamDay(iso){return new Date(Date.parse(iso)+7*3600000).toISOString().slice(0,10);}
+function appointmentDay(payload,at){const today=vietnamDay(at),mode=payload.day_choice||'today';let day=today;if(mode==='tomorrow')day=vietnamDay(new Date(Date.parse(at)+86400000).toISOString());else if(mode==='custom')day=payload.appointment_date;else if(mode!=='today')fail('INVALID_APPOINTMENT');if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isFinite(Date.parse(day+'T00:00:00Z'))||new Date(day+'T00:00:00Z').toISOString().slice(0,10)!==day||day<today)fail('INVALID_APPOINTMENT');return day;}
+function checkAppointmentDay(start,at){if(vietnamDay(start)<vietnamDay(at))fail('INVALID_APPOINTMENT');}
 function canonical(v){if(v===null||typeof v!=='object')return JSON.stringify(v);if(Array.isArray(v))return '['+v.map(canonical).join(',')+']';return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';}
 function emptyState(){return {customers:{},machines:{},orders:{},commands:{},events:[],sequences:{}};}
 const roles={create_customer:['dispatcher','director'],create_machine:['dispatcher','director'],create_order:['dispatcher','director'],assign:['dispatcher','director'],accept:['technician'],schedule_start:['technician'],schedule:['technician'],start:['technician'],wait_parts:['technician'],resume_schedule:['technician'],request_transfer:['technician'],approve_transfer:['dispatcher','director'],reject_transfer:['dispatcher','director'],cannot_complete:['technician'],complete:['technician'],cancel:['dispatcher','director'],add_evidence:['technician'],issue_parts:['warehouse','director'],reject_parts:['warehouse','director'],receive_parts:['technician'],resume_work:['technician'],collect_old_machine:['technician'],receive_old_machine:['warehouse','director'],report_parts_usage:['technician'],return_parts:['warehouse','director']};
@@ -31,12 +35,13 @@ function execute(state,command,context){
   if(!next.customers[payload.customer_id])fail('UNKNOWN_CUSTOMER');
   entity={id:fresh(),customer_id:payload.customer_id,model:required(payload.model),serial:typeof payload.serial==='string'?payload.serial.trim():'',version:1,created_at:at};next.machines[entity.id]=entity;
  }else if(command.type==='create_order'){
-  const customer=next.customers[payload.customer_id],machine=next.machines[payload.machine_id];
+  const customer=next.customers[payload.customer_id];let machine=next.machines[payload.machine_id];
   if(!customer)fail('UNKNOWN_CUSTOMER');if(payload.machine_id&&(!machine||machine.customer_id!==customer.id))fail('MACHINE_CUSTOMER_MISMATCH');
   if(!['hotline','zalo','other'].includes(payload.source)||!['normal','urgent','critical'].includes(payload.priority))fail('INVALID_CATEGORY');
-  const serviceDate=new Date(Date.parse(at)+7*3600000).toISOString().slice(0,10);let appointmentStart=payload.appointment_start,appointmentEnd=payload.appointment_end;
+  const serviceDate=appointmentDay(payload,at);let appointmentStart=payload.appointment_start,appointmentEnd=payload.appointment_end;
   if(payload.appointment_time_start||payload.appointment_time_end){if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.appointment_time_start||'')||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.appointment_time_end||''))fail('INVALID_APPOINTMENT');appointmentStart=serviceDate+'T'+payload.appointment_time_start+':00+07:00';appointmentEnd=serviceDate+'T'+payload.appointment_time_end+':00+07:00';}
-  const hasStart=!!appointmentStart,hasEnd=!!appointmentEnd;if(hasStart!==hasEnd)fail('INVALID_APPOINTMENT');const appointments=[];if(hasStart){const start=date(appointmentStart),end=date(appointmentEnd);if(start>=end)fail('INVALID_APPOINTMENT');appointments.push({start,end,kind:'requested',at,actor_id:actor.id});}
+  const hasStart=!!appointmentStart,hasEnd=!!appointmentEnd;if(hasStart!==hasEnd)fail('INVALID_APPOINTMENT');const appointments=[];if(hasStart){const start=date(appointmentStart),end=date(appointmentEnd);if(start>=end)fail('INVALID_APPOINTMENT');checkAppointmentDay(start,at);appointments.push({start,end,kind:'requested',at,actor_id:actor.id});}
+  if(!machine&&typeof payload.machine_model==='string'&&payload.machine_model.trim()){machine={id:fresh(),customer_id:customer.id,model:required(payload.machine_model),serial:typeof payload.machine_serial==='string'?payload.machine_serial.trim():'',version:1,created_at:at};next.machines[machine.id]=machine;}
   order={id:fresh(),order_no:number(next,'TD',at),customer_id:customer.id,machine_id:machine?machine.id:null,customer_snapshot:clone(customer),machine_snapshot:machine?clone(machine):{model:'',serial:''},service_date:serviceDate,address:required(payload.address),request:required(payload.request),area:customer.area,terms:customer.terms,source:payload.source,priority:payload.priority,status:'new',version:1,created_at:at,updated_at:at,assignments:[],appointments,visits:[],transfers:[],parts_requests:[],evidence:[],payment_status:'unpaid',financial_scope:'not_implemented'};
   next.orders[order.id]=order;entity=order;
  }else{
@@ -49,7 +54,7 @@ function execute(state,command,context){
   const part=()=>{const r=order.parts_requests.find(r=>r.id===payload.request_id);if(!r)fail('UNKNOWN_PARTS_REQUEST');return r;};
   const parts=()=>{const ids=payload.request_ids===undefined?[payload.request_id]:payload.request_ids;if(!Array.isArray(ids)||!ids.length||ids.length>50||new Set(ids).size!==ids.length)fail('INVALID_PARTS_LIST');return ids.map(requestId=>{const r=order.parts_requests.find(r=>r.id===requestId);if(!r)fail('UNKNOWN_PARTS_REQUEST');return r;});};
   const recordUsage=(r,usedQty,note)=>{if(r.status!=='received')fail('INVALID_TRANSITION');if(r.technician_id!==actor.id)fail('FORBIDDEN');if(!Number.isSafeInteger(usedQty)||usedQty<0||usedQty>r.issued_qty)fail('INVALID_QUANTITY');r.used_qty=usedQty;r.surplus_qty=r.issued_qty-usedQty;r.usage_note=required(note);r.usage_recorded_at=at;r.status=r.surplus_qty?'usage_recorded':'resolved';};
-  const setSchedule=()=>{let startValue=payload.start,endValue=payload.end;if(payload.time_start||payload.time_end){if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.time_start||'')||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.time_end||''))fail('INVALID_APPOINTMENT');const day=new Date(Date.parse(at)+7*3600000).toISOString().slice(0,10);startValue=day+'T'+payload.time_start+':00+07:00';endValue=day+'T'+payload.time_end+':00+07:00';}const start=date(startValue),end=date(endValue);if(start>=end)fail('INVALID_APPOINTMENT');const confirmation=required(payload.customer_confirmation);if(order.appointments.some(a=>a.kind==='confirmed'))required(payload.reason);order.appointments.push({start,end,kind:'confirmed',customer_confirmation:confirmation,reason:payload.reason||'',at,actor_id:actor.id});order.status='scheduled';};
+  const setSchedule=()=>{let startValue=payload.start,endValue=payload.end;if(payload.time_start||payload.time_end){if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.time_start||'')||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.time_end||''))fail('INVALID_APPOINTMENT');const day=appointmentDay(payload,at);startValue=day+'T'+payload.time_start+':00+07:00';endValue=day+'T'+payload.time_end+':00+07:00';}const start=date(startValue),end=date(endValue);if(start>=end)fail('INVALID_APPOINTMENT');checkAppointmentDay(start,at);const confirmation=required(payload.customer_confirmation);if(order.appointments.some(a=>a.kind==='confirmed'))required(payload.reason);order.appointments.push({start,end,kind:'confirmed',customer_confirmation:confirmation,reason:payload.reason||'',at,actor_id:actor.id});order.status='scheduled';};
   switch(command.type){
    case 'assign':{
     requireState('new','assigned','accepted','scheduled','unable','waiting_parts');employee(directory,payload.technician_id);
@@ -148,10 +153,10 @@ function execute(state,command,context){
  if(command.type==='add_evidence'){result.file_id=payload.file_id;result.upload_digest=payload.upload_digest;}
  next.events.push({id:fresh(),entity_id:entity.id,order_id:order?.id,type:command.type,actor_id:actor.id,actor_name:actor.name||actor.id,at,version:entity.version,reason:payload.note||payload.reason||''});next.commands[key]={fingerprint,result:clone(result)};return {state:next,result};
 }
-function project(state,actor,directory){
+function project(state,actor,directory,at=new Date().toISOString()){
  if(!permitted(actor,['dispatcher','director','technician','warehouse']))fail('FORBIDDEN');
  const orders=Object.values(state.orders).filter(o=>canRead(actor,o));const ids=new Set(orders.map(o=>o.id));
  const canManage=permitted(actor,['dispatcher','director']);
- return {actor:{id:actor.id,name:actor.name,roles:actor.roles},orders:clone(orders),customers:canManage?clone(Object.values(state.customers)):[],machines:canManage?clone(Object.values(state.machines)):[],technicians:Object.values(directory).filter(p=>p.active!==false&&p.roles.includes('technician')).map(p=>({id:p.id,name:p.name,area:p.area||'',open_count:canManage||p.id===actor.id?orders.filter(o=>o.technician_id===p.id&&!['accepted_work','cancelled'].includes(o.status)).length:null})),events:clone(state.events.filter(e=>canManage||ids.has(e.order_id)))};
+ return {actor:{id:actor.id,name:actor.name,roles:actor.roles},server_time:at,report:canManage?Analytics.report(orders,directory):[],orders:clone(orders).map(o=>({...o,sla:Analytics.deadlines(o,at)})),customers:canManage?clone(Object.values(state.customers)):[],machines:canManage?clone(Object.values(state.machines)):[],technicians:Object.values(directory).filter(p=>p.active!==false&&p.roles.includes('technician')).map(p=>({id:p.id,name:p.name,area:p.area||'',open_count:canManage||p.id===actor.id?orders.filter(o=>o.technician_id===p.id&&!['accepted_work','cancelled'].includes(o.status)).length:null})),events:clone(state.events.filter(e=>canManage||ids.has(e.order_id)))};
 }
 module.exports={emptyState,execute,project,canRead};

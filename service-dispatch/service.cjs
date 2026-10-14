@@ -7,7 +7,7 @@ function createService({auth,repository,files,now,id}){
  const authorized=(token,orderId)=>{const actor=auth.actor(token),order=state().orders[orderId];if(!order||!Domain.canRead(actor,order))fail('FORBIDDEN');return actor;};
  return {
   login:(username,password)=>auth.login(username,password),logout:token=>auth.logout(token),
-  query(token,orderId){const actor=auth.actor(token),current=state();if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory());if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
+  query(token,orderId){const actor=auth.actor(token),current=state();if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory(),now());if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
   command(token,command){if(command.type==='add_evidence')fail('FORBIDDEN');const actor=auth.actor(token);return repository.submit(command,{actor,directory:auth.directory(),now,id});},
   upload(token,payload){
    const actor=authorized(token,payload.order_id);

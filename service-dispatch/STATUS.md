@@ -90,3 +90,22 @@ Kiểm chứng local: 38/38 Node, 32 kịch bản HTTP browser không page error
 Theo yêu cầu người dùng, đổi tab Đã nghiệm thu thành Đã kết thúc: gom accepted_work và cancelled, bộ lọc Tất cả / Đã nghiệm thu / Đã hủy kèm số lượng, giữ lựa chọn khi refresh trong phiên và reset khi logout. Hai trạng thái rời Bảng điều phối/Việc của tôi; không thay trạng thái dữ liệu và không xóa đơn. Kho vẫn được xử lý bàn giao còn lại. Không làm được còn là việc cần điều phối xử lý, không tự đóng; trạng thái Hoàn thành hồ sơ sau đối soát chưa được triển khai.
 
 Kiểm chứng: 38/38 Node, 33 kịch bản HTTP browser, 9 kịch bản GAS/document.write/CSP đạt. Browser tạo đơn nghiệm thu và đơn hủy, kiểm tra cả hai rời bảng mở, vào tab chung, lọc đúng mỗi nhóm/tất cả và giữ bộ lọc khi tải dữ liệu. Không page error; quyền máy chủ giữ nguyên. Không chạy setup hoặc thay tài khoản/dữ liệu Google.
+
+
+## Sửa sau phản hồi test v15 (14/10/2026)
+
+Các hướng dẫn gộp hẹn/bắt đầu và hẹn chỉ trong hôm nay ở phần lịch sử phía trên được thay bằng hành vi dưới đây; tab Đã kết thúc và bộ lọc của v16 giữ nguyên.
+
+- Ngày hẹn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo thời gian máy chủ Việt Nam. Giữ khung sáng/chiều/cả ngày/tùy chỉnh. Domain kiểm ngày tồn tại và không trước hôm nay, cả lịch ISO cũ; giờ đầu/cuối phải đủ và đúng thứ tự. Không đổi lịch đã lưu của đơn cũ.
+- Hẹn giờ dùng schedule, chỉ Đã hẹn, không tạo visit. Bắt đầu tại khách một chạm dùng start, có khóa giao diện/replay/version và kiểm vật tư. schedule_start giữ cho trường hợp đến ngay chưa hẹn. Không đánh dấu Đang làm chỉ vì gọi hẹn khách.
+- Máy tùy chọn theo đúng khách; bỏ qua vẫn được. Model/serial nhập nhanh tạo máy và đơn atomic, gắn machine_id/snapshot; replay không tạo trùng, lịch sai không lưu máy một phần. Chọn máy cũ bỏ trường tạo mới; hồ sơ cũ và lịch sử liên kết vẫn giữ. Không suy ra máy của đơn cũ chỉ có mô tả.
+- Ẩn Phiên bản và vN trong lịch sử với thợ; vẫn giữ expected_version ở dữ liệu để bảo vệ ghi đồng thời.
+- SLA tính từ máy chủ khi query: giao thợ khẩn 15 phút, gấp 30 phút, thường 2 giờ từ nhận đơn; thợ nhận 15 phút từ lần giao hiện tại; xác nhận hẹn khẩn 30 phút từ tiếp nhận, thường hết ngày Việt Nam. Hẹn mức gấp dùng hết ngày vì yêu cầu chưa có mức riêng. Lịch requested lúc intake chưa được coi là xác nhận của thợ. Đơn quá hạn ở đầu Bảng điều phối, ghi loại hạn/thời điểm và mở chi tiết được. Đơn nghiệm thu/hủy không cảnh báo. Đây là cảnh báo khi tải/tải lại, chưa có cron hoặc gửi Zalo tự động.
+- Báo cáo chỉ điều phối/giám đốc nhận từ máy chủ: nhóm theo ngày tạo đơn Việt Nam và thợ hiện phụ trách, số đơn/nghiệm thu/hủy. Trung bình từ lần nhận hiện tại đến nghiệm thu, hiển thị số mẫu; đơn thiếu mốc không tính. Trễ là đến sau cuối khung hẹn đã có trước lần đến; tính mỗi đơn một lần, chỉ lần đến của thợ hiện tại, không gán trễ của thợ trước khi chuyển. Bộ lọc ngày/thợ trên UI; chưa phải lịch sử phân bổ công từng thợ tham gia.
+
+### Phải xử lý trước pilot
+
+1. ANYONE_ANONYMOUS vẫn cho người ngoài gọi login. Sai 5 lần khóa 15 phút có thể bị dùng để khóa tài khoản thợ; PBKDF2 JS 600.000 vòng còn tiêu tốn quota và thời gian GAS. Staging chấp nhận theo yêu cầu, nhưng cần chống lạm dụng/rate limiting, cơ chế khóa không bị tấn công nhắm tài khoản và đo hash_ms trên GAS trước pilot. Chưa triển khai các biện pháp đó hoặc đổi tham số băm trong lần sửa này.
+2. Vật tư còn tên tự do, chưa ánh xạ mã TD của app Kho và chưa trừ tồn. Bước tiếp theo: danh mục mã thống nhất, liên kết giao dịch xuất/nhận/hoàn trả có đối soát/idempotency; không coi sổ bàn giao staging là tồn kho thật.
+
+Kiểm chứng: 43/43 Node; 39 kịch bản HTTP Chromium, 9 kịch bản GAS/document.write/CSP, không page error. Kiểm tra ngày mai/ngày cụ thể/quá khứ/ngày sai và ranh giới ngày Việt Nam, hẹn không tạo visit, start một chạm, chọn máy cũ/tạo nhanh atomic/replay, ẩn kỹ thuật với thợ, SLA/ngày báo cáo/số mẫu/chuyển thợ. Fixture HTTP/GAS cũ đổi từ lịch 13/10 cố định sang giờ hôm nay hợp lệ; không bỏ kiểm tra quyền/recovery. Kết quả cập nhật trong ba file kiểm thử. Chưa thay thế UAT Google cho tính năng mới. Giữ nguyên project/deployment, public access, tài khoản và dữ liệu; không chạy setup.

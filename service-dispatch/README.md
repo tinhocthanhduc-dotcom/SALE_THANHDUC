@@ -119,3 +119,16 @@ Thợ dùng **Chốt giờ và bắt đầu**: chọn sáng/chiều/cả ngày h
 
 
 Tab **Đã kết thúc** gom đơn Đã nghiệm thu và Đã hủy, lọc Tất cả hoặc từng trạng thái kèm số lượng. Đơn thuộc hai trạng thái này không nằm trong Bảng điều phối/Việc của tôi. Bộ lọc giữ khi tải dữ liệu lại trong phiên trang, bỏ khi đăng xuất. Kho vẫn thấy bàn giao chưa xử lý; các thao tác và quyền đọc không đổi. Đơn Không làm được vẫn cần xử lý/giao lại, không tự coi là kết thúc. Trạng thái Hoàn thành hồ sơ sau đối soát chưa có trong bản hiện tại.
+
+
+## Ngày hẹn, máy và báo cáo (cập nhật 14/10/2026)
+
+Thay hướng dẫn gộp bước ở bản v15: **Hẹn giờ** chỉ lưu lịch và chuyển Đã hẹn; **Bắt đầu tại khách** một chạm khi đã có lịch. Chốt giờ và bắt đầu còn dành cho đến ngay khi chưa có lịch. Ngày chọn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo máy chủ Việt Nam; vẫn chọn khung sáng/chiều/cả ngày hoặc giờ tùy chỉnh. Máy chủ chặn ngày quá khứ và ngày không tồn tại, cả với API giờ ISO cũ. Không sửa ngày hẹn đã lưu của đơn cũ khi cập nhật mã.
+
+Nhận đơn chọn máy của đúng khách nếu đã có, hoặc để trống. Nhập model/serial mới để tạo hồ sơ máy và liên kết với đơn trong cùng một lần lưu; replay không tạo máy trùng. Giữ machine_id và snapshot model/serial để theo dõi lịch sử theo máy. Chọn máy cũ sẽ bỏ các trường tạo mới khỏi yêu cầu gửi.
+
+Đầu Bảng điều phối có **Đơn quá hạn**, kèm loại hạn và thời điểm: giao thợ khẩn 15 phút / gấp 30 phút / thường 2 giờ từ tiếp nhận; thợ nhận 15 phút từ lần giao hiện tại; chốt lịch khẩn 30 phút từ tiếp nhận, thường hết ngày Việt Nam. Mức gấp chưa có hạn hẹn riêng trong yêu cầu nên dùng hết ngày như thường. Lịch khách nhập khi tiếp nhận là requested; thợ xác nhận mới đạt hạn chốt lịch. Cảnh báo tính khi tải/tải lại dữ liệu, chưa có gửi thông báo tự động hoặc cron nhắc việc.
+
+**Báo cáo thợ / ngày** dành cho điều phối/giám đốc: ngày nhận đơn theo Việt Nam, thợ hiện phụ trách, số đơn/nghiệm thu/hủy. Thời gian trung bình từ lần thợ hiện tại nhận đến nghiệm thu, chỉ đơn có đủ hai mốc; hiện số mẫu. Tỷ lệ trễ tính trên đơn có lịch và lần đến của thợ hiện tại; đến sau giờ kết thúc khung hẹn là trễ, mỗi đơn tính một lần kể cả nhiều lần đến. Thiếu dữ liệu hiển thị Chưa có dữ liệu. Đây là báo cáo trạng thái hiện tại theo ngày nhận đơn, chưa phải lịch sử phân bổ công cho tất cả thợ từng tham gia.
+
+**Trước pilot:** đăng nhập anonymous còn có nguy cơ người ngoài khóa tài khoản bằng 5 lần sai, tiêu tốn quota băm PBKDF2 600.000 vòng. Cần chống lạm dụng/rate limit và đo thời gian GAS thực tế trước khi dùng thật. Vật tư tên tự do chưa có mã TD, chưa trừ tồn app Kho; bước tiếp theo là đồng bộ danh mục mã và giao dịch xuất/nhận/hoàn trả có đối soát, không suy ra tồn từ tên nhập tay.
