@@ -38,6 +38,14 @@
     {
       "name": "native customer debt mapping/reference/replay",
       "pass": true
+    },
+    {
+      "name": "native confirmed bank THU mapped ACB/replay",
+      "pass": true
+    },
+    {
+      "name": "native partial group failure retry preserves first THU without duplication",
+      "pass": true
     }
   ]
 }
