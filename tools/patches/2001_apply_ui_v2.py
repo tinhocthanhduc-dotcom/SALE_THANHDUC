@@ -132,3 +132,5 @@ if text.count(PRINT_MARKER) < 2:
         print("Applied TD_PRINT_V2")
 else:
     print("TD_PRINT_V2 already applied")
+
+# retrigger after workflow patch selection fix
