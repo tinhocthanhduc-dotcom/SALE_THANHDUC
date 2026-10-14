@@ -229,6 +229,89 @@ td.right{white-space:nowrap}
 .toast{position:fixed;right:18px;bottom:18px;z-index:100;max-width:min(420px,calc(100vw - 28px));padding:12px 16px;border-radius:10px;background:var(--txt);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transform:translateY(6px);transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:none}
 
+
+/* TD_UX_V2_SCREENS */
+.title-line{display:flex;align-items:baseline;gap:12px;min-width:0}
+.title-line small{font-size:12.5px}
+.list-toolbar{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.list-toolbar input{flex:1;min-width:200px}
+.filter-title{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.table.flat{border:0;border-radius:0;max-height:calc(100vh - 190px)}
+.table.flat table{min-width:680px}
+#productBody td:nth-child(2){min-width:200px}
+.seg{display:flex;gap:2px;padding:3px;border-radius:8px;background:var(--soft);flex:none}
+.seg button{min-height:30px;padding:0 12px;border-radius:6px;background:transparent;color:var(--muted);font-weight:500;font-size:12.5px}
+.seg button:hover:not(:disabled){background:rgba(255,255,255,.6);color:var(--txt)}
+.seg button.on{background:#fff;color:var(--txt);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cust-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.select-table tbody tr{cursor:pointer}
+.select-table tbody tr.sel{background:var(--brand-t);box-shadow:inset 3px 0 0 var(--brand)}
+.select-table td .mono,.mono{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.cell-main{display:block;font-weight:600}
+.cell-sub{display:block;font-size:11.5px;color:var(--muted)}
+.cell-sub.warn{color:var(--warn)}
+.detail-card{position:sticky;top:16px}
+.detail-top{padding:16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.detail-top .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.detail-top b{font-size:15px;line-height:1.35}
+.detail-top .addr{font-size:12.5px;color:var(--muted)}
+.detail-top .addr.empty{color:var(--warn)}
+.kv{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;padding:14px 16px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span{overflow-wrap:anywhere}
+.checklist{display:flex;flex-direction:column;gap:8px;padding:14px 16px}
+.checklist-title{font-size:11.5px;font-weight:700;letter-spacing:.5px;color:var(--txt-2)}
+.check-row{display:grid;grid-template-columns:18px 110px minmax(0,1fr);gap:10px;align-items:center;font-size:12.5px}
+.check-row .dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.check-row.ok .dot{background:#1f7a4d;color:#fff}
+.check-row.bad .dot{border:1.5px dashed #c48a1a}
+.check-row .lbl{color:var(--muted)}
+.check-row .val{font-weight:600;overflow-wrap:anywhere}
+.check-row.bad .val{color:var(--warn)}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px 16px;border-top:1px solid var(--line);background:#fafbfc}
+.detail-actions button{min-height:40px;border-radius:9px}
+.detail-empty{padding:40px 20px;text-align:center;color:var(--faint)}
+.prod-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+.group-card{position:sticky;top:16px}
+.group-card .head small{display:block}
+.group-list{display:flex;flex-direction:column;padding:6px;max-height:calc(100vh - 300px);overflow:auto}
+.group-sep{height:1px;background:var(--line);margin:6px 4px}
+.group-item{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;padding:0 10px;border-radius:7px;cursor:pointer;color:var(--txt-2)}
+.group-item:hover{background:#f4f8fc}
+.group-item.on{background:var(--brand-t);color:var(--brand-d);font-weight:600}
+.group-item .n{font-family:var(--mono);font-size:11.5px;color:var(--faint);font-weight:500}
+.group-item .acts{display:none;gap:2px}
+.group-item.on .acts{display:flex}
+.group-item.on .n{display:none}
+.group-item .acts button{min-height:24px;padding:0 6px;font-size:11.5px;border-radius:5px;background:transparent;color:var(--brand)}
+.group-item .acts button:hover:not(:disabled){background:#fff}
+.group-item .acts button.del{color:var(--red)}
+.group-help{padding:10px 14px 14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
+.link-btn{min-height:28px;padding:0 8px;background:transparent;color:var(--brand);font-size:12.5px}
+.link-btn:hover:not(:disabled){background:var(--brand-t)}
+.step-dialog{display:flex;flex-direction:column;overflow:hidden}
+.step-dialog>.body{overflow:auto}
+.step-dialog .head>div{display:flex;flex-direction:column}
+.step-label{font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--faint)}
+.step-dialog .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 18px;border-top:1px solid var(--line);background:#fafbfc}
+.foot-actions{display:flex;gap:8px}
+button.ghost{background:transparent;color:var(--muted)}
+button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
+.context-line{margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#f6f7f9;font-size:12.5px;color:var(--txt-2)}
+.choice-list{display:flex;flex-direction:column;gap:10px}
+.choice-card{display:flex;gap:12px;padding:14px;border:1px solid var(--line-2);border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.choice-card:hover{border-color:#b3bac6}
+.choice-card input{position:absolute;opacity:0;width:0;min-height:0}
+.choice-card .radio{flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;border:1.5px solid #b3bac6;background:#fff}
+.choice-card strong{display:block;font-size:14px}
+.choice-card small{display:block;margin-top:2px;line-height:1.45}
+.choice-card:has(input:checked){border:1.5px solid var(--brand);background:#f4f8fc;padding:13.5px}
+.choice-card:has(input:checked) .radio{border:5px solid var(--brand)}
+.input-missing{border:1.5px solid #c48a1a!important;background:#fffbf3!important}
+@media(max-width:1180px){.cust-layout{grid-template-columns:minmax(0,1fr) 320px}}
+@media(max-width:1000px){.cust-layout,.prod-layout{grid-template-columns:1fr}.detail-card,.group-card{position:static}.group-list{max-height:none;flex-direction:row;flex-wrap:wrap}.group-sep{display:none}}
+@media(max-width:620px){.list-toolbar{flex-wrap:wrap}.seg{width:100%}.seg button{flex:1}}
+
 /* Responsive */
 @media(min-width:1760px){.quote-layout{grid-template-columns:380px minmax(0,1fr) 320px}}
 @media(max-width:1440px){
@@ -362,71 +445,46 @@ td.right{white-space:nowrap}
 </div>
 </section>
 
-<section id="customers" class="page"><div class="card"><div class="head"><b>Khách hàng</b><button onclick="openCustomer()">+ Thêm</button></div><div class="body"><div class="toolbar"><input id="customerSearch" placeholder="Tìm tên, MST, điện thoại..." oninput="renderCustomers()"></div><div class="table"><table><thead><tr><th>Mã</th><th>Tên</th><th>Điện thoại</th><th>MST</th><th>Đại diện</th><th>Hồ sơ HĐ</th><th>Thao tác</th></tr></thead><tbody id="customerBody"></tbody></table></div></div></div></section>
-<section id="products" class="page">
-  <div class="product-admin-layout">
-    <div class="card">
-      <div class="head">
-        <div>
-          <b>Danh sách sản phẩm</b><br>
-          <small id="productCount">0 sản phẩm</small>
-        </div>
-        <button onclick="openProduct()">+ Thêm sản phẩm</button>
-      </div>
-
-      <div class="body">
-        <div class="toolbar">
-          <input id="productAdminSearch" placeholder="Tìm mã hoặc tên..." oninput="renderProducts()">
-          <select id="productGroupFilter" onchange="renderProducts()">
-            <option value="">Tất cả nhóm hàng</option>
-          </select>
-        </div>
-
-        <div class="table">
-          <table>
-            <thead>
-              <tr>
-                <th>Mã</th>
-                <th>Tên sản phẩm</th>
-                <th>Nhóm hàng</th>
-                <th>ĐVT</th>
-                <th class="right">Giá bán</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="productBody"></tbody>
-          </table>
-        </div>
+<section id="customers" class="page">
+<div class="page-head">
+  <div class="title-line"><h1>Khách hàng</h1><small id="customerSummary"></small></div>
+  <div class="page-actions"><button onclick="openCustomer()">+ Thêm khách hàng</button></div>
+</div>
+<div class="cust-layout">
+  <div class="card">
+    <div class="list-toolbar">
+      <input id="customerSearch" placeholder="Tìm tên, mã, MST, điện thoại..." oninput="renderCustomers()">
+      <div class="seg" id="customerFilterSeg">
+        <button class="on" data-f="ALL" onclick="setCustomerFilter('ALL')">Tất cả</button>
+        <button data-f="OK" onclick="setCustomerFilter('OK')">Đủ hồ sơ</button>
+        <button data-f="MISS" onclick="setCustomerFilter('MISS')">Thiếu hồ sơ</button>
       </div>
     </div>
-
-    <div class="card">
-      <div class="head">
-        <div>
-          <b>Danh sách nhóm hàng</b><br>
-          <small id="groupCount">0 nhóm</small>
-        </div>
-        <button onclick="openGroup()">+ Thêm nhóm</button>
-      </div>
-
-      <div class="body">
-        <div class="table group-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Mã</th>
-                <th>Tên nhóm</th>
-                <th>Số sản phẩm</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="groupBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <div class="table flat"><table class="select-table"><thead><tr><th style="width:96px">Mã</th><th>Tên / Đại diện</th><th style="width:130px">Điện thoại</th><th style="width:140px">MST</th><th style="width:120px">Hồ sơ HĐ</th></tr></thead><tbody id="customerBody"></tbody></table></div>
   </div>
+  <aside class="card detail-card" id="customerDetail"></aside>
+</div>
+</section>
+<section id="products" class="page">
+<div class="page-head">
+  <div class="title-line"><h1>Sản phẩm</h1><small id="productCount">0 sản phẩm</small></div>
+  <div class="page-actions"><button onclick="openProduct()">+ Thêm sản phẩm</button></div>
+</div>
+<div class="prod-layout">
+  <aside class="card group-card">
+    <div class="head"><div><b>Nhóm hàng</b><small id="groupCount">0 nhóm</small></div><button class="light mini" onclick="openGroup()">+ Nhóm</button></div>
+    <div class="group-list" id="groupBody"></div>
+    <div class="group-help">Đổi tên nhóm sẽ cập nhật mọi sản phẩm thuộc nhóm. Chỉ xóa được nhóm chưa có sản phẩm.</div>
+  </aside>
+  <div class="card">
+    <div class="list-toolbar">
+      <input id="productAdminSearch" placeholder="Tìm mã hoặc tên..." oninput="renderProducts()">
+      <select id="productGroupFilter" onchange="renderProducts()" hidden><option value="">Tất cả nhóm hàng</option></select>
+      <span id="productGroupTitle" class="filter-title"></span>
+    </div>
+    <div class="table flat"><table><thead><tr><th style="width:110px">Mã</th><th>Tên sản phẩm</th><th style="width:150px">Nhóm / Nguồn</th><th style="width:70px">ĐVT</th><th class="right" style="width:130px">Giá bán</th><th style="width:120px">Trạng thái</th><th style="width:70px"></th></tr></thead><tbody id="productBody"></tbody></table></div>
+  </div>
+</div>
 </section>
 
 <section id="history" class="page">
@@ -619,19 +677,33 @@ td.right{white-space:nowrap}
   </div>
 </div>
 
-<div id="contractChoiceModal" class="modal"><div class="dialog"><div class="head"><b>Chọn loại hợp đồng</b><button class="light" onclick="closeModal('contractChoiceModal')">✕</button></div><div class="body"><div id="contractChoiceCustomer" class="form-alert info" style="margin-bottom:12px"></div><div class="contract-choice"><button onclick="chooseContractType('HĐMB')"><strong>Hợp đồng mua bán</strong><small>Tạo từ báo giá, gồm danh sách hàng hóa, số lượng, đơn giá và tổng tiền.</small></button><button class="light" onclick="chooseContractType('HĐNT')"><strong>Hợp đồng nguyên tắc</strong><small>Quy định nguyên tắc giao dịch lâu dài.</small></button></div></div></div></div>
-<div id="contractInfoModal" class="modal"><div class="dialog large"><div class="head"><b>Bổ sung thông tin để tạo hợp đồng</b><button class="light" onclick="closeModal('contractInfoModal')">✕</button></div><div class="body"><div id="contractInfoWarning" class="form-alert danger"></div><div class="form" style="margin-top:12px">
+<div id="contractChoiceModal" class="modal"><div class="dialog step-dialog">
+<div class="head"><div><span class="step-label">BƯỚC 1 / 2</span><b>Chọn loại hợp đồng</b></div><button class="light" onclick="closeModal('contractChoiceModal')">✕</button></div>
+<div class="body">
+  <div id="contractChoiceCustomer" class="context-line"></div>
+  <div class="choice-list">
+    <label class="choice-card"><input type="radio" name="ctChoice" value="HĐMB" checked><span class="radio"></span><span><strong>Hợp đồng mua bán (HĐMB)</strong><small>Tạo từ báo giá, gồm danh sách hàng hóa, số lượng, đơn giá và tổng tiền.</small></span></label>
+    <label class="choice-card"><input type="radio" name="ctChoice" value="HĐNT"><span class="radio"></span><span><strong>Hợp đồng nguyên tắc (HĐNT)</strong><small>Quy định nguyên tắc giao dịch lâu dài.</small></span></label>
+  </div>
+</div>
+<div class="foot"><span></span><div class="foot-actions"><button class="light" onclick="closeModal('contractChoiceModal')">Hủy</button><button onclick="continueContractChoice()">Tiếp tục</button></div></div>
+</div></div>
+<div id="contractInfoModal" class="modal"><div class="dialog large step-dialog">
+<div class="head"><div><span class="step-label" id="contractStepLabel">BƯỚC 2 / 2</span><b id="contractInfoTitle">Bổ sung thông tin để tạo hợp đồng</b></div><button class="light" onclick="closeModal('contractInfoModal')">✕</button></div>
+<div class="body"><div class="form">
+<div id="contractInfoWarning" class="form-alert warning"></div>
 <input id="ctCustomerId" type="hidden"><input id="ctQuoteNo" type="hidden"><input id="ctType" type="hidden">
 <div class="field wide"><label>Tên khách hàng/công ty <span class="required">*</span></label><input id="ctName"></div>
 <div class="field"><label>Mã số thuế <span class="required">*</span></label><input id="ctTax"></div>
 <div class="field"><label>Số điện thoại</label><input id="ctPhone" inputmode="numeric" maxlength="12"></div>
 <div class="field wide"><label>Địa chỉ <span class="required">*</span></label><input id="ctAddress"></div>
-<div class="field"><label>Người đại diện <span class="required">*</span></label><input id="ctRepresentative"></div>
-<div class="field"><label>Chức vụ <span class="required">*</span></label><input id="ctPosition"></div>
+<div class="field"><label>Người đại diện <span class="required">*</span></label><input id="ctRepresentative" placeholder="Ví dụ: Nguyễn Văn A"></div>
+<div class="field"><label>Chức vụ <span class="required">*</span></label><input id="ctPosition" placeholder="Ví dụ: Giám đốc"></div>
 <div class="field"><label>Người nhận/liên hệ</label><input id="ctRecipient"></div>
 <div class="field"><label>Email</label><input id="ctEmail" type="email"></div>
-<div class="modal-actions wide"><button class="light" onclick="closeModal('contractInfoModal')">Để sau</button><button onclick="saveContractInfoAndContinue()">Lưu và tạo hợp đồng</button></div>
-</div></div></div></div>
+</div></div>
+<div class="foot"><button class="ghost" id="contractBackButton" onclick="contractStepBack()">← Quay lại</button><div class="foot-actions"><button class="light" onclick="closeModal('contractInfoModal')">Để sau</button><button id="contractSubmitButton" onclick="submitContractStep()">Lưu và tạo hợp đồng</button></div></div>
+</div></div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -2671,4 +2743,198 @@ refresh(false);
 renderQuoteCart();
 </script>
 <!-- TD_FORCE_WEBAPP_DEPLOY_V1 -->
+
+<script>
+/* TD_UX_V2_SCREENS — Khách hàng (danh sách + hồ sơ), Sản phẩm (lọc theo nhóm), Hợp đồng 2 bước */
+let selectedCustomerId='';
+let customerFilter='ALL';
+let productGroupKey='';
+let contractFlowFromChoice=false;
+const CONTRACT_FIELDS=[['Tên công ty','name'],['Địa chỉ','address'],['MST','tax'],['Người đại diện','representative'],['Chức vụ','position']];
+
+function setCustomerFilter(f){
+  customerFilter=f;
+  document.querySelectorAll('#customerFilterSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));
+  renderCustomers();
+}
+function renderCustomers(){
+  const q=norm(document.getElementById('customerSearch').value);
+  const all=DB.customers||[];
+  const list=all.filter(c=>{
+    const miss=contractMissingFields(c).length;
+    if(customerFilter==='OK'&&miss)return false;
+    if(customerFilter==='MISS'&&!miss)return false;
+    return !q||norm(c.id+' '+c.name+' '+c.phone+' '+c.tax+' '+c.representative+' '+c.position).includes(q);
+  }).slice(0,1000);
+  if(!list.some(c=>c.id===selectedCustomerId))selectedCustomerId=list[0]?list[0].id:'';
+  const missingTotal=all.filter(c=>contractMissingFields(c).length).length;
+  const summary=document.getElementById('customerSummary');
+  if(summary)summary.textContent=all.length+' khách · '+missingTotal+' thiếu hồ sơ HĐ';
+  document.getElementById('customerBody').innerHTML=list.map(c=>{
+    const missing=contractMissingFields(c);const ready=!missing.length;
+    return '<tr class="'+(c.id===selectedCustomerId?'sel':'')+'" data-id="'+esc(c.id)+'" onclick="selectCustomer(this.dataset.id)">'+
+      '<td><span class="mono">'+esc(c.id)+'</span></td>'+
+      '<td><span class="cell-main">'+esc(c.name)+'</span>'+(c.representative?'<span class="cell-sub">'+esc(c.representative)+(c.position?' · '+esc(c.position):'')+'</span>':'<span class="cell-sub warn">Chưa có người đại diện</span>')+'</td>'+
+      '<td>'+esc(c.phone||'—')+'</td>'+
+      '<td><span class="mono">'+esc(c.tax||'—')+'</span></td>'+
+      '<td><span class="status '+(ready?'badge-ready':'badge-missing')+'" title="'+(ready?'Đủ thông tin tạo hợp đồng':'Thiếu: '+esc(missing.join(', ')))+'">'+(ready?'Đủ':'Thiếu '+missing.length+' mục')+'</span></td></tr>';
+  }).join('')||'<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--faint)">Không có khách hàng phù hợp.</td></tr>';
+  renderCustomerDetail();
+}
+function selectCustomer(id){
+  selectedCustomerId=id;
+  document.querySelectorAll('#customerBody tr').forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));
+  renderCustomerDetail();
+}
+function renderCustomerDetail(){
+  const box=document.getElementById('customerDetail');if(!box)return;
+  const c=(DB.customers||[]).find(x=>x.id===selectedCustomerId);
+  if(!c){box.innerHTML='<div class="detail-empty">Chọn một khách hàng để xem hồ sơ.</div>';return;}
+  const missing=contractMissingFields(c);const id=esc(c.id);
+  box.innerHTML=
+    '<div class="detail-top"><div class="row"><span class="mono">'+id+' · '+esc(c.type||'Khách hàng')+'</span><button class="link-btn" data-id="'+id+'" onclick="openCustomer(this.dataset.id)">Sửa</button></div>'+
+    '<b>'+esc(c.name)+'</b><span class="addr'+(c.address?'':' empty')+'">'+esc(c.address||'Chưa có địa chỉ')+'</span></div>'+
+    '<div class="kv"><span>Điện thoại</span><span>'+esc(c.phone||'—')+'</span><span>Email</span><span>'+esc(c.email||'—')+'</span><span>Người nhận</span><span>'+esc(c.recipient||'—')+'</span>'+(c.note?'<span>Ghi chú</span><span>'+esc(c.note)+'</span>':'')+'</div>'+
+    '<div class="checklist"><span class="checklist-title">HỒ SƠ TẠO HỢP ĐỒNG</span>'+
+    CONTRACT_FIELDS.map(([label,key])=>{const v=String(c[key]||'').trim();return '<div class="check-row '+(v?'ok':'bad')+'"><span class="dot">'+(v?'✓':'')+'</span><span class="lbl">'+label+'</span><span class="val">'+esc(v||'Còn thiếu')+'</span></div>';}).join('')+
+    '</div>'+
+    '<div class="detail-actions"><button class="light" data-id="'+id+'" onclick="quoteForCustomer(this.dataset.id)">Tạo báo giá</button><button data-id="'+id+'" onclick="createPrincipleContract(this.dataset.id)">'+(missing.length?'Bổ sung & tạo HĐNT':'Tạo HĐNT')+'</button></div>';
+}
+function quoteForCustomer(id){
+  const c=(DB.customers||[]).find(x=>x.id===id);if(!c)return;
+  showPage('quote');
+  const input=document.getElementById('quoteCustomer');
+  input.value=c.name;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+  const contact=document.getElementById('quoteContact'),phone=document.getElementById('quotePhone');
+  if(contact&&!contact.value)contact.value=c.recipient||c.representative||'';
+  if(phone&&!phone.value)phone.value=c.phone||'';
+}
+
+/* Sản phẩm */
+function productMatchesGroup(p,key){
+  if(!key)return true;
+  if(key==='__KHO__')return p.source==='KHO';
+  if(key==='__NONE__')return p.source!=='KHO'&&!String(p.group||'').trim();
+  return String(p.group||'').trim()===key;
+}
+function pickProductGroup(key){
+  productGroupKey=key;
+  const sel=document.getElementById('productGroupFilter');
+  if(sel&&[...sel.options].some(o=>o.value===key))sel.value=key;
+  renderGroups();renderProducts();
+}
+function renderGroups(){
+  const groups=(DB.groups||[]).slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0));
+  const products=DB.products||[];
+  const cnt=key=>products.filter(p=>productMatchesGroup(p,key)).length;
+  if(productGroupKey&&!['__KHO__','__NONE__'].includes(productGroupKey)&&!groups.some(g=>String(g.name||'').trim()===productGroupKey))productGroupKey='';
+  document.getElementById('groupCount').textContent=groups.length+' nhóm';
+  const item=(key,name,n,group)=>'<div class="group-item'+(productGroupKey===key?' on':'')+'" data-key="'+esc(key)+'" onclick="pickProductGroup(this.dataset.key)"><span>'+esc(name)+'</span><span class="n">'+n+'</span>'+
+    (group?'<span class="acts"><button data-id="'+esc(group.id)+'" onclick="event.stopPropagation();openGroup(this.dataset.id)">Sửa</button><button class="del" data-id="'+esc(group.id)+'" onclick="event.stopPropagation();confirmDeleteGroup(this.dataset.id)">Xóa</button></span>':'<span class="acts"><span class="n" style="display:inline">'+n+'</span></span>')+'</div>';
+  const none=cnt('__NONE__');
+  document.getElementById('groupBody').innerHTML=
+    item('','Tất cả sản phẩm',products.length)+
+    item('__KHO__','Hàng trong kho',cnt('__KHO__'))+
+    (none?item('__NONE__','Chưa phân nhóm',none):'')+
+    '<div class="group-sep"></div>'+
+    (groups.map(g=>item(String(g.name||'').trim(),g.name,cnt(String(g.name||'').trim()),g)).join('')||'<div style="padding:10px;color:var(--faint);font-size:12px">Chưa có nhóm hàng.</div>');
+}
+function renderProducts(){
+  const keyword=norm(document.getElementById('productAdminSearch').value);
+  const all=DB.products||[];
+  const products=all.filter(p=>productMatchesGroup(p,productGroupKey)&&(!keyword||norm(p.code+' '+p.name+' '+(p.warehouseName||'')+' '+(p.source||'')).includes(keyword)));
+  const noPrice=all.filter(p=>!(Number(p.price||0)>0)).length;
+  document.getElementById('productCount').textContent=all.length+' sản phẩm · '+noPrice+' chưa có giá';
+  const title=document.getElementById('productGroupTitle');
+  if(title){const label=productGroupKey==='__KHO__'?'Hàng trong kho':productGroupKey==='__NONE__'?'Chưa phân nhóm':productGroupKey;title.textContent=(label?label+' · ':'')+products.length+' kết quả';}
+  document.getElementById('productBody').innerHTML=products.map(p=>{
+    const kho=p.source==='KHO',has=Number(p.price||0)>0;
+    return '<tr>'+
+      '<td><span class="mono">'+esc(p.code)+'</span></td>'+
+      '<td><span class="cell-main">'+esc(p.name)+'</span>'+(kho?'<span class="warehouse-meta">Tồn: <b>'+esc(p.stock)+'</b> '+esc(p.unit||'')+(p.stockStatus?' · '+esc(p.stockStatus):'')+'</span>':'')+'</td>'+
+      '<td>'+(kho?'<span class="source-badge source-kho">KHO</span>':(p.group?'<span class="group-pill">'+esc(p.group)+'</span>':'<small>Chưa phân nhóm</small>'))+'</td>'+
+      '<td>'+esc(p.unit)+'</td>'+
+      '<td class="right">'+(has?money(p.price):'<span class="price-missing">Chưa có giá</span>')+'</td>'+
+      '<td><span class="status '+(has?'badge-ready':'badge-missing')+'">'+(has?'Sẵn sàng':'Chưa có giá')+'</span></td>'+
+      '<td>'+(kho?'<small>Chỉ xem</small>':'<button class="link-btn" data-key="'+esc(p.key||p.code)+'" onclick="openProduct(this.dataset.key)">Sửa</button>')+'</td></tr>';
+  }).join('')||'<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--faint)">Không có sản phẩm phù hợp.</td></tr>';
+}
+
+/* Hợp đồng 2 bước */
+function makeContract(no){
+  const quote=(DB.quotes||[]).find(q=>q.no===no);
+  if(!quote){toast('Không tìm thấy báo giá.');return;}
+  if(!quote.customerId){toast('Báo giá chưa liên kết với khách hàng trong danh sách. Hãy mở báo giá, chọn lại khách hàng rồi cập nhật.');return;}
+  pendingContractRequest={customerId:quote.customerId,quoteNo:no,type:''};
+  const customer=DB.customers.find(c=>c.id===quote.customerId);
+  contractChoiceCustomer.innerHTML='Từ báo giá <b class="mono" style="color:var(--txt)">'+esc(no)+'</b> · '+esc(customer?.name||quote.customer||'');
+  const first=document.querySelector('input[name="ctChoice"][value="HĐMB"]');if(first)first.checked=true;
+  openModal('contractChoiceModal');
+}
+function continueContractChoice(){
+  const picked=document.querySelector('input[name="ctChoice"]:checked');
+  contractFlowFromChoice=true;
+  chooseContractType(picked?picked.value:'HĐMB');
+}
+function createPrincipleContract(customerId){
+  contractFlowFromChoice=false;
+  beginContractRequest({customerId:customerId,quoteNo:'',type:'HĐNT'});
+}
+function beginContractRequest(request){
+  const customer=DB.customers.find(c=>c.id===request.customerId);
+  if(!customer){toast('Không tìm thấy khách hàng trong danh sách.');return;}
+  openContractInfoModal(request,customer,contractMissingFields(customer));
+}
+function contractTypeName(t){return t==='HĐMB'?'HỢP ĐỒNG MUA BÁN':'HỢP ĐỒNG NGUYÊN TẮC';}
+function openContractInfoModal(request,customer,missing){
+  pendingContractRequest={...request};
+  ctCustomerId.value=customer.id||'';ctQuoteNo.value=request.quoteNo||'';ctType.value=request.type||'HĐNT';
+  ctName.value=customer.name||'';ctTax.value=customer.tax||'';ctPhone.value=customer.phone||'';ctAddress.value=customer.address||'';
+  ctRepresentative.value=customer.representative||'';ctPosition.value=customer.position||'';ctRecipient.value=customer.recipient||'';ctEmail.value=customer.email||'';
+  const step=contractFlowFromChoice?'BƯỚC 2 / 2 · ':'';
+  contractStepLabel.textContent=step+contractTypeName(ctType.value)+(request.quoteNo?' · '+request.quoteNo:'');
+  contractBackButton.style.visibility=contractFlowFromChoice?'visible':'hidden';
+  if(missing.length){
+    contractInfoTitle.textContent='Bổ sung thông tin để tạo hợp đồng';
+    contractInfoWarning.className='form-alert warning';
+    contractInfoWarning.innerHTML='Còn thiếu <b>'+missing.length+' mục</b>: '+missing.map(esc).join(', ')+'. Thông tin sẽ được lưu luôn vào hồ sơ khách hàng.';
+    contractSubmitButton.textContent='Lưu và tạo hợp đồng';
+  }else{
+    contractInfoTitle.textContent='Kiểm tra thông tin trước khi tạo hợp đồng';
+    contractInfoWarning.className='form-alert info';
+    contractInfoWarning.innerHTML='Hồ sơ đã đủ. Kiểm tra lại người đại diện và chức vụ rồi bấm <b>Tạo hợp đồng</b>.';
+    contractSubmitButton.textContent='Tạo hợp đồng';
+  }
+  markContractInputs();
+  openModal('contractInfoModal');
+  const firstEmpty=[ctName,ctTax,ctAddress,ctRepresentative,ctPosition].find(i=>!String(i.value||'').trim());
+  if(firstEmpty)setTimeout(()=>firstEmpty.focus(),60);
+}
+function markContractInputs(){
+  [ctName,ctTax,ctAddress,ctRepresentative,ctPosition].forEach(input=>{
+    input.classList.remove('input-invalid');
+    input.classList.toggle('input-missing',!String(input.value||'').trim());
+  });
+}
+['ctName','ctTax','ctAddress','ctRepresentative','ctPosition'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',markContractInputs);});
+function contractStepBack(){
+  closeModal('contractInfoModal');
+  const t=ctType.value;const r=document.querySelector('input[name="ctChoice"][value="'+t+'"]');if(r)r.checked=true;
+  openModal('contractChoiceModal');
+}
+function submitContractStep(){
+  const c=DB.customers.find(x=>x.id===ctCustomerId.value)||{};
+  const same=[['name',ctName],['tax',ctTax],['address',ctAddress],['representative',ctRepresentative],['position',ctPosition],['recipient',ctRecipient],['email',ctEmail]]
+    .every(([k,el])=>String(c[k]||'').trim()===String(el.value||'').trim())
+    &&String(c.phone||'')===String(ctPhone.value||'').replace(/\D/g,'');
+  if(same&&!contractMissingFields(c).length){
+    closeModal('contractInfoModal');
+    executeContractCreation({customerId:c.id,quoteNo:ctQuoteNo.value,type:ctType.value});
+    return;
+  }
+  saveContractInfoAndContinue();
+}
+</script>
 </body></html>
