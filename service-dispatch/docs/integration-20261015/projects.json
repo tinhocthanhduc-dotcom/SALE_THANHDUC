@@ -1,0 +1,23 @@
+{
+  "request_id": "20261015-01",
+  "copies": {
+    "KHO58": "1TOYhzL18eCa4_q_GeOJYxxfWxzyl6omUVxtUpesuI40",
+    "KHO145": "14KkcuihpriOlWVjWc7f3TwOlAGyFrwzZZ6PrY7UF3gg",
+    "FINANCE": "11KP6olMtDhuLziXTzo_gycoDWpswtAc98i0Bt5wbKlQ",
+    "OUTBOX": "1TwV5Le6umfpLOwTt0fPTOrX0DdP6jPatZpl6Y0vzRkk"
+  },
+  "projects": {
+    "warehouse": {
+      "script_id": "1gU8n4jcCf52xqZyVzpP13Ba-M5B5Dko0c3qH12VWMOZnxz5xsIROseXn",
+      "editor_url": "https://script.google.com/d/1gU8n4jcCf52xqZyVzpP13Ba-M5B5Dko0c3qH12VWMOZnxz5xsIROseXn/edit",
+      "created_at": "2026-10-14T18:28:08.966Z",
+      "pushed": true
+    },
+    "finance": {
+      "script_id": "1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf",
+      "editor_url": "https://script.google.com/d/1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf/edit",
+      "created_at": "2026-10-14T18:28:21.691Z",
+      "pushed": true
+    }
+  }
+}

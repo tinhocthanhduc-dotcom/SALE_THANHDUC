@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — đã tạo hai consumer Google riêng cho 4 copy ID được cung cấp
+
+- Warehouse project `1gU8n4jcCf52xqZyVzpP13Ba-M5B5Dko0c3qH12VWMOZnxz5xsIROseXn`; Finance project `1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf`. Source đã push, chưa deploy web app/cài trigger/chuyển token-HMAC/bật consumer. Đúng 4 ID trong ops/integration-copy-20261015.request.json; thay ID qua Properties khác pin bị chặn. Finance consumer không chuyển ảnh biên lai, ảnh giữ ở Điều phối; không cần thêm ID folder Finance để khởi động.
+- Dùng CLASPRC_JSON đang có qua GitHub Actions; clone Kho/Finance chỉ để đọc code native riêng tư, kiểm native 98/98 + 10 luồng trên fixture trước khi tạo. Không push original projects, không đọc/ghi sheet thật trong workflow. Không đăng source Finance private/native packages/secrets vào GitHub artifacts/logs; artifact chỉ registry ID.
+- Installer setupCopyConsumer điền ID metadata, giữ tắt và báo tên thuộc tính thiếu; owner chép riêng hai khóa từ Điều phối qua Google Settings. enableCopyConsumer chỉ cài trigger 5 phút sau marker + quyền native; không tự gán ADMIN/OPERATOR. Bootstrap và provisioning được kiểm bằng fixture: pin/secret/marker/quyền, trigger một lần, lưu registry trước push, khôi phục manifest, retry lỗi không tạo project trùng, chặn push legacy.
+- **Chưa UAT trên các sheet Google copy**, chưa biết runtime principal có quyền ghi sổ, chưa có trigger thực hoặc nối vận hành. Owner cần hoàn tất [OWNER_SETUP.md](docs/integration-20261015/OWNER_SETUP.md), sau đó thử chứng từ/các chặn/ledger/số dư thực tế trên copy. Apps Kho/Finance/AI thật chưa thay đổi; AI vẫn chờ duyệt riêng.
+
+
 ## 14/10/2026 — nối Kho/Finance theo outbox (chưa bật trên Google)
 
 - Điều phối chỉ ghi hàng chờ riêng. QL_KHO là đầu ghi duy nhất cho 58/145, native INVENTORY_IN/OUT → ledger/sequence/validation; Finance ghi native THU/CHUYEN_QUY/CONG_NO_KH. Bản sao có copy marker, từ chối ID file thật; envelope/result ký HMAC, dedupe durable trong lock. Trigger consumer và pump 5 phút có installer owner-only; bảng Đồng bộ nhận kết quả/manual retry/lý do/số phiếu, điều kiện đóng kiểm job recorded hoặc giám đốc duyệt ngoại lệ.
