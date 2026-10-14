@@ -1,0 +1,11 @@
+{
+  "request_id": "20261015-01",
+  "copies": {
+    "KHO58": "1TOYhzL18eCa4_q_GeOJYxxfWxzyl6omUVxtUpesuI40",
+    "KHO145": "14KkcuihpriOlWVjWc7f3TwOlAGyFrwzZZ6PrY7UF3gg",
+    "FINANCE": "11KP6olMtDhuLziXTzo_gycoDWpswtAc98i0Bt5wbKlQ",
+    "OUTBOX": "1TwV5Le6umfpLOwTt0fPTOrX0DdP6jPatZpl6Y0vzRkk"
+  },
+  "purpose": "Create TWO NEW private consumer projects for these user-provided copies; keep disabled until owner privately transfers token/HMAC and authorizes the setup functions.",
+  "restrictions": "Read native source only. Never push/deploy original Kho, Finance, AI_KHO or reset Dispatch. Never publish private Finance source, native packages, tokens or HMAC in GitHub artifacts/logs. Do not deploy a web app or install triggers remotely. Persist new project IDs before pushing only those new projects."
+}

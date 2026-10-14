@@ -16,5 +16,5 @@ finance=finance.replace("    const data = normalizeDebtPayload_(payload || {});"
 finance=finance.replace("MA_DOI_CHIEU: ''\n      };", "MA_DOI_CHIEU: payload.referenceCode || ''\n      };");
 finance=finance.replace("  // v0.23: Đã loại bỏ chức năng Chốt sổ.\n  return false;", "  return dispatchFinanceClosed_(formatDate_(date,'yyyy-MM-dd'));" );
 finance=finance.replace('SpreadsheetApp.openById(APP_CONFIG.DATABASE_ID)',"dispatchBridgeBook_('finance')");write('finance',finance,fs.readFileSync(path.join(__dirname,'finance-consumer.gs.txt'),'utf8'));
-const patch=require('./build-ai-review.cjs');patch.build(path.join(dest,'ai-review'),roots);const aiDir=path.join(dest,'ai-review');fs.writeFileSync(path.join(aiDir,'BridgeRuntime.js'),catalogue+'\n'+shared);
+if(process.env.DISPATCH_BUILD_CONSUMERS_ONLY!=='true'){const patch=require('./build-ai-review.cjs');patch.build(path.join(dest,'ai-review'),roots);const aiDir=path.join(dest,'ai-review');fs.writeFileSync(path.join(aiDir,'BridgeRuntime.js'),catalogue+'\n'+shared);}
 console.log('Review/copy-only packages built: '+dest);

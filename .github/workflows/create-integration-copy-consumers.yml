@@ -1,0 +1,94 @@
+name: Create warehouse and Finance COPY consumers (disabled)
+on:
+  pull_request:
+    paths:
+      - 'ops/integration-copy-20261015.request.json'
+      - 'ops/prepare-integration-copy-packages.cjs'
+      - 'ops/create-integration-copy-projects.cjs'
+      - '.github/workflows/create-integration-copy-consumers.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: integration-copy-20261015-01
+  cancel-in-progress: false
+jobs:
+  copy-consumers:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+      GH_TOKEN: ${{ github.token }}
+      DISPATCH_BUILD_CONSUMERS_ONLY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Use existing Google authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLASPRC_JSON"
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          npm install --prefix "$RUNNER_TEMP/clasp-tools" @google/clasp@3.4.1 --no-audit --no-fund
+          echo "$RUNNER_TEMP/clasp-tools/node_modules/.bin" >> "$GITHUB_PATH"
+          npm ci --prefix service-dispatch --ignore-scripts
+          node ops/test-integration-copy-projects.cjs
+      - name: Restore IDs of any previously created copy projects
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/copy-registry"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts" --jq '.artifacts[] | select(.name == "INTEGRATION_COPY_PROJECTS_20261015_01") | [.workflow_run.id,.expired] | @tsv' > "$RUNNER_TEMP/copy-candidates.tsv"
+          if [ -s "$RUNNER_TEMP/copy-candidates.tsv" ]; then
+            read -r copy_run copy_expired < "$RUNNER_TEMP/copy-candidates.tsv"
+            test "$copy_expired" = 'false'
+            gh run download "$copy_run" --repo "$GITHUB_REPOSITORY" --name INTEGRATION_COPY_PROJECTS_20261015_01 --dir "$RUNNER_TEMP/copy-registry"
+          fi
+      - name: Read native source privately; no original project writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/native-kho" "$RUNNER_TEMP/native-finance"
+          (cd "$RUNNER_TEMP/native-kho" && clasp --json clone-script '1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu' --rootDir .) > "$RUNNER_TEMP/clone-kho.log" 2>&1
+          (cd "$RUNNER_TEMP/native-finance" && clasp --json clone-script '1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN' --rootDir .) > "$RUNNER_TEMP/clone-finance.log" 2>&1
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const base=path.resolve(process.env.GITHUB_WORKSPACE,'..');
+          for(const [kind,repo,marker] of [['kho','QL_KHO_THANH_DUC','function aiExecuteBatchPreview_'],['finance','FINANCE_THANHDUC','function saveInternalTransfer']]){
+            const dir=path.join(process.env.RUNNER_TEMP,'native-'+kind),files=fs.readdirSync(dir).filter(n=>/\.(gs|js)$/.test(n)).map(n=>fs.readFileSync(path.join(dir,n),'utf8')).filter(s=>s.includes(marker));
+            if(files.length!==1)throw Error('UNSUPPORTED_NATIVE_SOURCE_LAYOUT');fs.mkdirSync(path.join(base,repo),{recursive:true});fs.writeFileSync(path.join(base,repo,'code.js'),files[0]);
+          }
+          JS
+      - name: Validate native copy adapters before creating any projects
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! node service-dispatch/integration/test-native.cjs "$RUNNER_TEMP/test-native-copy" > "$RUNNER_TEMP/private-native-test.log" 2>&1; then
+            echo 'Native copy adapter validation failed; no consumer projects created. Private source/logs were not published.'
+            exit 1
+          fi
+          node service-dispatch/integration/build-copy-packages.cjs "$RUNNER_TEMP/copy-unconfigured" > "$RUNNER_TEMP/private-build.log" 2>&1
+          node ops/prepare-integration-copy-packages.cjs ops/integration-copy-20261015.request.json "$RUNNER_TEMP/copy-unconfigured" "$RUNNER_TEMP/copy-configured"
+          if ! node ops/test-integration-copy-bootstrap.cjs "$RUNNER_TEMP/copy-configured" > "$RUNNER_TEMP/private-bootstrap-test.log" 2>&1; then
+            echo 'Copy bootstrap validation failed; no projects created. Private logs were not published.'
+            exit 1
+          fi
+          cp -r "$RUNNER_TEMP/copy-configured/warehouse" "$RUNNER_TEMP/copy-configured/warehouse-prepared"
+          cp -r "$RUNNER_TEMP/copy-configured/finance" "$RUNNER_TEMP/copy-configured/finance-prepared"
+      - name: Create and push only two NEW disabled consumer projects
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ops/create-integration-copy-projects.cjs "$RUNNER_TEMP/copy-configured" "$RUNNER_TEMP/copy-registry/projects.json"
+      - name: Persist only project IDs and copy IDs, including partial setup
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: INTEGRATION_COPY_PROJECTS_20261015_01
+          path: ${{ runner.temp }}/copy-registry/projects.json
+          if-no-files-found: ignore
+          retention-days: 90
