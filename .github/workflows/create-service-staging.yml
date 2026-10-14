@@ -117,6 +117,23 @@ jobs:
           fs.writeFileSync(path.join(root,'project.json'),JSON.stringify(project,null,2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'### Separate service dispatch staging\n\nEditor: '+project.editor_url+'\n\nWeb app: '+project.web_app_url+'\n\nRequired: set DISPATCH_INITIAL_PASSWORD privately, then run setupDispatchStaging from the editor. No sample passwords are provisioned.\n');
           JS
+      - name: Measure lightweight changes endpoint if Execution API is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          benchmark_exit=0
+          timeout 45s clasp --json run benchmarkDispatchChanges > "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" 2> "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" || benchmark_exit=$?
+          export DISPATCH_BENCHMARK_EXIT="$benchmark_exit"
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const root=path.join(process.env.RUNNER_TEMP,'project-registry');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(root,'changes-benchmark-raw.json'),'utf8'));}catch(ignore){}
+          const report=raw.response||raw.result||raw;
+          const measured=Array.isArray(report.samples_ms)&&Number.isFinite(report.average_ms);
+          fs.writeFileSync(path.join(root,'changes-benchmark-status.json'),JSON.stringify({measured,exit_code:Number(process.env.DISPATCH_BENCHMARK_EXIT),report:measured?report:undefined,reason:measured?undefined:'Execution API unavailable or did not return timing; owner can run benchmarkDispatchChanges in editor.'},null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nChanges timing: '+(measured?report.average_ms+' ms average (GAS)':'not measured; Execution API did not return timing. Owner can run benchmarkDispatchChanges in editor.')+'\n');
+          JS
       - name: Upload project links
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

@@ -132,3 +132,14 @@ Nhận đơn chọn máy của đúng khách nếu đã có, hoặc để trốn
 **Báo cáo thợ / ngày** dành cho điều phối/giám đốc: ngày nhận đơn theo Việt Nam, thợ hiện phụ trách, số đơn/nghiệm thu/hủy. Thời gian trung bình từ lần thợ hiện tại nhận đến nghiệm thu, chỉ đơn có đủ hai mốc; hiện số mẫu. Tỷ lệ trễ tính trên đơn có lịch và lần đến của thợ hiện tại; đến sau giờ kết thúc khung hẹn là trễ, mỗi đơn tính một lần kể cả nhiều lần đến. Thiếu dữ liệu hiển thị Chưa có dữ liệu. Đây là báo cáo trạng thái hiện tại theo ngày nhận đơn, chưa phải lịch sử phân bổ công cho tất cả thợ từng tham gia.
 
 **Trước pilot:** đăng nhập anonymous còn có nguy cơ người ngoài khóa tài khoản bằng 5 lần sai, tiêu tốn quota băm PBKDF2 600.000 vòng. Cần chống lạm dụng/rate limit và đo thời gian GAS thực tế trước khi dùng thật. Vật tư tên tự do chưa có mã TD, chưa trừ tồn app Kho; bước tiếp theo là đồng bộ danh mục mã và giao dịch xuất/nhận/hoàn trả có đối soát, không suy ra tồn từ tên nhập tay.
+
+
+## Tự cập nhật giữa điều phối và thợ
+
+Action changes xác thực phiên rồi đọc phiên bản chung từ CacheService/Script Properties, không mở Sheets/Drive hoặc đọc snapshot. Phiên bản lấy từ revision đã ghi của repository; mọi command/upload mới công bố phiên bản trong khóa ghi, replay không tăng lần nữa. Dấu pending được ghi trước thao tác; query/ghi tiếp phục hồi journal rồi công bố revision và xóa dấu, tránh bỏ sót ghi bị gián đoạn. Cache hỏng hoặc bị loại bỏ vẫn có Properties làm nguồn bền vững. Query trả change_version đọc trước snapshot để thay đổi đồng thời không bị đánh dấu nhầm đã đọc.
+
+Trang hiển thị hỏi mỗi 20 giây; visibilitychange/focus hỏi ngay khi quay lại, ẩn trang thì dừng. Khi có thay đổi, giữ đơn đang mở và vị trí cuộn; nếu đang mở form/đang tải hoặc chờ thử lại ảnh thì không query/vẽ lại, hiện dải Có cập nhật mới và thông tin trong dialog. Lưu/đóng form hoặc hoàn tất ảnh rồi bấm dải để xem. Đơn mới/đổi phiên bản được tô 6 giây, thợ có giao mới hoặc giao lại thấy thông báo và số đơn chưa xem trên tiêu đề; mở/thao tác đơn bỏ số chưa xem tương ứng. Đơn bị thu hồi quyền đọc rời chi tiết sau refresh.
+
+Lỗi polling im lặng, chu kỳ 20/40/80/120 giây; phiên hết hạn đóng dialog và về login. Điện thoại tắt màn hình/ẩn trình duyệt không nhận cập nhật cho đến mở lại. Zalo OA/Telegram để báo khi màn hình tắt chưa triển khai.
+
+Đo trên GAS: chủ project chọn **benchmarkDispatchChanges** trong editor → Run. Hàm tạo phiên benchmark tạm, gọi changes 5 lần và xóa phiên/người dùng tạm trong finally, log samples_ms/average_ms; không dùng mật khẩu nhân viên hoặc mở Sheets. Workflow thử cùng hàm qua Execution API; nếu API chưa cho phép thì artifact changes-benchmark-status.json ghi chưa đo, không coi số đo local/VM là GAS thật.

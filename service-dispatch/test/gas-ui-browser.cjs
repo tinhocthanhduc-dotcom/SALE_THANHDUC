@@ -16,6 +16,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await context.exposeBinding('fixtureGasApi',(_,input)=>{
    if(input.action==='login'){loginCalls++;if(mode==='login_failure')throw Error('Fixture transport failure');return app.service.login(input.username,input.password);}
    if(input.action==='query'){if(input.token&&mode==='null_query')return null;if(input.token&&mode==='invalid_query')return {actor:null,orders:[]};return app.service.query(input.token,input.order_id);}
+   if(input.action==='changes')return app.service.changes(input.token);
    if(input.action==='logout'){app.service.logout(input.token);return {ok:true};}
    throw Error('Unexpected fixture action');
   });

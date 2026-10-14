@@ -5,6 +5,11 @@ const {LocalRepository}=require('../erp-prototype/local-repository.cjs');
 const Domain=require('./domain.cjs');const {Auth,createUser}=require('./auth.cjs');const {createService}=require('./service.cjs');
 function createApp(directory){
  const business=new LocalRepository(path.join(directory,'business'),{domain:Domain});
+ let mutation=false;
+ const baseLock=business.lock.bind(business),baseSubmit=business.submit.bind(business);
+ const readChanges=()=>business.load('changes.json',{version:0,pending:false});
+ business.lock=fn=>baseLock(()=>{if(mutation)business.atomic('changes.json',{...readChanges(),pending:true});const result=fn();if(result?.revision!==undefined||result?.id){const revision=result.revision??business.load('state.json',{revision:0}).revision;business.atomic('changes.json',{version:revision,pending:false});}return result;});
+ business.submit=(...args)=>{mutation=true;try{return baseSubmit(...args);}finally{mutation=false;}};
  const authFiles=new LocalRepository(path.join(directory,'auth'));
  const store={lock:fn=>authFiles.lock(fn),read:()=>authFiles.load('auth.json',{users:{},sessions:{}}),write:s=>authFiles.atomic('auth.json',s)};
  const random=()=>crypto.randomBytes(16).toString('hex');
@@ -12,7 +17,7 @@ function createApp(directory){
  const auth=new Auth({store,random});
  const images=path.join(directory,'images');fs.mkdirSync(images,{recursive:true});
  const files={save(mime,base64){const data=Buffer.from(base64,'base64');if(!data.length||data.length>400000)throw Error('INVALID_IMAGE');const valid=mime==='image/png'?data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):mime==='image/jpeg'?data[0]===255&&data[1]===216:data.toString('ascii',0,4)==='RIFF'&&data.toString('ascii',8,12)==='WEBP';if(!valid)throw Error('INVALID_IMAGE');const id=crypto.randomUUID();fs.writeFileSync(path.join(images,id),data,{flag:'wx',mode:0o600});fs.writeFileSync(path.join(images,id+'.mime'),mime,{flag:'wx',mode:0o600});return id;},remove(id){for(const suffix of ['','.mime'])fs.rmSync(path.join(images,id+suffix),{force:true});},read(id){return {mime:fs.readFileSync(path.join(images,id+'.mime'),'utf8'),data:fs.readFileSync(path.join(images,id))};}};
- const service=createService({auth,repository:business,files,now:()=>new Date().toISOString(),id:()=>crypto.randomUUID()});
+ const service=createService({auth,repository:business,files,changes:{read:readChanges},now:()=>new Date().toISOString(),id:()=>crypto.randomUUID()});
  const server=http.createServer(async(req,res)=>{
   const respond=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
   res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');
@@ -27,7 +32,8 @@ function createApp(directory){
    if(input.action==='login'){const result=service.login(input.username,input.password);res.setHeader('Set-Cookie','dispatch_session='+result.token+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800');respond(200,{actor:result.actor});return;}
    if(input.action==='logout'){service.logout(token);res.setHeader('Set-Cookie','dispatch_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');respond(200,{ok:true});return;}
    let result;
-   if(input.action==='query')result=service.query(token,input.order_id);
+   if(input.action==='changes')result=service.changes(token);
+   else if(input.action==='query')result=service.query(token,input.order_id);
    else if(input.action==='command')result=service.command(token,input.command);
    else if(input.action==='upload')result=service.upload(token,input.payload);
    else if(input.action==='image'){const file=service.image(token,input.order_id,input.evidence_id);result={mime:file.mime,base64:file.data.toString('base64')};}

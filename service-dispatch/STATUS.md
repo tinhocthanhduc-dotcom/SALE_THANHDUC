@@ -126,3 +126,15 @@ Kiểm chứng: 43/43 Node, 48 kịch bản HTTP browser và 9 kịch bản gói
 Ảnh trước/sau tại docs/ui-review-20261014/README.md: danh sách và chi tiết 390×844, bảng điều phối 1440×1000, dùng fixture riêng. Đã nhìn kiểm tra ảnh sau; ảnh trước lấy từ a4b9e8f. Không dùng dữ liệu khách thật. Script ui-screenshots.cjs chụp lại bản hiện tại. Cần UAT trên điện thoại/GAS thực tế; không chạy setup, không đổi tài khoản hay dữ liệu.
 
 Rà soát cuối: small/order code và chữ phụ cũng tối thiểu 16px, bổ sung kiểm tra computed font của nội dung/nút/nhãn/summary; 48 kịch bản vẫn đạt. Cập nhật lại ảnh sau với cỡ chữ cuối cùng.
+
+
+## Đồng bộ khi nhiều màn hình cùng mở
+
+- Counter dùng revision repository, công bố CacheService + Script Properties dưới khóa ghi; command/upload mới tăng, replay không tăng. changes kiểm phiên rồi đọc metadata, không mở Sheets/Drive/snapshot. Pending marker trước ghi, phục hồi/publish khi query hoặc ghi sau giúp không mất thông báo lúc ghi gián đoạn. Không đổi nghiệp vụ, dữ liệu tài khoản hay định dạng journal dùng chung ERP.
+- Poll 20 giây khi hiển thị; focus/visibilitychange kiểm ngay, hidden dừng timer. Phiên bản khác thì query. Không query/vẽ lại khi form/ảnh đang xử lý hoặc ảnh chờ retry; giữ draft, hiện dải và thông báo trong dialog. Áp dụng cập nhật giữ selected và scroll; không giữ chi tiết nếu mất quyền đọc. Tránh response cũ ghi đè phiên mới và response đến sau logout.
+- Highlight 6 giây cho đơn mới/đổi, toast giao mới/giao lại cho thợ, tiêu đề đếm đơn chưa xem; mở/thao tác đơn xác nhận đã xem. Backoff 20/40/80/120 giây, không spam lỗi; AUTH_REQUIRED đóng form và về login.
+- Tắt màn hình/ẩn app không polling. Gửi Zalo OA/Telegram khi app không mở để bước sau; chưa có thông báo đẩy.
+
+Kiểm chứng: 44/44 Node, 48 kịch bản UI cũ, 9 kịch bản GAS UI và 9 kịch bản hai phiên live đạt. Local dùng timer 20 giây thật: giao đơn 20.116s, bắt đầu 20.389s, nghiệm thu 19.905s, đều dưới 25s. Form đang nhập còn nguyên, giữ lựa chọn/cuộn; clock/visibility mô phỏng kiểm backoff/hidden/wake/expired. Không page error. GAS VM đặt openById ném lỗi vẫn changes và benchmark chạy được, kiểm replay/cache fallback và xóa tài nguyên benchmark. Các số local/VM không phải số đo Google thật.
+
+benchmarkDispatchChanges có public owner guard và 5 mẫu thời gian xử lý GAS, không mở Sheets/đọc mật khẩu. Không có OAuth clasp cục bộ; workflow sẽ thử Execution API bằng quyền Google sẵn có và ghi artifact kết quả/chặn. Nếu chưa đo được, chủ project có thể Run helper trong editor. Cần UAT độ trễ GAS/trình duyệt điện thoại thực tế; mốc dưới 25s ở đây là kiểm thử local, không cam kết khi mạng/GAS chậm.

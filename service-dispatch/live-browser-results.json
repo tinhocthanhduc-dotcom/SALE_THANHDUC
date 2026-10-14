@@ -1,0 +1,27 @@
+{
+  "pass": true,
+  "scenarios": [
+    "real 20s assignment propagation under 25s",
+    "new assignment toast title and highlight",
+    "technician accept/start reflected in dispatcher",
+    "dialog content preserved with pending banner",
+    "selection and scroll preserved on applying update",
+    "uploaded evidence and acceptance reflected remotely",
+    "20/40/80/120s backoff without error spam",
+    "hidden polling stopped and return immediate",
+    "expired session returns to login"
+  ],
+  "metrics": {
+    "assignment_ms": 20116,
+    "start_ms": 20389,
+    "completion_ms": 19905,
+    "backoff_ms": [
+      20000,
+      40000,
+      80000,
+      120000,
+      120000
+    ]
+  },
+  "page_errors": []
+}

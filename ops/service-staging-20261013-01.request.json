@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 18,
-  "update": "Finalize authorized UI redesign: enforce 16px auxiliary text as well as body content, verify mobile text sizes, refresh after screenshots. No business/API changes; preserve staging identity and data."
+  "revision": 19,
+  "update": "User-authorized live updates: authenticated lightweight changes counter via Cache/Properties, 20s foreground polling with deferred draft-safe refresh, highlights/new assignment notification, backoff and session expiry. Add real two-session browser tests and attempt owner-only GAS changes benchmark via Execution API. Preserve staging identity/users/data."
 }
