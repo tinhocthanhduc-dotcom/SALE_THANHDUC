@@ -125,7 +125,7 @@ Tab **Đã kết thúc** gom đơn Đã nghiệm thu và Đã hủy, lọc Tất
 
 Thay hướng dẫn gộp bước ở bản v15: **Hẹn giờ** chỉ lưu lịch và chuyển Đã hẹn; **Bắt đầu công việc** một chạm khi đã có lịch. Chốt giờ và bắt đầu còn dành cho đến ngay khi chưa có lịch. Ngày chọn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo máy chủ Việt Nam; vẫn chọn khung sáng/chiều/cả ngày hoặc giờ tùy chỉnh. Máy chủ chặn ngày quá khứ và ngày không tồn tại, cả với API giờ ISO cũ. Không sửa ngày hẹn đã lưu của đơn cũ khi cập nhật mã.
 
-Nhận đơn chọn máy của đúng khách nếu đã có, hoặc để trống. Nhập model/serial mới để tạo hồ sơ máy và liên kết với đơn trong cùng một lần lưu; replay không tạo máy trùng. Giữ machine_id và snapshot model/serial để theo dõi lịch sử theo máy. Chọn máy cũ sẽ bỏ các trường tạo mới khỏi yêu cầu gửi.
+Nhận đơn chỉ chọn máy đang sử dụng trong hồ sơ của đúng khách, hoặc để Chưa chọn máy. Model/serial mới được nhập trong Tạo khách hoặc Khách / máy, không nhập ở Tiếp nhận đơn. Khách chỉ có một máy đang sử dụng sẽ được chọn sẵn. Giữ machine_id và snapshot để theo dõi lịch sử theo máy; API tạo nhanh cũ vẫn tương thích.
 
 Đầu Bảng điều phối có **Đơn quá hạn**, kèm loại hạn và thời điểm: giao thợ khẩn 15 phút / gấp 30 phút / thường 2 giờ từ tiếp nhận; thợ nhận 15 phút từ lần giao hiện tại; chốt lịch khẩn 30 phút từ tiếp nhận, thường hết ngày Việt Nam. Mức gấp chưa có hạn hẹn riêng trong yêu cầu nên dùng hết ngày như thường. Lịch khách nhập khi tiếp nhận là requested; thợ xác nhận mới đạt hạn chốt lịch. Cảnh báo tính khi tải/tải lại dữ liệu, chưa có gửi thông báo tự động hoặc cron nhắc việc.
 
@@ -159,3 +159,13 @@ Kho mở Cần soạn hàng, xem PX theo giờ hẹn và có thể báo Đã so�
 Nghiệm thu ghi Đã giao khách cho hàng giao kèm; chọn Mang về nếu khách không nhận. Kho nhận phần mang về bằng PN ở luồng trả hàng hiện có. Vật tư tiêu hao vẫn ghi Đã dùng, và đề xuất phát sinh của thợ vẫn theo DX → kho xuất → thợ nhận.
 
 Bản staging này chỉ ghi PX/PN trong Điều phối, chưa trừ tồn app Kho. Cần nối mã TD và tự ghi phiếu sang QL_KHO_THANH_DUC trước dùng thật để không nhập hai lần.
+
+## Hồ sơ khách và máy
+
+Tiếp nhận đơn chỉ chọn máy đang sử dụng của đúng khách, hoặc Chưa chọn máy; không nhập model/serial mới ở đây. Khách có đúng một máy đang sử dụng được chọn sẵn; nếu cần vẫn có thể chọn trống.
+
+Tạo khách mới có các dòng Máy của khách: model, serial, vị trí/phòng ban (không bắt buộc thêm máy). Lưu khách và tất cả máy trong một lần. Tạo khách ngay từ Tiếp nhận đơn sẽ quay lại đơn, chọn khách mới/máy duy nhất và giữ nội dung, giờ hẹn, địa chỉ riêng, hàng giao kèm đã nhập.
+
+Ở Khách / máy, mở khách để sửa thông tin, thêm máy, sửa model/serial/vị trí và chọn Ngừng sử dụng. Không xóa máy hoặc sửa snapshot của đơn cũ. Lịch sử đơn theo máy gồm cả đơn đã kết thúc. Serial trùng trong cùng khách có cảnh báo, không tự gộp/xóa hồ sơ; cả máy ngừng sử dụng được tính khi cảnh báo.
+
+Đơn chưa chọn máy có nút Gắn máy cho đơn: điều phối/giám đốc có thể gắn sau; thợ được giao chỉ gắn khi Đang làm. Danh sách chỉ có máy đang sử dụng thuộc khách của đơn; thao tác lưu lịch sử, không đổi máy của đơn đã gắn. API create_order cũ với machine_model/machine_serial vẫn hoạt động để giữ tương thích.
