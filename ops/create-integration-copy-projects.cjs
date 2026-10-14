@@ -1,5 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+function provision(){
 const root=process.argv[2],registryFile=process.argv[3],request=require('./integration-copy-20261015.request.json');
 const legacy=['1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu','1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN','1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH','1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6','1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql','16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N'];
 let registry=fs.existsSync(registryFile)?JSON.parse(fs.readFileSync(registryFile,'utf8')):{request_id:request.request_id,copies:request.copies,projects:{}};
@@ -21,3 +22,6 @@ for(const kind of ['warehouse','finance']){
  cp.execFileSync('clasp',['--json','push','--force'],{cwd:dir,stdio:'pipe'});project.pushed=true;save();
  console.log(kind+': '+project.editor_url);
 }
+
+}
+try{provision();}catch(error){console.error('COPY_CONSUMER_PROVISION_FAILED: stopped safely; inspect persisted project registry before retry. Private CLI output is not published.');process.exitCode=1;}
