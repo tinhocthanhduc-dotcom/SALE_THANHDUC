@@ -31,18 +31,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Apply patch scripts
+      - name: Apply changed patch scripts
         shell: bash
         run: |
-          set -e
-          if compgen -G "tools/patches/*.py" > /dev/null; then
-            for patch in tools/patches/*.py; do
-              echo "Running $patch"
-              python "$patch"
-            done
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: applying the newest patch only."
+            PATCHES="$(find tools/patches -maxdepth 1 -type f -name '*.py' -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
           else
-            echo "No patch scripts found."
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              BEFORE="$(git rev-parse "$AFTER^")"
+            fi
+
+            PATCHES="$(git diff --name-only "$BEFORE" "$AFTER" -- 'tools/patches/*.py' || true)"
           fi
+
+          if [ -z "$PATCHES" ]; then
+            echo "No changed patch scripts to apply."
+            exit 0
+          fi
+
+          printf '%s\n' "$PATCHES" | while IFS= read -r patch; do
+            [ -z "$patch" ] && continue
+            echo "Running $patch"
+            python "$patch"
+          done
 
       - name: Validate JavaScript syntax
         run: node --check code.js
