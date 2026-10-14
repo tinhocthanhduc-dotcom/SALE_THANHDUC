@@ -1,0 +1,15 @@
+{
+  "pass": true,
+  "production_deployed": false,
+  "environment": "AI review patch only, in-memory copy fixture",
+  "scenarios": [
+    "all quantity/price/reversal/pending/day-close direct writers blocked",
+    "stock and ledger capabilities read-only even nested access",
+    "daily counters cannot reset",
+    "AI aliases/logs routed to own metadata book",
+    "owner approval required before sending",
+    "IN/OUT queued to QL_KHO with exact TD and stable external key",
+    "replay creates one job, no stock writes",
+    "manual inventory delegates without direct mutation; preserves requested date"
+  ]
+}

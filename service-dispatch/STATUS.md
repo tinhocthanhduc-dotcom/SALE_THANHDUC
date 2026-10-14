@@ -1,5 +1,21 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 14/10/2026 — nối Kho/Finance theo outbox (chưa bật trên Google)
+
+- Điều phối chỉ ghi hàng chờ riêng. QL_KHO là đầu ghi duy nhất cho 58/145, native INVENTORY_IN/OUT → ledger/sequence/validation; Finance ghi native THU/CHUYEN_QUY/CONG_NO_KH. Bản sao có copy marker, từ chối ID file thật; envelope/result ký HMAC, dedupe durable trong lock. Trigger consumer và pump 5 phút có installer owner-only; bảng Đồng bộ nhận kết quả/manual retry/lý do/số phiếu, điều kiện đóng kiểm job recorded hoặc giám đốc duyệt ngoại lệ.
+- Catalogue mã TD đúng cột hai kho, readonly/cache 180 giây; outside-catalog giữ lại để kho gán; lượng vượt tồn chỉ cảnh báo. OUT theo actual pickup, IN theo actual PN/NK, không tạo OUT khi tạo PX/soạn. Không fuzzy-match/tạo SKU mới.
+- Mặc định hiện tại: Tiền mặt, Chuyển khoản ACB, Chuyển khoản TCB. VCB ngừng dùng, lịch sử cũ giữ nguyên. Giám đốc chọn ID tài khoản/danh mục/khách/nhân viên từ Finance, không tạo tài khoản. Cash → TAM_GIU hiện hữu; NQ → Quỹ TIEN_MAT theo phần thực nhận; bank confirmed → bank đã chọn; goods/service phân bổ theo billing. Thiếu mapping không ghi và không dùng tài khoản mặc định; retry cùng key; snapshot mapping đã gán không đổi theo cấu hình mới.
+- Hồ sơ công nợ đóng hai bước: đề nghị đóng phát hành nợ → chờ Finance ghi → đóng cuối. Không backfill lịch sử. Sau có job Finance, điều chỉnh giá bị chặn tới khi có luồng điều chỉnh xuyên app. Tạm dừng không bỏ nghĩa vụ của đơn đang đồng bộ.
+- **Kho/Finance/AI_KHO thật không sửa/push/deploy.** Audit AI_KHO đã liệt kê cả IN/OUT AI và thủ công, giá/schema/reset, reversal/pending/dayclose/rollback, alias/log. Review patch chuyển IN/OUT qua QL_KHO; mọi setter Kho bị chặn kể cả nested range/parent. Các chức năng chưa có adapter bị chặn, cần chủ duyệt. Bản AI đang chạy vẫn có đường ghi cũ cho tới khi được duyệt/chuyển triển khai.
+- **Finance cần duyệt riêng:** isDateClosed_ của source hiện tại trả false. Consumer bản sao khôi phục kiểm CHOT_SO, không tự đổi ngày. THU hỗn hợp dùng hai dòng native; NQ nhiều nguồn có dòng chuyển theo allocation, external key từng dòng chống trùng sau lỗi giữa chừng. Kho ledger pending/reconciliation bị chặn, không ghi lần hai.
+
+**Kiểm chứng:** 104/104 Node (84 cũ + 14 domain integration + 6 transport/privacy); integration-browser 10, money 11, delivery 9, GAS iframe 9; hồi quy UI/hồ sơ máy/ảnh/live chạy lại. Native QL_KHO runRegressionTestsV109 98/98 và 8 luồng native Kho/Finance; AI review 8 nhóm đạt. Native là fake workbook đúng schema + code native từ checkout QL_KHO bb25855 / Finance d3c4607 / AI d77e5be, **không phải UAT trên bản sao Google**. Kết quả/provenance: docs/integration-20261014/. Không có số đo thời gian/quota consumer GAS thực tế trong lượt này.
+
+**Còn chờ trước nối vận hành:** chủ chạy setupDispatchIntegrationCopies, tạo consumer project riêng/khai báo quyền và ID/token/HMAC an toàn, gán các ID Finance hiện hữu, chạy UAT trên bản sao Google và đối chiếu ledger/số dư. Sync mặc định tắt; chỉ bật copies sau cấu hình. Cần anh Tuấn duyệt riêng trước cutover QL_KHO/Finance thật hoặc triển khai AI_KHO. Không push main các repo tự deploy. Snapshot toàn bộ, native partial-write reconciliation, bảo vệ login/quota, hoàn tiền/điều chỉnh giá và công nợ theo kỳ vẫn là mốc trước pilot.
+
+Hướng dẫn chi tiết và audit: [integration-20261014/README.md](docs/integration-20261014/README.md), [AI_KHO_145_REVIEW.md](docs/integration-20261014/AI_KHO_145_REVIEW.md).
+
+
 App có máy chủ local và Apps Script staging riêng; Google đã khởi tạo và người dùng đã kiểm tra luồng nhận đơn, giao/nhận/hẹn/bắt đầu, chuyển thợ, ảnh và nghiệm thu. Project/deployment hiện tại lưu trong `ops/service-staging-20261013-01.project.json`. Cập nhật dùng lại project/deployment này, giữ nguyên Sheets, Drive, Script Properties và tài khoản.
 
 ## Sửa sau UAT

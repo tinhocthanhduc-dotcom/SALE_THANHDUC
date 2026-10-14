@@ -185,3 +185,10 @@ Tạo khách mới có các dòng Máy của khách: model, serial, vị trí/ph
 Báo cáo phân biệt ngày nghiệm thu (doanh thu hàng/công/vật tư), ngày báo thu, ngày xác nhận và ngày quỹ nhận. Tiền mặt báo thu không phải tiền về quỹ. Kho không nhận giá/sổ tiền qua query hoặc lịch sử, thợ chỉ nhận sổ thu/nộp của mình.
 
 Kiểm thử: `node service-dispatch/test/money-browser.cjs` (Playwright), `npm test --prefix service-dispatch` bao gồm kiểm thử tiền và bridge GAS/Sheets journal. Chưa đồng bộ FINANCE_THANHDUC: cần ghi PT/NQ đã xác nhận sang Finance với idempotency/đối soát trước dùng thật. QR, hoàn tiền, công nợ theo kỳ để sau.
+
+
+## Nối Kho và Finance trên bản sao — 14/10/2026
+
+Mã đã có catalogue TD, hàng chờ ký/đối soát, bảng gán ID Finance và consumer native dành riêng bản sao. Mặc định đồng bộ tắt, phương thức mới là Tiền mặt / Chuyển khoản ACB / Chuyển khoản TCB; VCB ngừng dùng và lịch sử giữ nguyên. Không tạo tài khoản Finance mới, không ghi sheet Kho/Finance từ Điều phối.
+
+Xem [hướng dẫn bản sao, kiểm thử và điều kiện bật](docs/integration-20261014/README.md), [audit mọi đường ghi AI_KHO 145 và đề xuất chuyển](docs/integration-20261014/AI_KHO_145_REVIEW.md). Chưa chạy UAT Google copies, chưa deploy Kho/Finance/AI_KHO thật; các mục lịch sử trước đây ghi vật tư tên tự do chưa nối là trạng thái tại thời điểm cũ. Trước pilot vẫn cần chuyển tables/index, kiểm partial-write recovery và bảo vệ đăng nhập/quota.

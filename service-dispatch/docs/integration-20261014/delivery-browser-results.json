@@ -1,0 +1,15 @@
+{
+  "pass": true,
+  "scenarios": [
+    "UI creates 2 lines/one atomic PX",
+    "edit add/remove quantity before pickup",
+    "warehouse packing tab and creator/locations",
+    "schedule before pickup",
+    "serial mismatch denied without mutation",
+    "partial pickup blocks start",
+    "remaining pickup enables start",
+    "delivery customer refusal vs delivered quantity",
+    "warehouse PN returns actual taken machine"
+  ],
+  "page_errors": []
+}

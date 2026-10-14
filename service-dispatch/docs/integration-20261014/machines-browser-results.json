@@ -1,0 +1,16 @@
+{
+  "pass": true,
+  "scenarios": [
+    "customer plus two machines atomic",
+    "duplicate serial warning on form",
+    "intake has only existing customer machines/model+serial",
+    "inline customer preserves draft/delivery/time/address",
+    "one active machine autoselected",
+    "edit customer and machine with old snapshot intact",
+    "retired machine hidden and history retained",
+    "all retired yields empty optional selection",
+    "reactivate profile without deleting",
+    "technician attaches only while working and only own customer"
+  ],
+  "page_errors": []
+}
