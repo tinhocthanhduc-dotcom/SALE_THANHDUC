@@ -1,0 +1,17 @@
+{
+  "pass": true,
+  "scenarios": [
+    "director company account management without invented bank data",
+    "acceptance snapshots actual goods plus explicit labor; brought-back goods not billed",
+    "no default full collection, over-collection blocked; partial cash enters custody",
+    "transfer displays company number/reference and explicit Thu đủ reserves remaining",
+    "optional bank receipt auto-upload with private evidence",
+    "finance confirms transfer independently and cannot edit work",
+    "one NQ reserves cash from multiple orders; pending does not reduce held total",
+    "finance actual shortage recorded, outstanding cash remains technician responsibility",
+    "shortage can be deposited later without duplicate allocation",
+    "closure only after cash, bank and stock settlement; separate closed tab",
+    "other technician receives neither payment ledger nor deposit documents"
+  ],
+  "page_errors": []
+}

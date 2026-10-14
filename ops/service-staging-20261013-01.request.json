@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 24,
-  "update": "User-authorized customer machine management: atomic customer + multiple machine profiles with model/serial/location, existing active machine selection only at intake and auto-select single machine, inline draft preservation, profile edits/retirement/history, authorized later attachment and duplicate serial warnings. Preserve legacy quick-create API and historic snapshots. Add profile domain/browser/GAS bridge tests, keep existing delivery/photo/live flows and staging accounts/data. Follow-up: keep command dialog open until foreground refresh completes, eliminating stale detail race exposed by CI; retain key/form on query failure."
+  "revision": 25,
+  "update": "User-authorized service finance staging update: delivery unit prices and acceptance pricing snapshot/customer consent, optional approval policy, custom company payment methods/accounts, replay-safe PT partial and mixed receipts, private receipt photos, NQ multi-order reserved cash allocations/independent counted reconciliation with shortage/excess, finance-only fund dashboard and source-date reports, closure gates and Closed tab. Keep same staging project/deployment, Sheets/Drive/properties/users and all legacy apps untouched; do not bootstrap/reset or write real Finance/Kho. Add money domain/browser/GAS bridge tests and update STATUS/README. Historical unpriced acceptance requires explicit manager pricing; new acceptance requires explicit prices via API."
 }

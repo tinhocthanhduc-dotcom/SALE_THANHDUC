@@ -38,6 +38,7 @@ jobs:
       - run: node service-dispatch/test/browser.cjs
       - run: node service-dispatch/test/customer-machines-browser.cjs
       - run: node service-dispatch/test/delivery-browser.cjs
+      - run: node service-dispatch/test/money-browser.cjs
       - run: node service-dispatch/test/photo-browser.cjs
       - run: node service-dispatch/test/gas-ui-browser.cjs
       - run: node service-dispatch/test/live-browser.cjs

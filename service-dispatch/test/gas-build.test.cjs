@@ -49,6 +49,17 @@ test('GAS bridge login, Sheets query and commands share the repository contract'
   const customerBatch=run('create_customer',{name:'Batch fixture',phone:'0901234002',address:'Fixture',machines:[{model:'Machine one',serial:'B1',location:'Room one'},{model:'Machine two',serial:'B2'}]});assert.equal(customerBatch.error,undefined);let profiles=box.dispatchApi({action:'query',token:login.token}).machines.filter(m=>m.customer_id===customerBatch.id);assert.equal(profiles.length,2);
   const retired=box.dispatchApi({action:'command',token:login.token,command:{type:'update_machine',payload:{machine_id:profiles[0].id,customer_id:customerBatch.id,model:'Machine one',serial:'B1',location:'Room one',active:false},expected_version:profiles[0].version,idempotency_key:'bridge-'+(++sequence)}});assert.equal(retired.error,undefined);
   const noMachine=run('create_order',{customer_id:customerBatch.id,address:'Fixture',request:'Attach later',source:'hotline',priority:'normal'});assert.equal(noMachine.error,undefined);const attached=box.dispatchApi({action:'command',token:login.token,command:{type:'attach_machine',payload:{order_id:noMachine.order_id,machine_id:profiles[1].id},expected_version:noMachine.version,idempotency_key:'bridge-'+(++sequence)}});assert.equal(attached.error,undefined);assert.equal(box.dispatchApi({action:'query',token:login.token,order_id:noMachine.order_id}).orders[0].machine_id,profiles[1].id);
+
+  // Money commands run through the compiled GAS bridge and existing Sheet journal, not a separate mock ledger.
+  const handoverState=box.dispatchApi({action:'query',token:techLogin.token,order_id:order.order_id}).orders[0];
+  const proof=box.dispatchApi({action:'upload',token:techLogin.token,payload:{...payload,kind:'handover',expected_version:handoverState.version,idempotency_key:'gas-handover'}});assert.equal(proof.error,undefined);
+  assert.equal(onOrder('complete',{work_summary:'Money fixture',customer_agreed:true,charge_lines:[{name:'Fixture service',kind:'labor',amount:100000}]},techLogin.token).error,undefined);
+  const pt=onOrder('report_payment',{amount:100000,method_id:'cash'},techLogin.token);assert.equal(pt.error,undefined);
+  const moneyState=box.dispatchApi({action:'query',token:techLogin.token});assert.equal(moneyState.money.payments[0].receipt_no.startsWith('PT-'),true);assert.equal(moneyState.money.payments[0].held,100000);
+  const nq=box.dispatchApi({action:'command',token:techLogin.token,command:{type:'create_deposit',payload:{payment_ids:[pt.id],cash_handed:true},idempotency_key:'gas-nq'}});assert.equal(nq.error,undefined);
+  const confirmed=box.dispatchApi({action:'command',token:login.token,command:{type:'confirm_deposit',payload:{deposit_id:nq.id,actual_amount:100000},expected_version:nq.version,idempotency_key:'gas-nq-confirm'}});assert.equal(confirmed.error,undefined);
+  assert.equal(box.dispatchApi({action:'query',token:techLogin.token}).money.payments[0].held,0);assert.equal(onOrder('close_dossier',{}).error,undefined);
+  assert.equal(box.dispatchApi({action:'query',token:login.token,order_id:order.order_id}).orders[0].dossier_status,'closed');
   assert.equal(JSON.stringify(loaded).includes('password_hash'),false);
   assert.equal(box.dispatchApi({action:'query',token:'invalid'}).error,'AUTH_REQUIRED');const health=box.checkDispatchStaging();assert.equal(health.storage_ok,true);assert.equal(health.admin_account_present,true);assert.equal(JSON.stringify(health).includes('password_hash'),false);
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
