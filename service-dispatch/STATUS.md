@@ -142,3 +142,5 @@ benchmarkDispatchChanges có public owner guard và 5 mẫu thời gian xử lý
 Workflow đầu đã thử đo GAS bằng Execution API: Google trả USER_ERROR/code 3, reading from storage, NOT_FOUND; không có mẫu thời gian GAS. Bổ sung thử context deployed (--nondev) bên cạnh devMode, không sửa quyền/API deployment. Nếu cả hai vẫn không trả đo, Run benchmarkDispatchChanges trong editor bằng tài khoản chủ project là bước còn lại.
 
 Kết quả thử cả devMode và deployed context: cả hai trả Google USER_ERROR/code 3, reading from storage, NOT_FOUND. Chưa có số đo GAS; kết quả lưu artifact changes-benchmark-status.json. Chủ project Run benchmarkDispatchChanges trong editor để lấy samples_ms/average_ms. Tạo/xóa phiên benchmark dùng cùng ScriptLock với auth, tránh ghi đè dọn dẹp khi người khác đăng nhập; phần đo changes không giữ khóa.
+
+CI phát hiện race ở harness clock.pauseAt dùng thời gian Node, có thể lùi vài ms so với browser. Đổi mốc pause lấy trực tiếp Date.now của browser +10 giây; không đổi timer sản phẩm hoặc nới ngưỡng 25 giây. Các bước real-timer chạy trước đó vẫn giữ nguyên.
