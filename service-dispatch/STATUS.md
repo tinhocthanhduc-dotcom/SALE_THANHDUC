@@ -211,3 +211,5 @@ CI bắt được race đóng form trước refresh: có khoảng trống giao d
 3. Nối mã TD/PX/PN sang QL_KHO_THANH_DUC trước dùng thật; vật tư/tồn thật vẫn ở app Kho. Không coi PX điều phối là đã trừ tồn app Kho.
 4. Bắt buộc thay persistence toàn snapshot bằng normalized tables/index cho orders, prices, payments, deposit allocations/confirmations, evidence/events/idempotency; retention/backup/migration/recovery. Snapshot và journal tăng nhanh hơn khi có sổ tiền; tối ưu ảnh/polling không giải quyết giới hạn này.
 5. Chốt hạn nộp quỹ/giờ cắt và ngoại lệ, ma trận giá; chống lạm dụng login/quota ANYONE_ANONYMOUS/PBKDF2, cùng UAT Google/điện thoại và đối chiếu sao kê/quỹ thực tế. Cảnh báo >24h hiện tại không tự đặt hạn thu giữ hoặc cho phép ngoại lệ giữ tiền để đóng.
+
+API payment_status cũng lấy từ sổ thu hiện tại, cùng nguồn với nhãn trên UI, thay cho placeholder unpaid cũ; không viết lại trạng thái tiền lịch sử bằng suy đoán. Kho không nhận payment_status/financial_scope qua projection.
