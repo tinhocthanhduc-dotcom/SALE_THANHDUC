@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 17,
-  "update": "User-authorized UI-only redesign: mobile technician bottom tabs, toast, next-step card/dock, colored badges, large contacts and collapsed extras/history; desktop dispatch table/detail pane and technician cards. Preserve business logic, API, staging identity and data; include 390px before/after screenshots."
+  "revision": 18,
+  "update": "Finalize authorized UI redesign: enforce 16px auxiliary text as well as body content, verify mobile text sizes, refresh after screenshots. No business/API changes; preserve staging identity and data."
 }

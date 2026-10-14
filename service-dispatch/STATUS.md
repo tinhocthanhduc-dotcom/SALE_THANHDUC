@@ -124,3 +124,5 @@ Chỉ sửa ui.html/ui.js, kiểm thử trình duyệt và ảnh tài liệu; do
 Kiểm chứng: 43/43 Node, 48 kịch bản HTTP browser và 9 kịch bản gói GAS/document.write/CSP đạt, không page error. Luồng chính chạy ở 390px; kiểm tab cố định/active, nút liên hệ/CTA lớn, Thêm và lịch sử thu gọn, font/kích thước, không tràn ngang, bảng desktop, thẻ chọn thợ, thao tác từ thẻ đúng đơn, toast tự tắt và lỗi còn sau 3 giây. Giữ kiểm tra kho, ảnh, chuyển thợ, quyền/replay và ngày hẹn.
 
 Ảnh trước/sau tại docs/ui-review-20261014/README.md: danh sách và chi tiết 390×844, bảng điều phối 1440×1000, dùng fixture riêng. Đã nhìn kiểm tra ảnh sau; ảnh trước lấy từ a4b9e8f. Không dùng dữ liệu khách thật. Script ui-screenshots.cjs chụp lại bản hiện tại. Cần UAT trên điện thoại/GAS thực tế; không chạy setup, không đổi tài khoản hay dữ liệu.
+
+Rà soát cuối: small/order code và chữ phụ cũng tối thiểu 16px, bổ sung kiểm tra computed font của nội dung/nút/nhãn/summary; 48 kịch bản vẫn đạt. Cập nhật lại ảnh sau với cỡ chữ cuối cùng.
