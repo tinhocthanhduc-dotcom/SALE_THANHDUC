@@ -39,7 +39,16 @@
     "optional machine profile",
     "technical version hidden for technician",
     "report and overdue board",
-    "quick machine creation in intake"
+    "quick machine creation in intake",
+    "mobile bottom tabs and active tab",
+    "large contacts and primary dock",
+    "collapsed secondary actions and history",
+    "technician payment placeholder hidden",
+    "16px content and 48px controls",
+    "desktop filtered table",
+    "one tap technician picker",
+    "card next step opens correct order",
+    "success toast expires and error persists"
   ],
   "page_errors": []
 }

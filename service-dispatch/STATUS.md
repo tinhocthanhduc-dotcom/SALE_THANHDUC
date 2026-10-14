@@ -109,3 +109,18 @@ Các hướng dẫn gộp hẹn/bắt đầu và hẹn chỉ trong hôm nay ở 
 2. Vật tư còn tên tự do, chưa ánh xạ mã TD của app Kho và chưa trừ tồn. Bước tiếp theo: danh mục mã thống nhất, liên kết giao dịch xuất/nhận/hoàn trả có đối soát/idempotency; không coi sổ bàn giao staging là tồn kho thật.
 
 Kiểm chứng: 43/43 Node; 39 kịch bản HTTP Chromium, 9 kịch bản GAS/document.write/CSP, không page error. Kiểm tra ngày mai/ngày cụ thể/quá khứ/ngày sai và ranh giới ngày Việt Nam, hẹn không tạo visit, start một chạm, chọn máy cũ/tạo nhanh atomic/replay, ẩn kỹ thuật với thợ, SLA/ngày báo cáo/số mẫu/chuyển thợ. Fixture HTTP/GAS cũ đổi từ lịch 13/10 cố định sang giờ hôm nay hợp lệ; không bỏ kiểm tra quyền/recovery. Kết quả cập nhật trong ba file kiểm thử. Chưa thay thế UAT Google cho tính năng mới. Giữ nguyên project/deployment, public access, tài khoản và dữ liệu; không chạy setup.
+
+
+## Giao diện ưu tiên thợ trên điện thoại (14/10/2026)
+
+Chỉ sửa ui.html/ui.js, kiểm thử trình duyệt và ảnh tài liệu; domain/service/auth/API và quy tắc nghiệp vụ không đổi.
+
+- Header một dòng, bỏ dòng phụ; thông báo thử nghiệm một dòng mảnh. Thợ có tab đáy Việc của tôi / Đã kết thúc / Tài khoản; đăng xuất và tải lại ở Tài khoản. Thành công thành toast tự tắt sau 3 giây, lỗi đỏ giữ lại.
+- Thẻ đơn có nút bước tiếp theo dùng command cũ; đơn trễ lên trước, rồi theo giờ hẹn. Nhãn màu dùng chung trên thẻ/chi tiết/bảng. Đủ lịch và vật tư thì Bắt đầu là chính, Đổi hẹn trong Thêm; đến ngay chưa hẹn cũng ở Thêm, không cạnh Hẹn giờ.
+- Chi tiết thợ có nút chính lớn cố định trên tab đáy; phụ gộp Thêm. Gọi khách/Chỉ đường thành hai nút >=48px, nội dung >=16px. Bỏ dòng Thanh toán chưa triển khai với thợ; phiên bản tiếp tục ẩn. Hẹn chưa chốt là một dòng ngày ngắn. Lịch sử hiện hai sự kiện mới nhất, phần còn lại thu gọn.
+- Điều phối: tab đang chọn tô rõ, nhận đơn là nút + nổi. Desktop >=1000px có bảng lọc trạng thái; đơn trễ đỏ, chi tiết nằm cạnh bên phải. Điện thoại khi mở đơn ẩn danh sách/khung khách khỏi chi tiết; tab Khách/máy vẫn quản lý hồ sơ riêng.
+- Giao thợ bằng thẻ chọn một chạm, vẫn gửi technician_id cũ. Hiển thị số việc tiếp nhận hôm nay, đang làm, đang mở và khu vực từ dữ liệu được cấp quyền; ưu tiên cùng khu vực rồi ít việc mở. Không tự điền khu vực thiếu hoặc đổi quy tắc giao việc.
+
+Kiểm chứng: 43/43 Node, 48 kịch bản HTTP browser và 9 kịch bản gói GAS/document.write/CSP đạt, không page error. Luồng chính chạy ở 390px; kiểm tab cố định/active, nút liên hệ/CTA lớn, Thêm và lịch sử thu gọn, font/kích thước, không tràn ngang, bảng desktop, thẻ chọn thợ, thao tác từ thẻ đúng đơn, toast tự tắt và lỗi còn sau 3 giây. Giữ kiểm tra kho, ảnh, chuyển thợ, quyền/replay và ngày hẹn.
+
+Ảnh trước/sau tại docs/ui-review-20261014/README.md: danh sách và chi tiết 390×844, bảng điều phối 1440×1000, dùng fixture riêng. Đã nhìn kiểm tra ảnh sau; ảnh trước lấy từ a4b9e8f. Không dùng dữ liệu khách thật. Script ui-screenshots.cjs chụp lại bản hiện tại. Cần UAT trên điện thoại/GAS thực tế; không chạy setup, không đổi tài khoản hay dữ liệu.

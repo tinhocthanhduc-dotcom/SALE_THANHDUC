@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 16,
-  "update": "User-authorized update: future-day scheduling with server validation, separate appointment and one-tap arrival, optional/atomic quick machine profiles, technician technical-label hiding, server SLA overdue board and authorized technician/day report. Record anonymous login and free-text inventory pilot blockers. Preserve existing staging deployment and data."
+  "revision": 17,
+  "update": "User-authorized UI-only redesign: mobile technician bottom tabs, toast, next-step card/dock, colored badges, large contacts and collapsed extras/history; desktop dispatch table/detail pane and technician cards. Preserve business logic, API, staging identity and data; include 390px before/after screenshots."
 }
