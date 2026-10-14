@@ -83,3 +83,10 @@ Người dùng xác nhận đã test hết tiến trình trước bản điều 
 - Ghi chú phân công hiện trên thẻ và đầu chi tiết; lần giao lại có tiêu đề và số lần rõ, nội dung được escape. Browser thử giao cùng thợ lần 2, xác nhận ghi chú hiện bên thợ trước và sau mở đơn.
 
 Kiểm chứng local: 38/38 Node, 32 kịch bản HTTP browser không page error, 9 kịch bản GAS/document.write/CSP đạt. Bao gồm giờ theo ngày Việt Nam, schedule/start atomic/replay, không vượt chờ vật tư, chọn dòng/dùng hết/trả hết, hàng không chọn giữ nguyên, dòng lỗi không ghi một phần, batch PN/replay, tab nghiệm thu và ghi chú lần 2. Kết quả cập nhật trong các file kiểm thử. Giữ nguyên project/deployment, public access, tài khoản và dữ liệu; không chạy setup. Cần UAT thao tác mới trên Google.
+
+
+## Tab chung cho công việc kết thúc
+
+Theo yêu cầu người dùng, đổi tab Đã nghiệm thu thành Đã kết thúc: gom accepted_work và cancelled, bộ lọc Tất cả / Đã nghiệm thu / Đã hủy kèm số lượng, giữ lựa chọn khi refresh trong phiên và reset khi logout. Hai trạng thái rời Bảng điều phối/Việc của tôi; không thay trạng thái dữ liệu và không xóa đơn. Kho vẫn được xử lý bàn giao còn lại. Không làm được còn là việc cần điều phối xử lý, không tự đóng; trạng thái Hoàn thành hồ sơ sau đối soát chưa được triển khai.
+
+Kiểm chứng: 38/38 Node, 33 kịch bản HTTP browser, 9 kịch bản GAS/document.write/CSP đạt. Browser tạo đơn nghiệm thu và đơn hủy, kiểm tra cả hai rời bảng mở, vào tab chung, lọc đúng mỗi nhóm/tất cả và giữ bộ lọc khi tải dữ liệu. Không page error; quyền máy chủ giữ nguyên. Không chạy setup hoặc thay tài khoản/dữ liệu Google.

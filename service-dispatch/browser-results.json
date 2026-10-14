@@ -32,7 +32,8 @@
     "lost upload response retries without duplicates",
     "selected usage and per-item return shortcuts",
     "accepted orders in separate tab",
-    "assignment notes visible to technician"
+    "assignment notes visible to technician",
+    "ended orders grouped and filtered by status"
   ],
   "page_errors": []
 }

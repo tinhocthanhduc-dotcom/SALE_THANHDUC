@@ -115,4 +115,7 @@ Thợ dùng **Chốt giờ và bắt đầu**: chọn sáng/chiều/cả ngày h
 
 **Ghi vật tư / hàng thực dùng** hiển thị nhiều món: chọn những món cần ghi, bấm Dùng hết/Trả hết cho từng món hoặc tất cả, hoặc sửa lượng thực dùng. Chỉ món đã chọn được lưu; lượng trả = đã nhận − thực dùng. Trong nghiệm thu cũng có nút dùng/trả nhanh, nhưng cần quyết toán đủ mọi món đã nhận. Kho chọn từng món dư hoặc Chọn tất cả món trả, xác nhận đã kiểm nhận và lưu một phiếu PN chung. Thợ ghi trả không tự xác nhận hàng đã về kho.
 
-Đơn nghiệm thu chuyển sang tab **Đã nghiệm thu**, rời danh sách việc mở. Kho vẫn thấy đơn có hàng/máy để bàn giao. Ghi chú phân công mới nhất hiển thị trên thẻ và đầu chi tiết; giao lần 2 trở đi ghi rõ số lần giao, không phải tìm trong lịch sử.
+Đơn nghiệm thu chuyển sang tab **Đã kết thúc**, rời danh sách việc mở. Kho vẫn thấy đơn có hàng/máy để bàn giao. Ghi chú phân công mới nhất hiển thị trên thẻ và đầu chi tiết; giao lần 2 trở đi ghi rõ số lần giao, không phải tìm trong lịch sử.
+
+
+Tab **Đã kết thúc** gom đơn Đã nghiệm thu và Đã hủy, lọc Tất cả hoặc từng trạng thái kèm số lượng. Đơn thuộc hai trạng thái này không nằm trong Bảng điều phối/Việc của tôi. Bộ lọc giữ khi tải dữ liệu lại trong phiên trang, bỏ khi đăng xuất. Kho vẫn thấy bàn giao chưa xử lý; các thao tác và quyền đọc không đổi. Đơn Không làm được vẫn cần xử lý/giao lại, không tự coi là kết thúc. Trạng thái Hoàn thành hồ sơ sau đối soát chưa có trong bản hiện tại.
