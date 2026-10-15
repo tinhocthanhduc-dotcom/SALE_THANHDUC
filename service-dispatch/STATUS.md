@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (c)
+
+- Chi tiết đơn thành các thẻ đầu đơn/liên hệ/thông tin/PX/tiến trình/thao tác phụ, tên khách 23px, nút Gọi và Chỉ đường 118×56px. Giữ ghi chú giao lại, hàng/vật tư, tiền, đồng bộ, ảnh và lịch sử hai dòng mới nhất. Một CTA gốc 62px ở đáy, hành động phụ đóng mặc định; không thêm command mới.
+- Tiến trình đọc sự kiện đúng lần phân công, không đánh dấu thợ mới đã nhận dựa vào lần cũ. PX tóm tắt lấy từ projection thật; vẫn lấy đủ mới bắt đầu. Đơn hủy/đóng không có bước tiếp theo giả. Desktop >750px và các vai trò khác giữ bố cục hiện tại.
+- Bảng hẹn giờ từ đáy: Hôm nay/Ngày mai/Chọn ngày, khung sáng/chiều/cả ngày/tùy chỉnh, consent 32px, lưu 62px. Dùng trường/command/key/version gốc, giữ kiểm ngày quá khứ và lý do đổi lịch đã xác nhận; `schedule` chỉ hẹn, không bắt đầu. Lỗi lưu/cập nhật nền không mất nội dung form; chạm nền để đóng.
+- **Đạt local:** 113/113 Node; 9/9 detail-browser, 10/10 shell, 8/8 board, 48/48 nghiệp vụ UI, 9/9 delivery, 10/10 customer-machines, 12/12 money, 10/10 integration, 9/9 GAS iframe, 9/9 live browser (polling hai chiều/giữ form/giữ cuộn); photo queue 3 ảnh/200 đơn/replay/thumbnail/full query 0. Build GAS đạt; Code.gs byte-identical với bước (b), chỉ Index.html thay đổi. Có ảnh trước/sau 390px và bảng hẹn; các bước (d)–(h), desktop (i)–(p) tiếp tục sau. Google UAT không được suy ra từ test local; không đổi app Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — tiếp gói thiết kế mới, hoàn tất bước (b)
 
 - Đã đọc README mobile và README_DESKTOP mới; README mobile giữ nguyên. Ghi nhận thiết kế desktop i–p, tiếp tục tuần tự với danh sách thợ (b) trước, không áp desktop trong mốc này.

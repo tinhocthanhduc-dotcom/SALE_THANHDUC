@@ -25,6 +25,16 @@ Theo gói `dieu-phoi-desing.zip` mới, README mobile không đổi; gói bổ s
 
 Hàm sửa: `board` (nhánh mobile mine), `renderTechShell` (CTA). Thêm `techOpenOrders`, `techOverdue`, `techOrderSort`, `techDelayText`, `techOrderDay`, `techOrderTime`, `techOrderCard`, `techBoard`; click mở ưu tiên đi cùng handler mở đơn hiện có. Không sửa nextAction, API, quyền, deadline domain hoặc dữ liệu. Test UI cũ chỉ đổi thao tác vào thẻ theo thiết kế, vẫn kiểm nhận đơn bằng command gốc ở chi tiết.
 
+## Bước (c) — Chi tiết đơn và bảng hẹn giờ
+
+- `detail` vẫn xây danh sách `buttons` theo điều kiện và quyền gốc, rồi chỉ nhánh `techMobile()` dùng `techDetail`. Các thẻ: đầu đơn/tên khách 23px, liên hệ hai hàng với nút 118×56px, lịch/máy/yêu cầu, ghi chú giao lại, PX giao kèm, tiến trình, Thao tác khác đóng mặc định. Mỗi hành động phụ được giữ lại, bỏ màu primary để tránh cạnh tranh CTA 62px. Hành động chính tiếp tục dùng `nextAction` và `photosReady`.
+- `techProgress` đọc `data.events` của đơn; nhận/hẹn/bắt đầu lấy sự kiện từ lần phân công gần nhất, không dùng dữ liệu giả `o.events` và không suy đoán thợ mới đã nhận từ lần cũ. Lấy đủ PX chỉ đánh dấu sau khi mọi PX còn hiệu lực đã picked. Đơn hủy/đóng không có bước kế tiếp. Đây là hiển thị sự kiện, không điều khiển/chặn workflow.
+- `detailRecords` tách nguyên markup vật tư, khoản thu, đồng bộ, form tải ảnh, queue/gallery riêng tư và lịch sử của chi tiết cũ để dùng chung. Desktop/vai trò khác giữ cấu trúc cũ. Ảnh vẫn patch tại chỗ; lịch sử giữ hai dòng gần nhất và mở rộng.
+- `enhanceTechSchedule` chỉ đổi form hẹn của thợ mobile thành bottom sheet, ngày ba nút, giờ 2×2, ngày/giờ tùy chọn, checkbox 32px và lưu 62px. Chip chọn cập nhật chính các trường `day_choice`, `appointment_date`, `time_window`, `time_start`, `time_end` gốc qua change handler; không tạo payload/API khác. Có lịch thì chọn sẵn đúng khung hoặc giờ tùy chỉnh. Giữ yêu cầu lý do khi đổi lịch đã xác nhận; ghi chú lần hẹn đầu không bắt buộc. Chạm nền hoặc Đóng vẫn đi theo handler đóng gốc; form mở vẫn chặn redraw do polling.
+- `updateTechSchedule` khóa nút cho đến khi xác nhận đã gọi khách và có giờ. `schedule` chỉ lưu lịch; `schedule_start` và `resume_schedule` giữ tên lệnh, điều kiện và ý nghĩa riêng. Không gộp hẹn với bắt đầu. Không đổi business/auth/server/API, không ghi Kho/Finance/AI thật.
+
+Hàm app.js sửa: `detail`, `openForm` (gọi skin sau khi điền form), `submitForm` (cập nhật lại trạng thái nút sau lỗi). Thêm `techDetail`, `techDeliverySummary`, `techProgress`, `detailRecords`, `enhanceTechSchedule`, `updateTechSchedule` và listener chip/backdrop giao diện. CSS chỉ trong `body.is-tech` + media ≤750px. Bộ test trình duyệt mới `technician-detail-browser.cjs`; test nghiệp vụ cũ đổi selector/chọn chip thay select ẩn, không bỏ kiểm chứng nghiệp vụ.
+
 ## Phần desktop mới — kế hoạch theo README_DESKTOP
 
 Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
@@ -38,9 +48,7 @@ Hàm sửa: `board` (nhánh mobile mine), `renderTechShell` (CTA). Thêm `techOp
 - (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
 - (p) HTML đăng nhập, giữ xác thực hiện có.
 
-## Các bước mobile còn lại — (c) đến (h)
-
-(c) `detail`, `openForm`: thẻ chi tiết, timeline và bottom sheet lịch hẹn.
+## Các bước mobile còn lại — (d) đến (h)
 
 (d) `updatePickupFields`, phần pickup của `openForm`: lấy hàng, stepper; giữ quy tắc lấy đủ mới được bắt đầu.
 
