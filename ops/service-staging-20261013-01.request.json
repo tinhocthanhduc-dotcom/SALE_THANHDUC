@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 30,
-  "update": "User-requested shared searchable choice UI on SAME Dispatch staging only. Single accent-insensitive customer/machine/TD/Finance picker, selected label and clear, max20 results, keyboard/ARIA, inline customer draft, short-list quick buttons. Preserve native IDs/API/commands/permissions/business data. Backend Code.gs unchanged from v53. Preserve all users/properties/Sheets/Drive/mappings/data; no reset/backfill or setup. Do not update any COPY consumer or real Kho/Finance/AI, never Finance main."
+  "revision": 31,
+  "update": "User explicitly requested deploy of commit 42fe696 shared VND money inputs to SAME Dispatch staging project and existing deployment URL. UI only: text/numeric input, Vietnamese grouping and amount words, caret, paste, validation; commands still integer VND, quantities unchanged. 138 Dispatch Node + 71 ERP Node + all 22 Dispatch browser suites passed. Preserve users, properties, Sheets, Drive, integration mappings and business data. Do not run setup or reset/backfill. Do not deploy Customer Directory, COPY consumers, real Kho/Finance/AI or Finance main."
 }
