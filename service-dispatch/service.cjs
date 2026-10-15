@@ -1,15 +1,18 @@
 'use strict';
 const Domain=require('./domain.cjs');
+const Directory=require('./customer-directory.cjs');
 const {digest}=require('./auth.cjs');
 function fail(code){const e=new Error(code);e.code=code;throw e;}
-function createService({auth,repository,files,now,id,changes={read:()=>({version:0})},catalogue={read:()=>({verified_copy:false,stock:[],accounts:[],categories:[],customers:[],employees:[]})}}){
+function createService({auth,repository,files,now,id,directoryClient=null,changes={read:()=>({version:0})},catalogue={read:()=>({verified_copy:false,stock:[],accounts:[],categories:[],customers:[],employees:[]})}}){
  const state=()=>repository.snapshot().state;
+ const directory=directoryClient?Directory.controller({client:directoryClient,auth,repository,now,id,catalogue}):null;
  return {
+  directory:(token,action,payload)=>{if(!directory)fail('DIRECTORY_NOT_CONFIGURED');return directory.action(token,action,payload);},
   integrationSnapshot_:state,integrationCommit_:(command,context)=>repository.submit(command,context),
   login:(username,password)=>auth.login(username,password),logout:token=>auth.logout(token),
   changes(token){auth.actor(token);return changes.read();},
-  query(token,orderId){const actor=auth.actor(token),change=changes.read(),snapshot=repository.snapshot(),current=snapshot.state;if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory(),now(),catalogue.read());result.change_version=change.version;if(repository.capacity&&actor.roles.some(r=>['director','finance','warehouse'].includes(r)))result.storage=repository.capacity(snapshot);if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
-  command(token,command){if(['add_evidence','sync_result'].includes(command.type))fail('FORBIDDEN');const actor=auth.actor(token);return repository.submit(command,{actor,directory:auth.directory(),now,id,catalogue:{...catalogue.read(),dispatch_employees:Object.values(auth.directory()).filter(p=>p.roles.includes('technician'))}});},
+  query(token,orderId){const actor=auth.actor(token),change=changes.read(),snapshot=repository.snapshot(),current=snapshot.state;if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory(),now(),catalogue.read());result.change_version=change.version;result.customer_directory={enabled:!!directory};if(repository.capacity&&actor.roles.some(r=>['director','finance','warehouse'].includes(r)))result.storage=repository.capacity(snapshot);if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
+  command(token,command){if(directory&&['create_customer','update_customer'].includes(command.type))return directory.command(token,command);if(['cache_directory_customer','add_evidence','sync_result'].includes(command.type))fail('FORBIDDEN');const actor=auth.actor(token);return repository.submit(command,{actor,directory:auth.directory(),now,id,directory_required:!!directory,catalogue:{...catalogue.read(),dispatch_employees:Object.values(auth.directory()).filter(p=>p.roles.includes('technician'))}});},
   upload(token,payload){
    const clock=()=>typeof performance==='object'?performance.now():Date.now(),started=clock(),timings={auth_ms:0,snapshot_ms:0,locked_snapshot_ms:0,drive_ms:0,sheets_ms:0,projection_ms:0};
    let tick=clock();const {actor,directory}=auth.context(token);timings.auth_ms=clock()-tick;

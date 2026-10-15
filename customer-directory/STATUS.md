@@ -1,5 +1,12 @@
 # Danh bạ khách — 15/10/2026
 
+## 15/10/2026 — cấu hình client Điều phối staging
+
+- Thêm owner-only configureDispatchDirectoryClient: nhập CD_DISPATCH_USERS từ danh sách ID/role nhân viên, tạo actor dieuphoi:<id> đúng tên/vai trò, client DIEUPHOI với allowlist. Secret chỉ CD_CLIENTS, rerun không rotate; đổi role có sẵn yêu cầu rà lại; không tạo/sửa khách, không quét nguồn, không cấp mã KTD.
+- HMAC/auth.cjs, API và quyền cột giữ nguyên theo be0a289 + các bản sửa hiện có. Giữ deployment Google authenticated, không chuyển anonymous. Danh bạ vẫn là single writer. [OWNER_SETUP Điều phối](../service-dispatch/docs/customer-directory/OWNER_SETUP.md).
+- Chưa tự tạo client/secret hoặc bật kết nối trên Google; chủ chạy hàm sau deploy COPY và kiểm OAuth/HMAC bằng checkDispatchDirectoryConnection ở Điều phối. Bộ Node có test cấu hình/rerun/không lộ secret/owner-only.
+
+
 ## Phạm vi đã làm: bước 1 và 2, COPY riêng
 
 - Core Danh bạ KTD-000001 tăng bền vững, hai nơi lưu bộ đếm, không dùng số dòng/không tái sử dụng; counter hỏng/lùi bị chặn. ScriptLock, expected_version, idempotency và WAL delta có kiểm checksum/phục hồi, receipt/lịch sử không nhân đôi sau retry hoặc ghi dở.

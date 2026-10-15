@@ -47,6 +47,7 @@ jobs:
       - run: node service-dispatch/test/desktop-operations-browser.cjs
       - run: node service-dispatch/test/desktop-administration-browser.cjs
       - run: node service-dispatch/test/choice-browser.cjs
+      - run: node service-dispatch/test/customer-directory-browser.cjs
       - run: node service-dispatch/test/customer-machines-browser.cjs
       - run: node service-dispatch/test/delivery-browser.cjs
       - run: node service-dispatch/test/money-browser.cjs

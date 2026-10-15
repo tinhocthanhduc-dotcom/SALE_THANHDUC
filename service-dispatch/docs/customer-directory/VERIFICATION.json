@@ -1,0 +1,23 @@
+{
+  "node": {
+    "passed": 316,
+    "failed": 0
+  },
+  "dispatch_browser_suites": {
+    "passed": 23,
+    "failed": 0
+  },
+  "directory_browser_scenarios": {
+    "passed": 11,
+    "failed": 0
+  },
+  "new_browser_scenarios": 10,
+  "gas_builds": [
+    "service-dispatch",
+    "customer-directory"
+  ],
+  "native_hmac_connection": "pending owner client/actor/secret provisioning",
+  "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
+  "deployment": "pending",
+  "snapshot_example": "synthetic fixtures only; KTD-000201 not inserted on Google"
+}

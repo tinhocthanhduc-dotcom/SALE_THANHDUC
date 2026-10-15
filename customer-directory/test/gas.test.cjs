@@ -127,3 +127,13 @@ test("existing-copy text upgrade validates marker before formatting any target c
   assert.throws(()=>f.ctx.normalizeCustomerDirectorySourceNumbers(),/COPY_MARKER_MISMATCH/);
   assert.equal(Object.values(f.raw.sheets).reduce((n,s)=>n+(s.formats||[]).length,0),0);
 });
+
+test('owner provisions DIEUPHOI actors in bulk without customer writes or exposing/rotating secrets',()=>{
+ const f=runtime(actors.director.id),p=f.raw.properties.values,before=JSON.stringify(f.raw.sheets.KHACH.rows);
+ const rows=[{id:'admin',name:'Chủ Điều phối',roles:['director','dispatcher']},{id:'phongkt',name:'Phong KT',roles:['technician']}];p.CD_DISPATCH_USERS=JSON.stringify(rows);
+ const result=f.ctx.configureDispatchDirectoryClient(),clients=JSON.parse(p.CD_CLIENTS),users=JSON.parse(p.CD_USERS),secret=clients.DIEUPHOI.secret;
+ assert.equal(result.customer_writes,0);assert.equal(result.dispatch_actor_map.phongkt.role,'dispatcher');assert.deepEqual(users['dieuphoi:admin'].roles,['director']);assert.deepEqual(users['dieuphoi:phongkt'].roles,['dispatcher']);assert(!JSON.stringify(result).includes(secret));assert.equal(p.CD_DISPATCH_USERS,undefined);assert.equal(JSON.stringify(f.raw.sheets.KHACH.rows),before);
+ p.CD_DISPATCH_USERS=JSON.stringify(rows);f.ctx.configureDispatchDirectoryClient();assert.equal(JSON.parse(p.CD_CLIENTS).DIEUPHOI.secret,secret);
+ p.CD_DISPATCH_USERS=JSON.stringify([{...rows[1],roles:['director']}]);assert.throws(()=>f.ctx.configureDispatchDirectoryClient(),/DIRECTORY_ROLE_REVIEW_REQUIRED/);assert.equal(p.CD_DISPATCH_USERS,undefined);
+ const forbidden=runtime(actors.finance.id);assert.throws(()=>forbidden.ctx.configureDispatchDirectoryClient(),/OWNER_REQUIRED/);
+});

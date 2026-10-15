@@ -196,3 +196,6 @@ Cấu hình ngân hàng ở **Thanh toán / cấu hình → sửa hình thức A
 Trước pilot cần [luồng điều chỉnh tiền mặt báo nhầm](docs/integration-20261015/CASH_CORRECTIONS_PROPOSAL.md), hiện mới là đề xuất, chưa có chức năng đảo/âm. [Vá chốt ngày Finance thật](docs/integration-20261015/FINANCE_CLOSE_DAY_PROPOSAL.md) là mục duyệt riêng, không nằm trong quyền triển khai bản nối.
 
 Xem [hướng dẫn bản sao, kiểm thử và điều kiện bật](docs/integration-20261014/README.md), [audit mọi đường ghi AI_KHO 145 và đề xuất chuyển](docs/integration-20261014/AI_KHO_145_REVIEW.md). Chưa chạy UAT Google copies, chưa deploy Kho/Finance/AI_KHO thật; các mục lịch sử trước đây ghi vật tư tên tự do chưa nối là trạng thái tại thời điểm cũ. Trước pilot vẫn cần chuyển tables/index, kiểm partial-write recovery và bảo vệ đăng nhập/quota.
+
+
+Nối mã khách chung KTD trên staging/COPY: xem [OWNER_SETUP Danh bạ](docs/customer-directory/OWNER_SETUP.md). Chỉ bật sau check HMAC/actor/OAuth đạt; không tự ghép khách cũ.

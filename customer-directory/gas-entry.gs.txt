@@ -366,3 +366,28 @@ function normalizeCustomerDirectorySourceNumbers() {
   var result = repo.submit({type:"scan_import", payload:{rows:rows}, expected_version:revision, idempotency_key:"source-zeros:" + revision + ":" + cdHash_(DirectoryBundle.stable(rows))}, actor);
   return {source_rows:result.report.source_rows,leading_zero_rows:result.report.leading_zero_rows.length,repaired_customers:result.repaired_customers,revision:result.revision,ktd_allocated:0};
 }
+
+/** Owner-only COPY onboarding for the DIEUPHOI signed client; no customer writes. */
+function configureDispatchDirectoryClient() {
+ cdOwner_();var c=cdProperties_();
+ try{
+  var rows=JSON.parse(c.p.getProperty('CD_DISPATCH_USERS')||'null');
+  if(!Array.isArray(rows)||!rows.length||rows.length>200)throw new Error('INVALID_USER');
+  return cdLock_(function(){
+   var users=JSON.parse(c.p.getProperty('CD_USERS')||'{}'),clients=JSON.parse(c.p.getProperty('CD_CLIENTS')||'{}'),mapping={},ids=[];
+   rows.forEach(function(row){
+    if(!row||!/^[A-Za-z0-9_-]{1,100}$/.test(row.id)||mapping[row.id]||!Array.isArray(row.roles)||!row.roles.length)throw new Error('INVALID_USER');
+    if(row.active===false)return;
+    var role=row.roles.indexOf('director')>=0?'director':'dispatcher',id='dieuphoi:'+row.id,old=users[id];
+    if(old&&JSON.stringify(old.roles)!==JSON.stringify([role]))throw new Error('DIRECTORY_ROLE_REVIEW_REQUIRED');
+    users[id]={id:id,name:String(row.name||row.id).slice(0,200),roles:[role],active:true};mapping[row.id]={actor_id:id,role:role};ids.push(id);
+   });
+   if(!ids.length)throw new Error('INVALID_USER');
+   var client=clients.DIEUPHOI||{secret:(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,''),actors:[],active:true};
+   // A provisioning rerun never rotates the secret or grants unrelated actors.
+   client.actors=ids;client.active=true;clients.DIEUPHOI=client;
+   c.p.setProperties({CD_USERS:JSON.stringify(users),CD_CLIENTS:JSON.stringify(clients)},false);
+   return {configured:true,client_id:'DIEUPHOI',dispatch_actor_map:mapping,secret_location:'CD_CLIENTS.DIEUPHOI.secret in Script Properties only',customer_writes:0};
+  });
+ }finally{c.p.deleteProperty('CD_DISPATCH_USERS');}
+}

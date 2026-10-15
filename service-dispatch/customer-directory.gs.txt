@@ -1,0 +1,23 @@
+/** COPY-only directory client. All credentials remain in Script Properties. */
+function dispatchDirectoryClient_(props) {
+ return DispatchBundle.CustomerDirectory.createClient({
+  config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');return {url:p.DISPATCH_CD_URL,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
+  id:function(){return Utilities.getUuid();},
+  hmac:function(raw,key){return Utilities.computeHmacSha256Signature(raw,key,Utilities.Charset.UTF_8).map(function(b){return ('0'+((b+256)%256).toString(16)).slice(-2);}).join('');},
+  send:function(url,envelope){
+   if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url))throw new Error('DIRECTORY_NOT_CONFIGURED');
+   // GAS has no configurable HTTP timeout. The browser enforces its 8s wait budget;
+   // retries reuse the original command key even if this fetch completes later.
+   var response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken()},muteHttpExceptions:true,followRedirects:true});
+   if(response.getResponseCode()!==200)throw new Error('DIRECTORY_UNAVAILABLE');
+   var raw=response.getContentText();if(raw.length>1500000)throw new Error('DIRECTORY_UNAVAILABLE');return JSON.parse(raw);
+  }
+ });
+}
+function listDispatchDirectoryUsers(){dispatchBridgeOwner_();return Object.values(dispatchAuth_(PropertiesService.getScriptProperties()).directory()).map(function(u){return {id:u.id,name:u.name,roles:u.roles,active:u.active!==false};});}
+function checkDispatchDirectoryConnection(){
+ dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties(),users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}'),client=dispatchDirectoryClient_(p),checked=[];
+ Object.keys(mapping).forEach(function(id){var user=users[id];if(!user||user.active===false)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var identity=client.call(user,'bootstrap',{}).actor,role=user.roles.indexOf('director')>=0?'director':'dispatcher';if(identity.id!==mapping[id].actor_id||identity.roles.indexOf(role)<0||role==='dispatcher'&&identity.roles.some(function(r){return r!=='dispatcher';}))throw new Error('DIRECTORY_ACTOR_UNMAPPED');checked.push(id);});
+ if(!checked.length)throw new Error('DIRECTORY_ACTOR_UNMAPPED');return {ok:true,checked_user_ids:checked,client_id:'DIEUPHOI',target:'COPY',secrets_exposed:false};
+}
+function enableDispatchCustomerDirectory(){dispatchBridgeOwner_();var result=checkDispatchDirectoryConnection();dispatchLock_(function(){PropertiesService.getScriptProperties().setProperty('DISPATCH_CD_ENABLED','true');});return result;}
