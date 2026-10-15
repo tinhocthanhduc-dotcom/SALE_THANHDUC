@@ -27,9 +27,21 @@ function dispatchDirectoryClient_(props) {
   }
  });
 }
+/** Owner-only unsigned probe. Platform errors deliberately remain visible: no credentials or customer payload are sent. */
+function checkDispatchDirectoryTransport(){
+ dispatchBridgeOwner_();
+ if(typeof ScriptApp.requireScopes==='function')ScriptApp.requireScopes(ScriptApp.AuthMode.FULL,['https://www.googleapis.com/auth/script.external_request']);
+ var p=PropertiesService.getScriptProperties(),endpoint=DispatchDirectoryCopyEndpoint.web_app_url,started=Date.now();
+ p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify({ok:false,phase:'UNSIGNED_GET',checked_at:new Date().toISOString()}));
+ // No catch: a permission/context/URL Fetch quota exception must retain Google's original explanation.
+ var response=UrlFetchApp.fetch(endpoint,{method:'get',muteHttpExceptions:true,followRedirects:true}),status=response.getResponseCode(),result={ok:false,phase:'UNSIGNED_GET',http_status:status,elapsed_ms:Date.now()-started,checked_at:new Date().toISOString()};
+ if(status!==200){p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));throw new Error('DIRECTORY_PROBE_HTTP_'+status);}
+ var body;try{body=JSON.parse(response.getContentText());}catch(e){p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));throw new Error('DIRECTORY_PROBE_NON_JSON');}
+ result.ok=body.ok===false&&body.error==='HMAC_REQUIRED';p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));if(!result.ok)throw new Error('DIRECTORY_PROBE_UNEXPECTED_RESPONSE');return result;
+}
 function listDispatchDirectoryUsers(){dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties(),rows=Object.values(dispatchAuth_(p).directory()).map(function(u){return {id:u.id,name:u.name,roles:u.roles,active:u.active!==false};});p.setProperty('DISPATCH_CD_USER_EXPORT',JSON.stringify(rows));return {ready:true,copy_from_property:'DISPATCH_CD_USER_EXPORT',users:rows.length};}
 function checkDispatchDirectoryConnection(){
- dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties();p.setProperty('DISPATCH_CD_CHECK',JSON.stringify({ok:false,checked_at:new Date().toISOString()}));var users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}'),client=dispatchDirectoryClient_(p),checked=[];
+ dispatchBridgeOwner_();checkDispatchDirectoryTransport();var p=PropertiesService.getScriptProperties();p.setProperty('DISPATCH_CD_CHECK',JSON.stringify({ok:false,checked_at:new Date().toISOString()}));var users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}'),client=dispatchDirectoryClient_(p),checked=[];
  Object.keys(mapping).forEach(function(id){var user=users[id];if(!user||user.active===false)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var identity=client.call(user,'bootstrap',{}).actor,role=user.roles.indexOf('director')>=0?'director':'dispatcher';if(identity.id!==mapping[id].actor_id||identity.roles.indexOf(role)<0||role==='dispatcher'&&identity.roles.some(function(r){return r!=='dispatcher';}))throw new Error('DIRECTORY_ACTOR_UNMAPPED');checked.push(id);});
  if(!checked.length)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var result={ok:true,checked_at:new Date().toISOString(),checked_user_ids:checked,client_id:'DIEUPHOI',target:'COPY',secrets_exposed:false};p.setProperty('DISPATCH_CD_CHECK',JSON.stringify(result));return result;
 }

@@ -60,3 +60,7 @@ Giữ nguyên form và nút Thử lại để tái sử dụng khóa cũ. Đóng
 ## Chẩn đoán kết nối COPY (16/10/2026)
 
 `DISPATCH_CD_TRANSPORT_CHECK` chỉ lưu đích API công khai, mã HTTP, loại phản hồi, mã lỗi và thời gian; không chứa secret, chữ ký, nội dung phản hồi hay dữ liệu khách. `DIRECTORY_HTTP_401/403` là lỗi quyền HTTP, `DIRECTORY_GOOGLE_LOGIN` là trang đăng nhập, `DIRECTORY_NON_JSON` là phản hồi không phải JSON, `DIRECTORY_NETWORK_ERROR` là lỗi UrlFetch. Google ContentService redirect chỉ được theo tới script.googleusercontent.com/macros/echo bằng GET và không mang theo envelope HMAC. Không chạy lại setup hoặc tạo lại actor/secret khi gặp lỗi đường truyền.
+
+### DIRECTORY_NETWORK_ERROR ngay sau vài mili giây
+
+Tải lại editor, chạy **checkDispatchDirectoryTransport**. Đây là GET không gửi secret hoặc dữ liệu khách. Chấp nhận quyền kết nối bên ngoài nếu Google hỏi. Nếu lỗi, gửi nguyên thông báo lỗi của lần chạy này: lỗi Google không bị đổi thành DIRECTORY_NETWORK_ERROR nữa. Khi probe thành công, chạy checkDispatchDirectoryConnection rồi enableDispatchCustomerDirectory. Không chạy lại setup hoặc tạo lại secret. Probe chưa chứng minh chữ ký/mapping đúng; bước check tiếp theo vẫn bắt buộc.

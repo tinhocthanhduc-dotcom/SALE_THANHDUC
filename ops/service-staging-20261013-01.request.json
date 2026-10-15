@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 37,
-  "update": "COPY-only Directory connection repair: always target owner-approved pinned API, including configurations holding older UI deployment URLs. Preserve properties/secret/actors/data/enabled flag. Store sanitized transport diagnosis (status, kind, code, elapsed only) in DISPATCH_CD_TRANSPORT_CHECK; no raw response, customer data, signatures, secret or tokens. Expose safe specific transport error instead of generic DIRECTORY_UNAVAILABLE. Same Dispatch staging ID only; no setup/reset/enable or real app changes."
+  "revision": 38,
+  "update": "COPY-only connection diagnosis: owner check requests external_request scope via ScriptApp.requireScopes when supported; runs unsigned approved-API GET before HMAC with original Google platform exceptions visible. Add public owner-only checkDispatchDirectoryTransport, no secret/token/customer payload. No setup, data, secret, actors, enabled flag changes. Same staging project/deployment only."
 }
