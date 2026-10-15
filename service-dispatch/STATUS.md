@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — desktop đợt cuối, hoàn tất giao diện (o/p)
+
+- Đồng bộ: bảng chứng từ năm cột, dải bản sao và ba số liệu; lỗi đỏ, kết quả thật, thao tác theo quyền/trạng thái gốc. Gán Finance: bốn nhóm, nguồn chưa gán hiện đỏ, shortcut mở form gốc với nguồn và ID đã lưu; danh mục chưa xác minh thì khóa gán. Ngân hàng vẫn cấu hình hợp nhất trong hình thức thanh toán.
+- Thanh toán: thẻ hình thức đang/ngừng dùng, thông tin tài khoản nhận và ngưỡng duyệt giá. Khách/máy: danh sách trái, hồ sơ/máy/lịch sử phải; tìm model/serial, tạo đơn cho khách đã chọn qua form cũ, giữ atomic khách/máy, nháp và dữ liệu lịch sử. Đăng nhập desktop chia đôi navy/form, nút 54px, giữ input/handler/quyền gốc. Thợ và ≤999px không đổi màn vận hành; không thay API/business/auth/command/version/idempotency hoặc app Kho/Finance/AI thật.
+- Kiểm chứng local: 113/113 Node; 13 nhóm desktop-administration mới (native fixture commands, không ghi Google), các bộ hồi quy desktop/mobile/nghiệp vụ/tiền/khách/giao hàng/đồng bộ/ảnh/GAS iframe/live. Build GAS đạt; Code.gs byte-identical v48. Có ảnh 1440px trước/sau năm màn và patch. Chi tiết kết quả trong bản bàn giao giao diện.
+- Sửa bài test GAS iframe theo nhận diện đăng nhập mới (brand hoặc header vẫn phải hiển thị khi lỗi); bài test giữ cuộn chờ render hoàn tất thay chờ cứng 50ms, giữ nguyên mức sai số/vị trí yêu cầu. CI v48 trước đó lỗi tại bài test chờ cuộn; không dùng kết quả ấy làm bằng chứng đã đạt CI.
+- Giao diện (a)–(p) đã có triển khai. Cần UAT Google tổng thể với người dùng được cấp quyền; chưa phải xác nhận sẵn sàng pilot. Giữ nguyên OWNER_SETUP và các mục trước pilot về login/quota, normalized tables, điều chỉnh tiền, sổ thật và duyệt riêng AI_KHO/Finance.
+
 ## 15/10/2026 — desktop đợt 2, hoàn tất (l/m/n)
 
 - Kho: thẻ PX soạn hàng, bảng bàn giao 6 cột/4 bộ lọc, tìm mã TD/đơn/hàng; từng nút mở đúng đơn/request/nhóm DX/PX/máy, giữ xác nhận kho và version/key. Tách nguyên điều kiện orderButtons từ detail để không lệch quyền. Gán mã chỉ có khi outbox Kho hỗ trợ, sửa PX chỉ trước lúc lấy. Không thêm đầu ghi sổ Kho.

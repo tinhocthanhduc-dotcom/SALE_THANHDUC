@@ -45,6 +45,7 @@ jobs:
       - run: node service-dispatch/test/technician-cash-browser.cjs
       - run: node service-dispatch/test/desktop-dispatch-browser.cjs
       - run: node service-dispatch/test/desktop-operations-browser.cjs
+      - run: node service-dispatch/test/desktop-administration-browser.cjs
       - run: node service-dispatch/test/customer-machines-browser.cjs
       - run: node service-dispatch/test/delivery-browser.cjs
       - run: node service-dispatch/test/money-browser.cjs

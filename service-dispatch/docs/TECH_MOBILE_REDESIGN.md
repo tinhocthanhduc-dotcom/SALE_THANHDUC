@@ -99,13 +99,9 @@ Hàm sửa: `board`, `coordinatorTable`, `detail`, `render`, `openForm`, `submit
 
 Hàm sửa: `board`, `detail` (dùng orderButtons chung), `preparationBoard`, `funds`, `depositCards`, `reports`, `moneyReports`, listener mở hành động kho; bổ sung các helper desktop. `materialPanel` trong chi tiết và các form xuất/nhận/thu/nộp vẫn dùng nguyên luồng hiện tại. `desktop-operations-browser.cjs` kiểm 18 nhóm kịch bản bằng native fixtures, kể cả API tự xác nhận bị chặn và nộp 90k/100k vẫn giữ 10k ở thợ. Có ảnh 1440px trước/sau 4 màn. Code.gs byte-identical với (i/j/k).
 
-## Desktop còn lại — (o/p)
-
-Đợt cuối: Đồng bộ, Gán Finance, Thanh toán/cấu hình, Khách/máy và đăng nhập. Giữ cấu hình ngân hàng gộp và các native guards; không quay về hai nơi cài tài khoản theo dữ liệu mẫu. Hiện các trang này mới áp shell chung, phần nội dung chưa dựng lại.
-
 ## Tiến độ mobile
 
-Đã hoàn tất (a)–(h). Cần UAT tổng thể trên Google với tài khoản thợ trước pilot. Phần desktop (i)–(p) tiếp tục riêng theo thiết kế mới.
+Đã hoàn tất (a)–(h). Cần UAT tổng thể trên Google với tài khoản thợ trước pilot. Phần desktop (i)–(p) đã triển khai theo thiết kế mới.
 
 ## Điểm mẫu khác nghiệp vụ — giữ hành vi app
 
@@ -120,3 +116,15 @@ Hàm sửa: `board`, `detail` (dùng orderButtons chung), `preparationBoard`, `f
 ## Kiểm tra
 
 `ERP_TEST_CHROMIUM=/usr/bin/chromium node service-dispatch/test/technician-shell-browser.cjs` kiểm 390px, mép 750/751px, CTA/tab, số liệu thật từ fixture domain, giữ cuộn, tránh trùng command, form NQ, các đường vào lịch sử, chip queue/lỗi, chặn nghiệm thu khi ảnh chưa lưu và bốn vai trò khác. `DISPATCH_TECH_SCREENSHOTS=<thư mục ngoài checkout>` xuất ảnh 390px. Browser test nghiệp vụ chỉ cập nhật đường đi menu/selectors theo layout; không bỏ kiểm nghiệp vụ.
+
+## Desktop — đợt (o/p) quản trị và đăng nhập
+
+- `syncBoard`: bảng năm cột chứng từ/nơi nhận/trạng thái/lý do-kết quả/thao tác, ba số liệu và dải trạng thái bản sao. Dòng lỗi có vạch đỏ; chứng từ đã ghi không có thao tác ghi lại. Giữ nguyên `data-sync-refresh`, retry/gán TD/duyệt ngoại lệ, entity/version/key và quyền từ projection.
+- `financeMapping`: bốn nhóm, hiện cả nguồn chưa gán để chủ thấy phần thiếu; nút từng dòng mở chính form gán hiện có và chọn nguồn tương ứng. Đích luôn là select danh mục Finance, chưa gán giữ lựa chọn trống; chưa xác minh bản sao thì vô hiệu hóa nút. Chuyển khoản mở cấu hình hình thức/ngân hàng hợp nhất, không thêm nơi gán tài khoản thứ hai. Chứng từ đã ghi giữ mapping snapshot cũ theo domain hiện hành.
+- `paymentMethods`: thẻ hình thức/trạng thái, thông tin tài khoản công ty trong cùng cấu hình Finance hiện có, cùng form sửa/ngừng dùng và cấu hình duyệt giá. Không tạo tài khoản Finance mới, không thêm form tài khoản công ty độc lập.
+- `customers`: danh sách khách bên trái và hồ sơ/máy/lịch sử bên phải, tìm theo tên/điện thoại/địa chỉ/model/serial từ projection. Giữ sửa khách, thêm/sửa/ngừng dùng máy và lịch sử cũ. Tạo đơn từ hồ sơ chỉ chọn khách vào form tiếp nhận gốc; vẫn tự chọn duy nhất máy đang dùng, vẫn giữ nháp khi tạo khách/máy giữa chừng.
+- Đăng nhập ≥1000px chia đôi navy/form, nút 54px; dùng nguyên input, xử lý đăng nhập, trạng thái lỗi và kiểm quyền. Không thêm vai trò giả hay tài khoản/mật khẩu mặc định. Đăng xuất/thu nhỏ trả về bố cục tương ứng. Các màn quản trị chỉ dùng `desktop()` và quyền gốc; thợ, ≤999px, backend/business/API/auth không đổi.
+
+Hàm sửa: `syncBoard`, `financeMapping`, `paymentMethods`, `customers`, `renderDesktopShell` (cho tìm khách), listener search/các shortcut form; bổ sung `desktopSync`, `desktopMappingRow`, `desktopFinanceMapping`, `desktopPaymentMethods`, `desktopCustomers`. CSS thêm riêng desktop và split login. `desktop-administration-browser.cjs` dùng native commands/fixtures để kiểm mapping, retry cùng key, recorded readonly, ngân hàng hợp nhất, khách/máy/nháp/lịch sử, responsive và quyền.
+
+Các bước thiết kế giao diện (a)–(p) đã có triển khai. Kiểm thử trình duyệt local không thay cho UAT trên Google: chủ cần kiểm lại trên deployment staging với tài khoản thật được cấp quyền. Các mốc trước pilot về xác thực/quota, normalized tables, nối sổ thật và thay đổi AI_KHO/Finance vẫn giữ nguyên trong STATUS; đợt này không triển khai app thật.
