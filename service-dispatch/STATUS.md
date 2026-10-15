@@ -414,3 +414,5 @@ Owner unsigned/scope probe deployed in Dispatch v62 (workflow 38775101685), orig
 ### 2026-10-16 — probe returns HTTP404 inside Google
 
 Owner unsigned probe returns DIRECTORY_PROBE_HTTP_404. External fresh approved API GET still returns HMAC_REQUIRED through ContentService. This does not establish which hop fails inside UrlFetch. The probe and signed transport now share explicit 302/303 handling with escaping=false, never re-encode the Google signed response URL and never forward HMAC payload. Sanitized diagnostics record initial_http_status, phase (API_ENDPOINT/CONTENT_SERVICE_RESPONSE), redirect_host, redirect_http_status. No redirect query/body logs. Native owner success pending; original platform errors remain visible.
+
+Per-hop/encoded-URL update deployed as Dispatch v63, workflow 38776299484 succeeded, original deployment ID preserved. Node 321/321. Fresh external API query again returns HTTP200 HMAC_REQUIRED. Owner-native signed/unsigned result is pending; no connection-success claim.

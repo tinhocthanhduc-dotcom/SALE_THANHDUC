@@ -19,8 +19,8 @@
   "native_hmac_connection": "pending owner-run check; existing secret/mapping retained; native unsigned/bad-signature rejection verified",
   "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
   "deployment": {
-    "dispatch_native_version": 62,
-    "dispatch_workflow": 38775101685,
+    "dispatch_native_version": 63,
+    "dispatch_workflow": 38776299484,
     "directory_copy_native_version": 8,
     "directory_workflow": 38768136190,
     "same_urls": true,
@@ -65,5 +65,14 @@
     "owner_signed_check": "pending",
     "native_platform_exceptions": "visible on owner unsigned probe; no secret/customer payload",
     "scope": "script.external_request"
+  },
+  "per_hop_probe": {
+    "commit": "3cafb15",
+    "node_passed": 321,
+    "node_failed": 0,
+    "fresh_external_api_get": "HTTP200 HMAC_REQUIRED",
+    "native_owner_check": "pending",
+    "escaping": false,
+    "diagnostic_property": "DISPATCH_CD_TRANSPORT_PROBE"
   }
 }
