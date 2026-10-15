@@ -1,0 +1,191 @@
+{
+  "feature_commit": "dd55973",
+  "node": {
+    "passed": 326,
+    "failed": 0,
+    "scope": [
+      "service-dispatch",
+      "erp-prototype",
+      "customer-directory"
+    ]
+  },
+  "dispatch_browser_suites": [
+    {
+      "suite": "browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 36.6
+    },
+    {
+      "suite": "cash-corrections-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 11.4
+    },
+    {
+      "suite": "choice-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.0
+    },
+    {
+      "suite": "customer-directory-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 24.5
+    },
+    {
+      "suite": "customer-machines-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.4
+    },
+    {
+      "suite": "delivery-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 10.6
+    },
+    {
+      "suite": "desktop-administration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 24.0
+    },
+    {
+      "suite": "desktop-dispatch-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 13.3
+    },
+    {
+      "suite": "desktop-operations-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 21.5
+    },
+    {
+      "suite": "gas-ui-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.3
+    },
+    {
+      "suite": "integration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.3
+    },
+    {
+      "suite": "live-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 88.5
+    },
+    {
+      "suite": "money-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 10.6
+    },
+    {
+      "suite": "money-input-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.9
+    },
+    {
+      "suite": "photo-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 25.6
+    },
+    {
+      "suite": "session-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 12.3
+    },
+    {
+      "suite": "technician-board-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.5
+    },
+    {
+      "suite": "technician-cash-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.4
+    },
+    {
+      "suite": "technician-complete-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.8
+    },
+    {
+      "suite": "technician-detail-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.1
+    },
+    {
+      "suite": "technician-payment-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.7
+    },
+    {
+      "suite": "technician-pickup-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.1
+    },
+    {
+      "suite": "technician-shell-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.4
+    },
+    {
+      "suite": "terms-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.7
+    }
+  ],
+  "new_session_browser_scenarios": [
+    "localStorage token + server expiry; F5 keeps session and selected order at 390px",
+    "late AUTH_REQUIRED from logged-out session cannot clear replacement login",
+    "new share link opens intended order; later F5 preserves navigation away from that order",
+    "server-expired token clears storage and shows login",
+    "disabled user cannot restore local token",
+    "logout revokes session/ticket and F5 stays logged out",
+    "both storages throw; one-use URL fragment restores account screen and rotates credentials",
+    "foreground refresh renews short-lived fallback without extending session",
+    "replaying consumed URL code is rejected",
+    "storage-blocked logout clears URL and revokes ticket",
+    "password/user version change rejects fallback and clears URL",
+    "storage works at login but becomes blocked on F5; pre-armed URL fallback restores session",
+    "storage and history unavailable show persistent warning; never put real token in URL"
+  ],
+  "directory_browser": {
+    "passed_scenarios": 11,
+    "failed": 0
+  },
+  "erp_browser": "passed",
+  "native_browser_matrix": {
+    "Google Chrome desktop": "NOT_TESTED",
+    "Google Chrome Android": "NOT_TESTED",
+    "Google Safari iPhone": "NOT_TESTED"
+  },
+  "test_environment": "Chromium sandbox iframe; mocked Google callback/history/url APIs; real auth and repository",
+  "deployment": "pending same staging deployment; no setup/reset",
+  "limitations": [
+    "Fallback URL code expires after at most 10m; backgrounded/closed app with blocked storage may need login.",
+    "If storage and Google history/url APIs are unavailable, show warning and require login after reload.",
+    "Lost resume response may require login; consumed code never replays a token.",
+    "Offline logout clears local credentials but cannot guarantee server revocation without network."
+  ]
+}
