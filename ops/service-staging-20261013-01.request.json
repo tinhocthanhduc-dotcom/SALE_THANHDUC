@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 31,
-  "update": "User explicitly requested deploy of commit 42fe696 shared VND money inputs to SAME Dispatch staging project and existing deployment URL. UI only: text/numeric input, Vietnamese grouping and amount words, caret, paste, validation; commands still integer VND, quantities unchanged. 138 Dispatch Node + 71 ERP Node + all 22 Dispatch browser suites passed. Preserve users, properties, Sheets, Drive, integration mappings and business data. Do not run setup or reset/backfill. Do not deploy Customer Directory, COPY consumers, real Kho/Finance/AI or Finance main."
+  "revision": 32,
+  "update": "Deploy capacity hotfix 9d828cb to SAME existing Dispatch staging project/deployment URL. Automatically expand active Sheets grids within 10000-row limit; retain 20 verified snapshots, archive older COMMITTED journal attempts with crash-safe copy/verify/delete under existing lock; capacity metrics and friendly full-storage message. 219 Node and all 22 browser suites passed; GAS build passed. Preserve users, marker, properties, data, files and mappings. No setup/reset/backfill. Do not deploy Customer Directory, COPY consumers or real Kho/Finance/AI apps. Normalized tables remain pre-pilot work."
 }
