@@ -18,7 +18,22 @@
   ],
   "native_hmac_connection": "pending owner client/actor/secret provisioning",
   "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
-  "deployment": "pending",
+  "deployment": {
+    "dispatch_native_version": 58,
+    "dispatch_workflow": 38766851075,
+    "directory_copy_native_version": 7,
+    "directory_workflow": 38766216826,
+    "same_urls": true,
+    "dispatch_http_status": 200,
+    "dispatch_served_client_matches_local_build": true,
+    "client_config_provisioned": false,
+    "connection_enabled": false,
+    "native_hmac_uat": "pending OWNER_SETUP"
+  },
   "snapshot_example": "synthetic fixtures only; KTD-000201 not inserted on Google",
-  "directory_setup_workflow_note": "Existing workflow attempted setup via Execution API on COPY deployment v7; completion unconfirmed (NOT_FOUND). Future setup/UAT now requires explicit run_setup=true; default is skip. No source rescan requested."
+  "directory_setup_workflow_note": "Existing workflow attempted setup via Execution API on COPY deployment v7; completion unconfirmed (NOT_FOUND). Future setup/UAT now requires explicit run_setup=true; default is skip. No source rescan requested.",
+  "ci_notes": [
+    "Initial CI browser run timed out preserving inner scroll; local recheck passed and subsequent CI passed that suite.",
+    "CI exposed LocalRepository marker publication race in preexisting multi-process tests; marker now published atomically. This local runner is not bundled into GAS. Full local Node suite re-passed 316/316 after fix."
+  ]
 }

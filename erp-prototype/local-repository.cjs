@@ -10,7 +10,13 @@ class LocalRepository {
     this.directory=directory;this.fault=fault;this.domain=domain;
     fs.mkdirSync(directory,{recursive:true});
     const marker=path.join(directory,'FIXTURE_ONLY');
-    try{fs.writeFileSync(marker,'THANHDUC_LOCAL_FIXTURE_ONLY\n',{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;}
+    // Publish a complete marker atomically. O_EXCL on the final path exposes an
+    // empty file briefly to other processes initializing the same fixture.
+    if(!fs.existsSync(marker)){
+      const temp=path.join(directory,'.fixture-marker-'+crypto.randomUUID()+'.tmp'),fd=fs.openSync(temp,'wx',0o600);
+      try{fs.writeFileSync(fd,'THANHDUC_LOCAL_FIXTURE_ONLY\n');fs.fsyncSync(fd);}finally{fs.closeSync(fd);}
+      try{fs.linkSync(temp,marker);}catch(e){if(e.code!=='EEXIST')throw e;}finally{fs.unlinkSync(temp);}
+    }
     if(fs.readFileSync(marker,'utf8')!=='THANHDUC_LOCAL_FIXTURE_ONLY\n')fail('FIXTURE_MARKER_MISMATCH');
   }
   atomic(name,value) {
