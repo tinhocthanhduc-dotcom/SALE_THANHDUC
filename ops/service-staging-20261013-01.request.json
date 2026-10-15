@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 28,
-  "update": "User-approved cash correction pilot on SAME Dispatch staging: request/director approval, cancel pending NQ, cancel original Finance THU before replacement THU with frozen mapping and replay fences. Update existing COPY consumers only with reviewed Finance closing/unlock guard and private synthetic-workbook UAT. Preserve all users, properties, Sheets/Drive and mappings. No bootstrap/reset/backfill. No real Kho/Finance/AI writes or deploy; no Finance main push."
+  "revision": 29,
+  "update": "User-approved per-receipt credit instead of fixed order terms on SAME Dispatch staging. Customer credit permission with legacy fallback; optional mixed cash/bank/debt after acceptance/fee; dispatcher/director approval for exceptions, no self approval; exact CN amounts/TD reference, reserved repayment allocations, financial reopen after closed and updated mobile payment screen. Preserve all users/properties/Sheets/Drive/mappings/data; no reset/backfill. Update existing COPY Finance adapter only; never push/deploy/write real Finance, Kho or AI, never Finance main."
 }

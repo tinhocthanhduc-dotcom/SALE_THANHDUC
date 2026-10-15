@@ -54,6 +54,10 @@ test('GAS bridge login, Sheets query and commands share the repository contract'
   const handoverState=box.dispatchApi({action:'query',token:techLogin.token,order_id:order.order_id}).orders[0];
   const proof=box.dispatchApi({action:'upload',token:techLogin.token,payload:{...payload,kind:'handover',expected_version:handoverState.version,idempotency_key:'gas-handover'}});assert.equal(proof.error,undefined);
   assert.equal(onOrder('complete',{work_summary:'Money fixture',customer_agreed:true,charge_lines:[{name:'Fixture service',kind:'labor',amount:100000}]},techLogin.token).error,undefined);
+  assert.equal(onOrder('record_credit',{amount:100001,reason:'Over'},techLogin.token).error,'OVER_CREDIT');
+  const debtProposal=onOrder('record_credit',{amount:10000,reason:'Khách xin nợ'},techLogin.token);assert.equal(debtProposal.error,undefined);assert.equal(box.dispatchApi({action:'query',token:techLogin.token}).money.debts[0].status,'pending');
+  const decision=(type,payload,token=login.token)=>box.dispatchApi({action:'command',token,command:{type,payload:{debt_id:debtProposal.id,...payload},expected_version:1,idempotency_key:'gas-debt-'+(++sequence)}});
+  assert.equal(decision('approve_credit',{},techLogin.token).error,'FORBIDDEN');assert.equal(decision('approve_credit',{}).error,'CUSTOMER_FINANCE_MAPPING_REQUIRED');assert.equal(decision('reject_credit',{reason:'Chưa có gán khách Finance'}).error,undefined);assert.equal(box.dispatchApi({action:'query',token:techLogin.token,order_id:order.order_id}).orders[0].money.outstanding,0);
   const pt=onOrder('report_payment',{amount:100000,method_id:'cash'},techLogin.token);assert.equal(pt.error,undefined);
   const moneyState=box.dispatchApi({action:'query',token:techLogin.token});assert.equal(moneyState.money.payments[0].receipt_no.startsWith('PT-'),true);assert.equal(moneyState.money.payments[0].held,100000);
   const nq=box.dispatchApi({action:'command',token:techLogin.token,command:{type:'create_deposit',payload:{payment_ids:[pt.id],cash_handed:true},idempotency_key:'gas-nq'}});assert.equal(nq.error,undefined);

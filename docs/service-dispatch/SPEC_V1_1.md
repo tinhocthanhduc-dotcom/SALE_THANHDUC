@@ -51,14 +51,14 @@ Nền tảng đã được anh Tuấn chọn: Google Apps Script + Sheets; ảnh
 |---|---|---|
 | Công việc | Mới, Đã giao, Đã nhận, Đã hẹn, Đang làm, Chờ linh kiện, Không làm được, Đã nghiệm thu, Hủy | Command có quyền và điều kiện |
 | Hồ sơ | Đang mở, Chờ đối soát, Đã đóng, Đã mở lại | Tính điều kiện đóng hoặc command mở lại có duyệt |
-| Điều khoản thanh toán | Thu ngay, Công nợ theo kỳ | Snapshot khi tạo đơn; thay đổi có quyền/lý do |
+| Quyết định ghi nợ theo khoản | Chờ duyệt, Đã ghi nợ, Từ chối | Sau nghiệm thu/phí; quyền khách hoặc điều phối/giám đốc khác người lập duyệt |
 | Mức thanh toán | Chưa thanh toán, Một phần, Đã đủ | Tính từ khoản thu/hoàn thực hiện đã xác nhận |
 | Khoản thu | Chờ xác nhận, Đã xác nhận, Từ chối | Người có quyền xác nhận tiền |
 | Thời điểm thu | Trả trước, Cọc, Trả sau | Thuộc tính khoản thu, không phải mức thanh toán |
 | Vật tư đơn | Không có xuất thêm, Đang xử lý, Chờ trả dư, Có sai lệch, Đã quyết toán | Tính từ cấp/nhận/dùng/trả/hỏng đã xác nhận |
 | Nộp quỹ | Không phát sinh, Chờ nộp, Chờ xác nhận nhận, Đã đối soát, Có sai lệch | Tính theo từng khoản tiền mặt và phân bổ nộp đã xác nhận |
 
-Khách công nợ vẫn có mức thanh toán và số còn phải thu; nhãn Công nợ là điều khoản. Không cộng POS chưa đối chiếu, khoản chuyển khoản chờ xác nhận hoặc phiếu hoàn mới được duyệt vào số đã xác nhận.
+Hồ sơ khách chỉ có quyền Cho phép ghi công nợ, không có mặc định thanh toán. Một đơn có thể vừa thu tiền vừa ghi nợ; nợ đã duyệt không tính là tiền đã thu. Không cộng POS chưa đối chiếu, khoản chuyển khoản chờ xác nhận hoặc phiếu hoàn mới được duyệt vào số đã xác nhận.
 
 ## 5. Mô hình dữ liệu
 
@@ -66,7 +66,7 @@ Các trường chung: UUID, mã hiển thị nếu có, tao_luc, nguoi_tao, cap_
 
 | Bảng/hồ sơ | Nội dung chính |
 |---|---|
-| KHACH_HANG | Tên, điện thoại dạng text, địa chỉ mặc định, khu vực/tuyến, loại khách, điều khoản TT mặc định, MST, liên hệ, ghi chú, external_keys |
+| KHACH_HANG | Tên, điện thoại dạng text, địa chỉ mặc định, khu vực/tuyến, loại khách, cho phép ghi công nợ (có/không), ID_KH Finance đã gán, MST, liên hệ, ghi chú, external_keys |
 | MAY | Khách sở hữu, hãng/model, serial tùy chọn, ngày hết bảo hành và căn cứ; chuyển chủ có lịch sử |
 | DON_HANG | Khách/máy, snapshot địa chỉ/lỗi/điều khoản, nguồn, ưu tiên, thợ hiện tại, trạng thái công việc/hồ sơ, số tiền tính toán, lý do hủy/không làm được |
 | PHAN_CONG | Đơn, thợ, giao lúc, hạn nhận, nhận lúc, kết thúc phân công, lý do giao lại; giữ các phân công cũ |
@@ -78,6 +78,7 @@ Các trường chung: UUID, mã hiển thị nếu có, tao_luc, nguoi_tao, cap_
 | GIAO_DICH_VAT_TU | Từng lần cấp/nhận/dùng/trả/hỏng/linh kiện cũ; mã hàng, số lượng, nguồn Định mức/Xuất thêm, người giữ, đơn/đề xuất, mã phiếu kho ngoài, trạng thái xác nhận, người/thời điểm xác nhận |
 | DE_NGHI_GIA | Dòng đơn, giá bảng snapshot, giá đề nghị, lý do, khách đồng ý lúc/bằng chứng, trạng thái duyệt, giá được duyệt, người/thời điểm duyệt |
 | THANH_TOAN | Đơn, tiền dương, phương thức, thời điểm thu, người báo/thu, thời gian, external_transaction_id tùy chọn, ảnh, trạng thái xác nhận/từ chối và lý do |
+| GHI_CONG_NO | Đơn/khách, CN tự cấp, số tiền, lý do, người chọn/thời điểm, chờ/duyệt/từ chối, người duyệt, snapshot ID_KH Finance; khoản trả bù liên kết từng CN |
 | NOP_QUY và PHAN_BO_NOP | Người nộp, số tiền, tự cấp số, các khoản thu nguồn và số phân bổ, quỹ/tài khoản nhận, trạng thái, bằng chứng, người xác nhận |
 | DE_NGHI_HUY_MO_LAI | Đơn, loại yêu cầu, lý do, người đề nghị/duyệt, trạng thái, phương án xử lý hàng/tiền còn tồn |
 | LICH_SU_DON | Thời điểm, actor, command/action, đối tượng, giá trị cũ/mới, lý do, version, command key; chỉ thêm |
@@ -147,7 +148,13 @@ Tiền mặt thợ báo thu hiện thành “đã báo đang giữ” ngay để
 
 Mã giao dịch ngoài nếu có phải chống ghi trùng theo nguồn/phương thức. Biên nhận nội bộ tự cấp; một giao dịch ngân hàng phân bổ nhiều đơn phải qua nghiệp vụ phân bổ sau này, không tạo nhiều khoản thu độc lập cùng mã. POS chờ đối chiếu theo bằng chứng; tiền POS không là tiền mặt thợ giữ. Settlement/phí ngân hàng ngoài phạm vi bản đầu.
 
-Khách công nợ: thợ không ghi khoản thu trực tiếp; hiện “Không thu tại chỗ”. Người có quyền tài chính vẫn có thể ghi/phân bổ khoản thanh toán công ty đã nhận, có đối chiếu. Điều khoản được snapshot trên đơn, thay đổi khách mặc định không tự đổi đơn cũ.
+**Thay đổi đã chốt 15/10/2026:** không snapshot terms lên đơn mới. Tại Thu tiền sau nghiệm thu hoặc không làm được có phí, thợ chọn Tiền mặt / Chuyển khoản ACB / Chuyển khoản TCB / Ghi công nợ; các hình thức tùy biến khác giữ nguyên nếu đã cấu hình. Một đơn được thu từng phần, nhiều hình thức và nợ phần còn lại.
+
+Khách có quyền ghi nợ: ghi ngay người chọn/thời điểm. Khách chưa có quyền: lý do bắt buộc, chỉ là đề nghị, điều phối/giám đốc khác người lập mới duyệt thành nợ; từ chối giữ số còn phải thu. Quyết định này không đổi quyền vĩnh viễn trong hồ sơ khách. Cả hai đường duyệt cần ID_KH Finance được giám đốc gán từ danh sách. Nợ không vượt tổng chốt trừ các khoản đã báo thu hợp lệ và nợ đã duyệt còn chưa có khoản trả bù giữ chỗ. Đề nghị chờ không giữ chỗ tiền: khách vẫn được trả tiền, khi duyệt phải kiểm lại số còn lại.
+
+CONG_NO_KH chỉ ghi số nợ từng CN được duyệt, MA_DOI_CHIEU = mã TD; không ghi tổng đơn. Phần đã thu vẫn THU theo snapshot danh mục hàng/công và tài khoản. Trả bù liên kết CN gốc; Finance phân bổ bằng ID khoản nợ, giữ danh mục THU hàng/công đã gán và native sổ phân bổ, không đoán khách theo tên, không tạo thêm doanh thu đơn. Sau khi hồ sơ đóng có thể báo thu trả bù; mở lại phần đối soát tiền, lưu lần đóng trước, không mở lại công việc. Tiền mặt vẫn chờ nộp quỹ, CK/POS vẫn chờ xác nhận; khoản bị từ chối trả lại khả năng thu/nợ đúng số.
+
+Khách cũ thiếu allow_credit đọc terms=credit thành có quyền; giá trị allow_credit đã lưu rõ ràng luôn ưu tiên hơn terms cũ. Đơn cũ giữ terms/lịch sử và mọi số tiền, không tự sinh nợ cho đơn đang mở. CN cũ đã phát sinh giữ external key và snapshot; trả bù tái dùng, không tạo lại khoản nợ.
 
 Nộp quỹ tối thiểu: thợ lập đề nghị từ các khoản tiền mặt của mình → xác nhận đã giao tiền → kế toán/người có quyền xác nhận thực nhận. Phân bổ tới khoản nguồn; đề nghị chờ giữ chỗ để không nộp cùng tiền hai lần. Chỉ xác nhận thực nhận mới giảm tiền đang giữ. Có thể ghi một lần nộp cho nhiều đơn với phân bổ rõ ràng; số đối chiếu lấy từ phân bổ, không cộng chứng từ cha rồi cộng từng dòng lần nữa.
 
@@ -159,7 +166,7 @@ M8 hiển thị riêng: tiền mặt báo thu trong ngày, đã xác nhận, đ�
 
 Đơn bị hủy vẫn hiển thị nghĩa vụ vật tư/tiền, người chịu trách nhiệm và phương án xử lý. Tiếp tục cho phép ghi/xác nhận thu hồi hàng và đối soát tiền của đơn hủy theo quyền; cấm tạo thêm công việc thông thường. Sau nghiệm thu dùng hồ sơ mở lại/điều chỉnh, không dùng nút hủy trước nghiệm thu.
 
-Công việc hoàn tất không đồng nghĩa hồ sơ đóng. Hệ thống chuyển Chờ đối soát sau nghiệm thu khi còn nghĩa vụ. Được đóng khi: đã nghiệm thu; giá ngoại lệ kết thúc; không còn đề xuất vật tư mở/chờ nhận/trả/hỏng/sai lệch; mọi khoản báo thu đã được xử lý; điều khoản thu ngay đã thu đủ hoặc điều khoản công nợ đã ghi nhận số cần theo dõi; tiền mặt nguồn đơn đã nộp và được quỹ xác nhận hoặc có ngoại lệ giữ được duyệt, còn hiển thị trách nhiệm. Khoản công nợ chưa trả không tự thành bằng 0 khi đóng.
+Công việc hoàn tất không đồng nghĩa hồ sơ đóng. Hệ thống chuyển Chờ đối soát sau nghiệm thu khi còn nghĩa vụ. Được đóng khi: đã nghiệm thu hoặc Không làm được đã chốt phí; giá ngoại lệ kết thúc; không còn đề xuất vật tư mở/chờ nhận/trả/hỏng/sai lệch; mọi khoản báo thu đã được xử lý; toàn bộ số tiền đã được xác nhận thu hoặc đã ghi nợ được duyệt, không còn đề nghị nợ chờ; tiền mặt nguồn đơn đã nộp và được quỹ xác nhận hoặc có ngoại lệ giữ được duyệt, còn hiển thị trách nhiệm. Khoản công nợ chưa trả không tự thành bằng 0 khi đóng.
 
 Hồ sơ hủy được đóng sau xử lý hết các nghĩa vụ phát sinh hoặc chuyển sang hồ sơ ngoại lệ được duyệt và liên kết rõ, không được đóng để che khoản tồn.
 
@@ -225,7 +232,7 @@ Giai đoạn 1: fixture/prototype, không dữ liệu thật. Giai đoạn 2: st
 | Phân quyền | Thợ A gõ URL/API mã đơn B bị chặn; kho không lấy được dữ liệu tiền; client giả actor/role bị từ chối |
 | Giá | Ngoại lệ chưa duyệt không nghiệm thu; giá cũ được snapshot; sửa sau nghiệm thu có duyệt và revision |
 | Vật tư | Định mức/xuất thêm tách lượng dùng; cấp nhiều lần, nhận thiếu, trả/hỏng chưa xác nhận không giảm số còn phải xử lý |
-| Thu tiền | Khoản chờ không giảm phải thu; công nợ không cho thợ báo thu; không ghi trùng giao dịch, thu vượt hoặc số âm |
+| Thu tiền | Khoản chờ không giảm phải thu; khách được phép nợ vẫn thu tiền được; nợ vượt bị chặn, đề nghị chưa duyệt vẫn phải thu; không ghi trùng giao dịch, thu vượt hoặc số âm |
 | Nộp quỹ | Đề nghị chưa giảm tiền giữ; xác nhận thực nhận mới giảm; không nộp lặp hoặc tự xác nhận |
 | Hủy/mở lại | Hàng/tiền phát sinh cần duyệt; hủy không đảo dữ liệu; mở lại không xóa nghiệm thu và khoản thu cũ |
 | Đồng thời/retry | Hai người cùng version: một thành công, một conflict; lỗi sau ghi một phần có recovery và retry không nhân đôi |

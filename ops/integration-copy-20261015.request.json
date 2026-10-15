@@ -6,7 +6,7 @@
     "FINANCE": "11KP6olMtDhuLziXTzo_gycoDWpswtAc98i0Bt5wbKlQ",
     "OUTBOX": "1TwV5Le6umfpLOwTt0fPTOrX0DdP6jPatZpl6Y0vzRkk"
   },
-  "purpose": "User-approved cash correction and close/unlock on EXISTING COPY consumer projects only. Preserve configuration, token/HMAC and enabled state. Run private owner-only UAT in a NEW synthetic workbook; inventory configured Finance copy closing dates read-only. Never write real Finance/Kho/AI or push Finance main.",
+  "purpose": "User-approved per-receipt CN and debt repayments on EXISTING COPY consumer projects only, with internal native allocation guard, exact debt amount/TD reference, durable replay and cancellation reversal. Preserve copy IDs/configuration/token/HMAC/enabled state. No real Finance/Kho/AI writes/deploy, no Finance main push, no reset/backfill.",
   "restrictions": "Read native source only. Never push/deploy original Kho, Finance, AI_KHO or reset Dispatch. Never publish private Finance source, native packages, tokens or HMAC in GitHub artifacts/logs. Do not deploy a web app or install triggers remotely. Persist new project IDs before pushing only those new projects.",
-  "revision": 2
+  "revision": 3
 }

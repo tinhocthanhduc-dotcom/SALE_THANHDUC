@@ -50,6 +50,7 @@ jobs:
       - run: node service-dispatch/test/delivery-browser.cjs
       - run: node service-dispatch/test/money-browser.cjs
       - run: node service-dispatch/test/cash-corrections-browser.cjs
+      - run: node service-dispatch/test/terms-browser.cjs
       - run: node service-dispatch/test/integration-browser.cjs
       - run: node service-dispatch/test/photo-browser.cjs
       - run: node service-dispatch/test/gas-ui-browser.cjs

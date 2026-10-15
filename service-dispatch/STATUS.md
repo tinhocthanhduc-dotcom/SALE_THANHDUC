@@ -1,5 +1,16 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — thanh toán / ghi công nợ theo từng khoản
+
+- Hồ sơ khách bỏ Điều khoản thanh toán, thay bằng Cho phép ghi công nợ; dispatcher/director sửa. Thiếu cờ mới đọc terms=credit thành có quyền, cờ đã lưu có ưu tiên; không bulk migration, không sửa đơn/số tiền cũ. Đơn mới không có terms cố định, tiếp nhận không hỏi thanh toán.
+- Thu tiền mobile giữ màn bước (f), CTA 62px: tiền mặt/ACB/TCB/Ghi công nợ, vẫn giữ POS/Khác đã cấu hình; số tiền trống, Thu đủ/Ghi nợ phần còn lại phải bấm. Khách có quyền approved ngay + người/thời điểm, chưa có quyền thì lý do/pending → điều phối/giám đốc khác người lập duyệt hoặc từ chối ở tab **Nợ chờ duyệt**. Duyệt riêng khoản không cấp quyền vĩnh viễn. Cả hai đường cần ID_KH Finance hợp lệ. Pending vẫn là phải thu, khi duyệt kiểm lại số còn lại; chặn vượt/đề nghị trùng/tự duyệt cả API.
+- Sổ CN riêng, một đơn kết hợp nhiều khoản thu/nợ. THU vẫn đúng tài khoản/danh mục; CONG_NO_KH chỉ số nợ từng CN, MA_DOI_CHIEU mã TD; mapping ID_KH chốt tại lúc duyệt. Trả bù PT giữ phân bổ CN và native Finance sổ phân bổ, retry không thu hoặc giảm nợ trùng. PT vừa thu thường vừa trả bù, nhiều CN, và ĐC cash hủy/ghi lại đều được đối chiếu. Adapter trả bù chỉ ở consumer COPY, không thay Finance main/project thật.
+- Đóng: nghiệm thu hoặc không làm được đã chốt phí, không vật tư/thu/đề nghị nợ chờ, đã thu xác nhận hoặc nợ approved đủ tổng, cash về quỹ và sync xong. Khách trả bù sau đóng mở lại đối soát tiền + closure_history, công việc kết thúc giữ nguyên; sau đối soát đóng lại với nợ còn thực tế. CN cũ dùng lại key/snapshot, đơn cũ chỉ terms không tự ghi thành nợ.
+- Local đạt **138/138 Node**, gồm 12 test terms và GAS compiled bridge cho yêu cầu/đúng lỗi thiếu gán; **18/18 native Finance**, Kho native 98/98 và consumer cũ; **20 bộ trình duyệt** (5 nhóm terms mới, tất cả màn desktop/mobile/tiền/khách/giao hàng/sync/ảnh/GAS iframe/live). Test ảnh chờ ảnh đầy đủ hiển thị trước đếm request, không nới mức chống trùng/quyền/size. Build GAS đạt. Đây là mô phỏng/local, không gọi Google pass.
+- Chi tiết nghiệp vụ, API/số liệu, UAT và khôi phục: [terms-20261015/README.md](docs/terms-20261015/README.md); SPEC mục 4/5/9/10 cập nhật. Giữ tài khoản/copy ID/HMAC/bảng gán và mọi dữ liệu; không reset/setup lại. Google UAT còn cần chạy trên copy vì quyền remote trước đó trả 403; triển khai thật vẫn cần chủ duyệt riêng. Sau khi có CN/PT trả bù mới không rollback riêng về v52 reader cũ.
+- OWNER_SETUP/pilot giữ nguyên: pump actor admin, bảng gán ID_KH/tài khoản/danh mục/nhân viên, đối chiếu UAT trên copy, normalized tables, chống lạm dụng đăng nhập/quota. Finance/Kho/AI_KHO thật và Finance main không thay đổi.
+
+
 ## 15/10/2026 — ĐC tiền mặt và chốt sổ, chỉ bản sao
 
 - Theo quyết định chủ: thợ/kế toán đề nghị ĐC, giám đốc khác người lập duyệt; một đề nghị mở/PT, lý do bắt buộc. Chỉ PT tiền mặt chưa có NQ hiệu lực; NQ chờ được người lập/kế toán hủy có lý do/lịch sử; đã nhận một phần hoặc đủ thì chặn và yêu cầu giám đốc xử lý ngoài app.
