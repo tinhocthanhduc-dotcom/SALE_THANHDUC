@@ -1,5 +1,12 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (f)
+
+- Thu tiền toàn màn hình cho thợ ≤750px: tổng tiền navy, lịch sử thu gọn, ô tiền 56px định dạng Việt Nam, hình thức chọn thẻ 60px, CTA gốc 62px. Số tiền ban đầu trống, Thu đủ phải bấm; payload vẫn số nguyên. Chuyển khoản hiện đúng tài khoản cố định và mã TD, có sao chép; không chọn tài khoản riêng, không thêm QR. Thiếu cấu hình thì khóa gửi. Desktop/vai trò khác giữ giao diện cũ.
+- Tổng đã báo, đã xác nhận, chờ đối soát và còn được báo thu thể hiện riêng. Báo đủ đang chờ không báo đã thanh toán hoặc cho thu thêm; tiền mặt giữ ở thợ không gọi tiền về quỹ. Lịch sử khoản bị từ chối và ảnh biên lai giữ nguyên. Công nợ/miễn phí không thu tại chỗ. Không đổi API/command/quyền/phiếu/version/idempotency hoặc nghiệp vụ.
+- Đạt local: 113 Node, 11 payment-browser mới, 12 money, 48 UI nghiệp vụ, 10 complete, 8 pickup, 9 detail, 10 shell, 8 board, 10 hồ sơ máy, 9 delivery, 10 integration, 9 GAS iframe và photo queue (3 ảnh/200 đơn/replay/thumbnail/full query 0). Live browser 9/9 đạt (cập nhật hai chiều, giữ form và cuộn). Build GAS đạt; Code.gs byte-identical bước (e). Có ảnh 390px trước/sau và chuyển khoản. Còn (g) tiền đang giữ, (h) trống/mất mạng và desktop i–p. Kiểm local không thay Google UAT; không sửa Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (e)
 
 - Nghiệm thu thành form mobile toàn màn hình: hai ô ảnh 116px, chip kết quả nhiều lựa chọn, stepper Giao khách/Đã dùng và Mang về/Trả kho, nhiều dòng công/vật tư tính tiền, tổng 26px, ba xác nhận số lượng/đồng ý giá/nghiệm thu giữ riêng; ghi chú tùy chọn thu gọn. CTA gốc 62px cố định, lỗi server hiển thị ở footer. Desktop >750px/vai trò khác giữ form cũ.

@@ -57,6 +57,16 @@ Hàm sửa: `openForm` (reset modal skin và gọi bố cục), `updatePickupFie
 
 Hàm sửa: `openForm` (reset skin/call), `moneyPayload` (đọc giá qua adapter), `submitForm` (cập nhật trạng thái sau lỗi), `patchPhotos` (patch ô ảnh/CTA), `selectPhoto` (đầu vào kind cho ô ảnh). Thêm `techChargeValue`, `formatTechCharge`, `enhanceTechChargeRows`, `enhanceTechComplete`, `patchTechCompletePhotos`, `updateTechComplete` và listener giao diện. CSS chỉ body.is-tech ≤750px. Test cũ chỉ đổi nút lượng sang stepper và kiểm nút disabled thay bấm khi còn thiếu xác nhận; giữ mọi assertion nghiệp vụ. `technician-complete-browser.cjs` kiểm 10 nhóm kịch bản gồm snapshot tiền, miễn phí/công nợ, replay, chụp lại/lỗi mạng, duyệt giá, giữ form và viewport.
 
+## Bước (f) — Thu tiền
+
+- `enhanceTechPayment` bố trí form `report_payment` gốc thành màn toàn chiều cao: tổng tiền nền navy, lịch sử khoản thu thu gọn, ô tiền 56px, thẻ hình thức 60px và CTA 62px cố định. Chỉ áp dụng thợ ≤750px. Dùng danh mục đang hoạt động, không hard-code hình thức; desktop và vai trò khác giữ form cũ.
+- Tiền ban đầu **để trống**. Thu đủ chỉ điền số còn được báo thu khi thợ chủ động bấm. `techChargeValue`/`formatTechCharge` định dạng Việt Nam nhưng payload amount vẫn là integer; giữ nguyên method_id/account_id, expected_version và idempotency key. Không đổi command, quyền, API hoặc quy tắc thu tiền.
+- Phân biệt tổng đơn, đã báo, đã xác nhận, chờ đối soát và **còn được báo thu** (collectable). Khoản chờ đã giữ chỗ thì không thu thêm; báo đủ nhưng chờ đối soát dùng màu cảnh báo, không báo Đã thanh toán. Tiền mặt chưa nộp ghi Tiền thợ giữ, không gọi là tiền về quỹ. Lịch sử giữ lý do từ chối; ảnh biên lai tùy chọn vẫn tải ở chi tiết qua luồng cũ.
+- Chọn chuyển khoản tự hiện đúng tài khoản cố định của hình thức, số/chủ tài khoản và nguyên mã TD làm nội dung. Không có ô chọn tài khoản riêng, không đoán mapping/fallback. Cấu hình chưa đủ thì khóa gửi; server tiếp tục kiểm tra độc lập. Nút sao chép giữ số 0 đầu/mã có gạch; clipboard không khả dụng thì hướng dẫn nhấn giữ. QR chưa triển khai.
+- Khách công nợ, miễn phí, đơn chưa nghiệm thu/đóng/không thuộc thợ và thu vượt không gửi được. Sau thành công giữ hành vi đóng form/quay lại đơn: thu một phần có thể mở lại, đã báo đủ chờ kế toán thì không có CTA thu thêm. Polling không mất nội dung. Lỗi giữ form/key; mất phản hồi sau commit rồi thử lại không tạo PT thứ hai.
+
+Hàm sửa: `paymentList`, `bankDetails`, `openForm`, `moneyPayload`, `submitForm`, phần tiền trong `techDetail`. Thêm `techPaymentHistory`, `techPaymentOverview`, `techPaymentDone`, `enhanceTechPayment`, `updateTechPayment` và listener radio/bàn phím/ô tiền/sao chép. CSS nằm trong body.is-tech + media ≤750px. `technician-payment-browser.cjs` có 11 nhóm kịch bản; money-browser cũ cập nhật selector/định dạng, giữ kiểm thu vượt trực tiếp qua API. Code.gs backend byte-identical bước (e).
+
 ## Phần desktop mới — kế hoạch theo README_DESKTOP
 
 Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
@@ -70,9 +80,7 @@ Hàm sửa: `openForm` (reset skin/call), `moneyPayload` (đọc giá qua adapte
 - (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
 - (p) HTML đăng nhập, giữ xác thực hiện có.
 
-## Các bước mobile còn lại — (f) đến (h)
-
-(f) `moneyForm`, `bankDetails`, `paymentList`: giao diện thu; dùng binding ngân hàng cố định của bản v38.
+## Các bước mobile còn lại — (g) đến (h)
 
 (g) `myCash`, `depositCards`: thẻ tiền giữ và phiếu NQ; giữ nguyên xác nhận số thực nhận.
 
