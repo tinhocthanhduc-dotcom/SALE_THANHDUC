@@ -89,10 +89,19 @@ Hàm sửa: `myCash`, `updateTechHeader`, `updateTechCashAction`, `renderTechShe
 
 Hàm sửa: `board`, `coordinatorTable`, `detail`, `render`, `openForm`, `submitForm` (finally), `resetLogin`; thêm các helper desktop và listener chip/search. API/business/auth/roles/command/payload/version/idempotency không đổi. Browser nghiệp vụ cũ chỉ cập nhật selector refresh, chip lọc/ngày và mở Thao tác khác; không bỏ assertion. `desktop-dispatch-browser.cjs` gồm 13 nhóm kịch bản, fixture native đầy đủ và ảnh 1440px trước/sau. Code.gs backend giữ nguyên.
 
-## Desktop còn lại — (l) đến (p)
+## Desktop — đợt (l/m/n) đã hoàn tất
 
-- Đợt tiếp theo (l/m/n): bảng Cần soạn hàng/Kho bàn giao, Quỹ/đối soát và Báo cáo theo README_DESKTOP. Mốc hiện tại mới áp khung chung cho các trang này; phần nội dung vẫn dùng renderer cũ.
-- Đợt cuối (o/p): Đồng bộ, Gán Finance, Thanh toán/cấu hình, Khách/máy và đăng nhập. Giữ cấu hình ngân hàng gộp và các native guards; không quay về hai nơi cài tài khoản theo dữ liệu mẫu.
+- Kho: `preparationBoard` giữ tập PX và thứ tự theo giờ hẹn cũ, nhánh desktop dùng thẻ ≥340px với số PX/TD, kho, người tạo/thợ, bảng món và trạng thái soạn; đã soạn thì không hiện thao tác soạn lại. Kho/bàn giao dùng bảng 6 cột, 4 thẻ lọc công việc, mã TD/phiếu/SL/trạng thái/thợ và lịch sử đã xử lý. Tìm theo đơn, khách, mã/tên hàng hoặc phiếu từ dữ liệu đã được cấp quyền; không thêm request tìm kiếm.
+- `orderButtons(o)` tách nguyên điều kiện nút từ detail để kho và chi tiết dùng chung. Các shortcut mở đúng đơn, request/nhóm DX, PX hoặc máy; giữ số version/key của form và các xác nhận kho chưa đánh dấu. Xuất một dòng thuộc DX nhiều món vẫn chọn nhóm gốc theo API, không tự đổi thành xuất lẻ; nhận dư chọn đúng món đã bấm nhưng vẫn cần thủ kho xác nhận. Sửa PX chỉ hiện khi PX đó chưa có hàng được lấy. Gán mã TD chỉ hiện nếu đã có job Kho thiếu mã phù hợp trong outbox; không bịa đầu ghi TONKHO hoặc chứng từ mới.
+- Quỹ: 4 số liệu, bộ lọc ngày lập phiếu/thợ, cột phiếu báo thu không dùng tiền mặt và NQ, cột tiền từng thợ với thanh đỏ phần quá 1 ngày. Ngày chỉ lọc khoản báo thu/NQ theo ngày lập; **tiền đang giữ gồm mọi ngày**, chỉ lọc theo thợ để không che khoản cũ. NQ chờ vẫn tính tiền giữ; thực nhận/thiếu/thừa/ghi chú đều giữ. Xác nhận/từ chối dùng form/command cũ, không ai tự xác nhận khoản mình báo; chi tiết và ảnh biên lai vẫn mở bằng data-open.
+- Báo cáo: bảng công việc theo ngày nhận, doanh thu theo ngày nghiệm thu và thu theo ngày ghi nhận; tiền/số căn phải, trễ hẹn/còn phải thu đỏ, null và mẫu thời gian giữ ý nghĩa gốc. Dùng data.report và data.money, không tính lại sổ. Khi chọn thợ, bảng thu dùng ledger_days của thợ, không dùng fund_days tổng công ty. Chi tiết theo thợ, tiền giữ và thừa chưa phân bổ vẫn mở rộng được; Quỹ giữ đường vào toàn bộ báo cáo trong mục thu gọn. Ngày của báo thu/xác nhận/về quỹ có thể khác; không gọi tiền mặt báo thu là tiền về quỹ.
+- `desktop()` giữ phạm vi ≥1000px và không phải body.is-tech; các layout ≤999px, renderer mobile và mọi business/API/auth/permission/command/version/idempotency không đổi. Bộ test nghiệp vụ cũ chỉ thay assertion "1 nghiệm thu" sang đúng ô số Nghiệm thu của bảng, không bỏ kiểm kết quả.
+
+Hàm sửa: `board`, `detail` (dùng orderButtons chung), `preparationBoard`, `funds`, `depositCards`, `reports`, `moneyReports`, listener mở hành động kho; bổ sung các helper desktop. `materialPanel` trong chi tiết và các form xuất/nhận/thu/nộp vẫn dùng nguyên luồng hiện tại. `desktop-operations-browser.cjs` kiểm 18 nhóm kịch bản bằng native fixtures, kể cả API tự xác nhận bị chặn và nộp 90k/100k vẫn giữ 10k ở thợ. Có ảnh 1440px trước/sau 4 màn. Code.gs byte-identical với (i/j/k).
+
+## Desktop còn lại — (o/p)
+
+Đợt cuối: Đồng bộ, Gán Finance, Thanh toán/cấu hình, Khách/máy và đăng nhập. Giữ cấu hình ngân hàng gộp và các native guards; không quay về hai nơi cài tài khoản theo dữ liệu mẫu. Hiện các trang này mới áp shell chung, phần nội dung chưa dựng lại.
 
 ## Tiến độ mobile
 

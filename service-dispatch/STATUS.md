@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — desktop đợt 2, hoàn tất (l/m/n)
+
+- Kho: thẻ PX soạn hàng, bảng bàn giao 6 cột/4 bộ lọc, tìm mã TD/đơn/hàng; từng nút mở đúng đơn/request/nhóm DX/PX/máy, giữ xác nhận kho và version/key. Tách nguyên điều kiện orderButtons từ detail để không lệch quyền. Gán mã chỉ có khi outbox Kho hỗ trợ, sửa PX chỉ trước lúc lấy. Không thêm đầu ghi sổ Kho.
+- Quỹ: 4 số liệu, lọc ngày/thợ, phiếu báo thu/NQ và tiền từng thợ/thanh quá hạn. Tiền giữ gồm cả ngày cũ, không biến mất khi lọc ngày lập phiếu. Xác nhận/từ chối và đối soát thực nhận vẫn qua form native; chờ NQ không giảm tiền giữ, nhận thiếu vẫn giữ phần thiếu. Lịch sử thực nhận/thiếu/thừa và ảnh biên lai giữ nguyên; không có nút tự xác nhận.
+- Báo cáo: 3 bảng công việc/doanh thu/thu theo hình thức, số căn phải, trễ và còn phải thu đỏ. Ghi đúng các mốc ngày nhận/nghiệm thu/ghi nhận; lọc thợ dùng ledger_days riêng, không hiển thị tổng công ty như số của một thợ. Chi tiết thu/tiền giữ/thừa vẫn có trong mục mở rộng. Không đổi API/nghiệp vụ/auth/permission/command; thợ và ≤999px giữ layout cũ.
+- Đạt local: 113 Node, 18 desktop-operations mới, 13 desktop-dispatch, 48 UI nghiệp vụ, 10 complete, 8 pickup, 9 detail, 10 shell, 8 board, 11 cash, 11 payment, 12 money, 10 hồ sơ máy, 9 delivery, 10 integration, photo queue (3 ảnh/200 đơn/replay/thumbnail/full query 0), 9 GAS iframe và 9 live. Build GAS đạt, Code.gs byte-identical đợt (i/j/k). Có ảnh 1440px trước/sau Kho/soạn/Quỹ/báo cáo. Còn (o/p) quản trị và đăng nhập; các trang đó mới dùng shell, nội dung vẫn bản trước. Cần Google UAT; không sửa app Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — desktop đợt 1, hoàn tất (i/j/k)
 
 - Khung chung ≥1000px cho điều phối/kho/kế toán/giám đốc: sidebar 240px theo quyền, dải thử, topbar 68px/tìm kiếm/tải lại/tiếp nhận, font cơ sở 15px. Di chuyển nút/nav gốc, không tạo lệnh trùng; thu nhỏ/đăng xuất trả layout cũ. Thợ và màn hình ≤999px giữ giao diện hiện tại.

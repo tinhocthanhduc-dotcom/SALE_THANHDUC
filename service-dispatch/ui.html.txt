@@ -549,6 +549,88 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
  @media(max-width:1279px){body.is-desktop.has-detail .desktop-stats{grid-template-columns:repeat(2,minmax(0,1fr))}body.is-desktop #desktop-header{gap:8px}body.is-desktop #desktop-header h1{max-width:160px;font-size:18px}body.is-desktop .desktop-refresh{max-width:170px}body.is-desktop .desktop-create-button{font-size:13px;padding:8px 10px}body.is-desktop .desktop-stats{gap:6px}body.is-desktop .desktop-stats button{padding:8px}}
 }
 
+/* Desktop warehouse, funds and reports (l-n); mobile and technician styles are untouched. */
+@media(min-width:1000px){
+ body.is-desktop .desktop-preparation>h2{font-size:20px;font-weight:800;margin:0 0 16px}
+ body.is-desktop .desktop-preparation>h2 span{font-size:14px;margin-left:8px;color:var(--desk-secondary)}
+ body.is-desktop .desktop-preparation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+ body.is-desktop .desktop-preparation-card{padding:18px;background:#fff;border:1.5px solid var(--desk-border);border-radius:14px;min-width:0;overflow-wrap:anywhere}
+ body.is-desktop .desktop-preparation-card h3{font-size:17px;font-weight:800;margin:0 0 12px}
+ body.is-desktop .desktop-preparation-card p{margin:10px 0;color:var(--desk-secondary);font-size:14px;line-height:1.5}
+ body.is-desktop .desktop-preparation-card table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+ body.is-desktop .desktop-preparation-card th{text-align:left;background:#f4f7fa;font-size:13px;padding:8px}
+ body.is-desktop .desktop-preparation-card td{padding:10px 8px;border-bottom:1px solid #dbe4ea;vertical-align:top}
+ body.is-desktop .desktop-preparation-card td:nth-child(n+2){white-space:nowrap}
+ body.is-desktop .desktop-preparation-card .actions{justify-content:flex-end;margin-bottom:0}
+ body.is-desktop .desktop-state{display:inline-block;padding:5px 8px;border-radius:8px;font-size:13px;font-weight:700;background:#e3e8ec;color:#2e3f4c;line-height:1.4}
+ body.is-desktop .desktop-state.is-waiting{border:1px solid #d49b30;background:#fff0c9;color:#583a00}
+ body.is-desktop .desktop-state.is-done{background:#d6f2df;color:#155b2d}
+ body.is-desktop .desktop-state.is-danger{background:#ffe0e0;color:#7d1515;border:1px solid #a12222}
+ body.is-desktop .desktop-stock-table{width:100%;min-width:860px;border-collapse:collapse;background:#fff;font-size:14px}
+ body.is-desktop .desktop-stock-table th{font-size:13px;font-weight:800;padding:12px;background:#f4f7fa;text-align:left;white-space:nowrap}
+ body.is-desktop .desktop-stock-table td{padding:12px;border-top:1px solid #dbe4ea;vertical-align:top;overflow-wrap:anywhere}
+ body.is-desktop .desktop-stock-table td:first-child{min-width:200px;max-width:270px}
+ body.is-desktop .desktop-stock-table td:first-child>strong{display:block}
+ body.is-desktop .desktop-stock-table td:nth-child(2){min-width:180px;max-width:280px}
+ body.is-desktop .desktop-stock-table td:nth-child(4){min-width:180px}
+ body.is-desktop .desktop-stock-table p{margin:6px 0;font-size:13px;color:var(--desk-secondary)}
+ body.is-desktop .desktop-stock-actions{display:flex;flex-direction:column;gap:8px;min-width:130px}
+ body.is-desktop .desktop-stock-actions button{font-size:13px;min-height:38px;padding:7px 10px}
+ body.is-desktop .desktop-warehouse-screen,body.is-desktop .desktop-funds-screen,body.is-desktop .desktop-report-screen,body.is-desktop .desktop-money-report{display:flex;flex-direction:column;gap:16px;min-width:0}
+ body.is-desktop .desktop-four-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+ body.is-desktop .desktop-stats .desktop-stat{background:#fff;border:1.5px solid var(--desk-border);border-radius:12px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+ body.is-desktop .desktop-stats .desktop-stat-alert{border-color:#a12222;background:#fff5f5}
+ body.is-desktop .desktop-stat>strong{overflow-wrap:anywhere;font-size:24px}
+ body.is-desktop .desktop-report-filters{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;background:#fff;border:1.5px solid var(--desk-border);border-radius:14px;padding:14px 18px}
+ body.is-desktop .desktop-report-filters label{font-size:14px;margin:0;display:flex;flex-direction:column;gap:6px;min-width:220px}
+ body.is-desktop .desktop-report-filters input,body.is-desktop .desktop-report-filters select{font-size:14px;min-height:42px}
+ body.is-desktop .desktop-data-note{font-size:13px;color:var(--desk-secondary);line-height:1.5;margin:0}
+ body.is-desktop .desktop-data-danger,body.is-desktop .desktop-stock-table p.desktop-data-danger{color:#a12222;font-weight:700}
+ body.is-desktop .desktop-data-section{min-width:0;display:flex;flex-direction:column;gap:12px}
+ body.is-desktop .desktop-data-section h2{font-size:18px;font-weight:800;margin:0}
+ body.is-desktop .desktop-data-scroll{overflow:auto;min-width:0;border:1.5px solid var(--desk-border);border-radius:14px;background:#fff}
+ body.is-desktop .desktop-data-table{width:100%;min-width:760px;border-collapse:collapse;font-size:14px}
+ body.is-desktop .desktop-data-table th{font-size:13px;font-weight:800;background:#f4f7fa;text-align:left;padding:12px;white-space:nowrap}
+ body.is-desktop .desktop-data-table th:nth-child(n+3),body.is-desktop .desktop-number{text-align:right;font-variant-numeric:tabular-nums}
+ body.is-desktop .desktop-data-table td{padding:12px;border-top:1px solid #dbe4ea;vertical-align:top;white-space:nowrap}
+ body.is-desktop .desktop-data-table td:nth-child(2){white-space:normal;min-width:140px;overflow-wrap:anywhere}
+ body.is-desktop .desktop-empty-data{padding:22px;margin:0;font-size:14px;color:var(--desk-secondary);background:#fff;border-radius:12px}
+ body.is-desktop .desktop-funds-columns{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:20px;align-items:start}
+ body.is-desktop .desktop-funds-columns>div{display:flex;flex-direction:column;gap:24px;min-width:0}
+ body.is-desktop .desktop-finance-list{display:flex;flex-direction:column;gap:12px}
+ body.is-desktop .desktop-finance-card{background:#fff;border:1.5px solid var(--desk-border);border-radius:14px;padding:16px;overflow-wrap:anywhere}
+ body.is-desktop .desktop-finance-card-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px}
+ body.is-desktop .desktop-finance-card-head>strong{font-size:16px;font-weight:800}
+ body.is-desktop .desktop-finance-card-head>strong:first-child{color:var(--desk-primary)}
+ body.is-desktop .desktop-finance-card p{font-size:14px;color:var(--desk-secondary);line-height:1.5;margin:8px 0}
+ body.is-desktop .desktop-finance-card .actions{justify-content:flex-end;margin-bottom:0}
+ body.is-desktop .desktop-finance-card button{font-size:13px;min-height:40px}
+ body.is-desktop .desktop-danger-button{border-color:#a12222;color:#a12222}
+ body.is-desktop .desktop-bank-summary{background:#edf5fb;padding:8px 12px;border-radius:10px;border:1px solid #c9d6df}
+ body.is-desktop .desktop-bank-summary p{margin:4px 0;font-size:13px}
+ body.is-desktop .desktop-deposit-allocations{margin:12px 0;border-top:1px solid #dbe4ea}
+ body.is-desktop .desktop-deposit-allocations p{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;padding:8px 0;border-bottom:1px solid #dbe4ea;margin:0;font-size:13px}
+ body.is-desktop .desktop-deposit-difference,body.is-desktop .desktop-excess-note{padding:12px;background:#fff5f5;border:1px solid #a12222;border-radius:10px;color:#7d1515}
+ body.is-desktop .desktop-deposit-difference p,body.is-desktop .desktop-excess-note p{color:#7d1515;font-size:14px}
+ body.is-desktop .desktop-holders{background:#fff;border:1.5px solid var(--desk-border);border-radius:14px;padding:16px;position:sticky;top:0;min-width:0}
+ body.is-desktop .desktop-holders h2{font-size:18px;font-weight:800;margin:0 0 10px}
+ body.is-desktop .desktop-holders article{padding:16px 0;border-bottom:1px solid #dbe4ea}
+ body.is-desktop .desktop-holders article>div:first-child{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px}
+ body.is-desktop .desktop-holders article:last-child{border:0}
+ body.is-desktop .desktop-holders article p{font-size:13px;margin:8px 0 0}
+ body.is-desktop .desktop-holder-bar{height:12px;background:#e3e8ec;border-radius:8px;overflow:hidden;margin-top:12px}
+ body.is-desktop .desktop-holder-bar>span{display:block;height:100%;background:#185b89;border-radius:8px;overflow:hidden}
+ body.is-desktop .desktop-holder-bar i{display:block;height:100%;background:#a12222}
+ body.is-desktop .desktop-report-more{background:#fff;border:1.5px solid var(--desk-border);border-radius:14px;padding:0 16px}
+ body.is-desktop .desktop-report-more>summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-weight:800;color:var(--desk-primary)}
+ body.is-desktop .desktop-report-more[open]{padding-bottom:16px}
+ body.is-desktop .desktop-report-more .desktop-data-section{margin-top:16px}
+ body.is-desktop.has-detail .desktop-funds-columns{grid-template-columns:1fr}
+ body.is-desktop.has-detail .desktop-holders{position:static}
+ @media(max-width:1279px){body.is-desktop .desktop-funds-columns{grid-template-columns:1fr}body.is-desktop .desktop-holders{position:static}body.is-desktop .desktop-four-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+}
+
+@media(min-width:1000px){body.is-desktop #desktop-search:disabled{background:#f4f7fa;color:#5a6f80;opacity:.65;cursor:not-allowed}body.is-desktop #view>.desktop-money-report{margin-top:24px}}
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});
