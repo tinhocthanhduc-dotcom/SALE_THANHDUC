@@ -408,3 +408,5 @@ Follow-up deployed as Dispatch v61 at original staging URL, workflow 38774232966
 ### 2026-10-16 — immediate native UrlFetch failure
 
 Owner diagnostic: DIRECTORY_NETWORK_ERROR after 3ms on approved API endpoint. No HTTP status was obtained; exact Google exception was previously hidden. Do not infer a bad secret from this. Owner check now explicitly requests script.external_request scope via requireScopes when available and runs owner-only unsigned GET first. The unsigned probe does not catch native exceptions, allowing Google permission/context/quota explanations to reach the editor without secret or customer payload. Public helper checkDispatchDirectoryTransport is owner-only. DISPATCH_CD_TRANSPORT_PROBE records only phase/status/timing. Full signed success remains pending owner execution; no secret/data reset or automatic enable.
+
+Owner unsigned/scope probe deployed in Dispatch v62 (workflow 38775101685), original staging deployment unchanged. Combined Node 321/321. Await owner execution for original Google error/authorization; successful signed native connection is not claimed.
