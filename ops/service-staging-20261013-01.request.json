@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 33,
-  "update": "Deploy commit 2010a35 server-only DIEUPHOI HMAC bridge to customer-directory COPY. Shared KTD combobox, snapshot refresh/merge events, remote create/update with cross-app idempotency, explicit legacy KTD linking, Finance outbox KTD metadata. Add UrlFetch OAuth scope and owner setup/check functions. 316 Node, all 23 Dispatch browser suites and 11 Directory browser scenarios passed. SAME Dispatch staging project/deployment URL; preserve all users, properties, data, mappings, Drive and pending financial/stock jobs. Do not run setup/reset, provision actual secret/users, enable connection, or rescan customer sources. OWNER_SETUP must complete before enabling. No real Sales/CARE/Kho/Finance/AI app changes."
+  "revision": 34,
+  "update": "Apply final reviewed KTD bridge UI fixes from 907e29a atop 2010a35 to SAME Dispatch staging URL: clear cancels pending selection, late responses cannot restore cleared value, KTD old-to-new codes visible in merge history, search timer avoids detached forms. 316 Node pass and new 11-scenario directory browser suite pass; all 23 existing/current Dispatch suites and Directory 11 scenarios passed in the feature verification. Preserve data/users/properties/mappings and keep directory connection disabled until owner provisioning/check. No setup/reset/client provisioning/source rescan. Directory COPY v7 already has owner helper; no further directory deploy or real app changes requested."
 }
