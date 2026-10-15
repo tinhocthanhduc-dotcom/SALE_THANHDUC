@@ -23,5 +23,15 @@
     }
   ],
   "signed_connection": "pending owner-run check using existing private secret/mapping",
-  "customer_data_written": false
+  "customer_data_written": false,
+  "private_ui_probe": {
+    "http": 302,
+    "google_login_redirect": true
+  },
+  "local": {
+    "combined_node_passed": 321,
+    "failed": 0,
+    "directory_browser_passed": 11,
+    "dispatch_directory_browser_passed": 11
+  }
 }

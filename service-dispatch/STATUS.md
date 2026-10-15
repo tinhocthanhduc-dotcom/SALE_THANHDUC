@@ -396,3 +396,5 @@ Deploy ô tiền hoàn tất: Google staging **v55**, workflow **38754513113** s
 ### 2026-10-15 — owner-approved COPY HMAC endpoint
 
 Separate API v9 on SAME Directory COPY project, no public UI and no changes to customer data/properties/keys/actors. Private UI v8 stays pinned. Workflow 38772111587 succeeded and restored private editor HEAD. Native unsigned GET/POST: HMAC_REQUIRED; bad signature: BAD_SIGNATURE. Dispatch routes pinned old UI URL to API URL server-side; bearer removed, HMAC retained. Existing owner only reruns check/enable; no secret/mapping recreation. Local combined Node 321/321, Directory browser 11/11; native signed owner check remains pending.
+
+Dispatch deployment completed: v60, workflow 38772565658, original deployment ID/URL unchanged; native HTTP 200 with app shell. Post-routing combined Node 321/321 and signed-directory browser 11/11 passed. COPY Directory CI tests passed; API deployment job correctly skipped without a new request. Full signed native check/enable remains owner-run using existing private properties.

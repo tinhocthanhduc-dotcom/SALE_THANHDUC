@@ -1,6 +1,6 @@
 # Nối Điều phối staging → Danh bạ COPY
 
-Danh bạ COPY: giao diện riêng tư v8 giữ nguyên; API riêng có HMAC v9. Điều phối dùng API riêng qua server. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
+Điều phối staging v60 đã triển khai. Danh bạ COPY: giao diện riêng tư v8 giữ nguyên; API riêng có HMAC v9. Điều phối dùng API riêng qua server. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
 
 ## Đã cài xong nhưng gặp DIRECTORY_UNAVAILABLE
 
