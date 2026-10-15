@@ -4,7 +4,7 @@ Project Apps Script và Google Sheet riêng, thư mục `customer-directory/`, n
 
 Đặc tả trong tin nhắn của chủ là tiêu chuẩn thực hiện. Link Claude chỉ trả khung Artifact khi kiểm tra, chưa đọc được nội dung thiết kế bên trong; không tuyên bố đã đối chiếu phần chưa truy cập được.
 
-App COPY: [https://script.google.com/macros/s/AKfycbzEaRBqhoykUTTYy-JHUTlxFYmVuDr485s7thWWpeCKUUZ4i_HsGFuN7DLFCxgechPx/exec](https://script.google.com/macros/s/AKfycbzEaRBqhoykUTTYy-JHUTlxFYmVuDr485s7thWWpeCKUUZ4i_HsGFuN7DLFCxgechPx/exec). [Editor riêng](https://script.google.com/d/1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW/edit). Triển khai v1; setup/UAT Google chưa được Execution API xác nhận, xem [trạng thái Google](docs/GOOGLE_STATUS.json).
+App COPY: [https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec](https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec). [Editor riêng](https://script.google.com/d/1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW/edit). Triển khai v1; setup/UAT Google chưa được Execution API xác nhận, xem [trạng thái Google](docs/GOOGLE_STATUS.json).
 
 ## Chạy app và khởi tạo
 

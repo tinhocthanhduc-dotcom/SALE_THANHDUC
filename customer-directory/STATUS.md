@@ -62,3 +62,5 @@ Kiểm tra: 67/67 Node (gồm service API, quyền giả, replay, stale version)
 201-customer fixture: full request including driver construction reduced Sheets acquisitions from 99→6 (20 results), 42→6 (1 result). Lazy in-range header validation, one metadata read, Map-based customer resolution; stable reads skip ScriptLock and journal races use verified committed state or nonblocking recovery. Client debounce 300ms, 30s/50-query cache, empty focus skipped, loading feedback and safe elapsed/count logs. Details: docs/SEARCH_PERFORMANCE.md.
 
 72/72 Node and 10 browser groups pass locally; build GAS passes. Native Google before/after timing not yet available; read-only owner benchmark and sanitized CI attempt added. No claim that 1500ms Google target has been met. Deployment request revision 4 targets only the directory COPY.
+
+Google COPY deployment v4 / CI 38751130392 completed successfully. Execution API returned no timing samples (confirmed=false); native 1500ms target remains unverified. docs/SEARCH_GOOGLE_STATUS.json records counts, deployment link, and explicit measurement limitation.
