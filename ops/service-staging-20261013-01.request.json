@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 29,
-  "update": "User-approved per-receipt credit instead of fixed order terms on SAME Dispatch staging. Customer credit permission with legacy fallback; optional mixed cash/bank/debt after acceptance/fee; dispatcher/director approval for exceptions, no self approval; exact CN amounts/TD reference, reserved repayment allocations, financial reopen after closed and updated mobile payment screen. Preserve all users/properties/Sheets/Drive/mappings/data; no reset/backfill. Update existing COPY Finance adapter only; never push/deploy/write real Finance, Kho or AI, never Finance main."
+  "revision": 30,
+  "update": "User-requested shared searchable choice UI on SAME Dispatch staging only. Single accent-insensitive customer/machine/TD/Finance picker, selected label and clear, max20 results, keyboard/ARIA, inline customer draft, short-list quick buttons. Preserve native IDs/API/commands/permissions/business data. Backend Code.gs unchanged from v53. Preserve all users/properties/Sheets/Drive/mappings/data; no reset/backfill or setup. Do not update any COPY consumer or real Kho/Finance/AI, never Finance main."
 }

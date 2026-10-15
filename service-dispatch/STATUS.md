@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — ô tìm/chọn hợp nhất
+
+- Một thành phần `ChoiceUI` thay hai ô tìm + select bằng một ô cho khách, máy nhiều lựa chọn, mã TD, gán Finance/tài khoản và select dài khác. Tìm không dấu/hoa thường, tên/điện thoại/địa chỉ, model/serial, mã/tên; tối đa 20 kết quả. Hàng hiện mã/tên/đơn vị/kho/tồn; ID vẫn từ option gốc, chữ gõ chưa chọn không lưu được. × bỏ chọn, trạng thái không tìm thấy, tạo khách điền sẵn và giữ nháp. Máy tự cập nhật theo khách; hàng ngoài danh mục phải là lựa chọn rõ ràng theo luồng cũ.
+- Danh sách dưới 5 lựa chọn thành nút ngang, giữ nút nhanh có sẵn. Font 16px, nút 48px, kết quả 52px. Arrow/Enter/Esc/Tab, combobox/listbox và radiogroup; ngăn polling vẽ lại khi popup đang dùng. Cả desktop/mobile dùng chung, không thêm thư viện hoặc API tìm kiếm.
+- Local đạt **138/138 Node và 21 bộ trình duyệt** (20 bộ cũ + 1 bộ mới). Build GAS đạt; live giao đơn ~20,0s, bắt đầu ~20,4s, nghiệm thu ~19,9s trên fixture, không phải số đo Google. [Kết quả local](docs/choice-20261015/LOCAL_VERIFICATION.json). Kiểm chứng và cách dùng/khôi phục: [choice-20261015/README.md](docs/choice-20261015/README.md). Bộ trình duyệt mới có 9 nhóm ở 390px; hồi quy cũ giữ các kiểm nghiệp vụ/quyền/chống trùng, chỉ đổi selector của ô tìm khách và phân biệt nút loại ảnh với nút upload thủ công.
+- Chỉ sửa UI. Build GAS có Code.gs byte-identical bản terms/v53; không migration, không chạy setup/reset, không sửa consumer COPY hay Kho/Finance/AI thật. Giữ toàn bộ người dùng, cấu hình, dữ liệu và bảng gán. Mốc pilot và OWNER_SETUP cũ còn nguyên.
+
+
 ## 15/10/2026 — thanh toán / ghi công nợ theo từng khoản
 
 - Hồ sơ khách bỏ Điều khoản thanh toán, thay bằng Cho phép ghi công nợ; dispatcher/director sửa. Thiếu cờ mới đọc terms=credit thành có quyền, cờ đã lưu có ưu tiên; không bulk migration, không sửa đơn/số tiền cũ. Đơn mới không có terms cố định, tiếp nhận không hỏi thanh toán.
