@@ -1,8 +1,9 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 7,
+  "revision": 8,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
   "scope": "Update SAME separate customer-directory COPY project/deployment only. Add owner-only bulk setup helper for DIEUPHOI HMAC client/actors, no customer data writes or changes to existing signed API/auth behavior. No real app or source workbook changes.",
   "run_source_zero_rescan": false,
-  "update": "Deploy configureDispatchDirectoryClient helper from 2010a35. Keep Google authenticated deployment and existing URL/data/properties/clients/counters. Do not run helper/setup/reset/rescan or create actual clients/secrets; owner performs OWNER_SETUP manually. Companion Dispatch staging deploy is request revision 33. 316 combined Node and browser regressions passed."
+  "update": "COPY-only owner onboarding helper exports non-secret mapping to CD_DISPATCH_ACTOR_MAP so Google editor return values do not require logging. Same project/deployment URL, authenticated web app unchanged. Do not run setup/UAT/rescan/provisioning helpers. Preserve all existing customer data, KTD/counters/users/clients/secrets. Dispatch staging request revision 35 is companion. 316 combined Node + all browser regressions passed; compiled-GAS setup tests verify private exports and owner-only roles.",
+  "run_setup": false
 }

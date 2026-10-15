@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 34,
-  "update": "Apply final reviewed KTD bridge UI fixes from 907e29a atop 2010a35 to SAME Dispatch staging URL: clear cancels pending selection, late responses cannot restore cleared value, KTD old-to-new codes visible in merge history, search timer avoids detached forms. 316 Node pass and new 11-scenario directory browser suite pass; all 23 existing/current Dispatch suites and Directory 11 scenarios passed in the feature verification. Preserve data/users/properties/mappings and keep directory connection disabled until owner provisioning/check. No setup/reset/client provisioning/source rescan. Directory COPY v7 already has owner helper; no further directory deploy or real app changes requested."
+  "revision": 35,
+  "update": "Deploy final owner onboarding helpers to SAME Dispatch staging URL. listDispatchDirectoryUsers exports sanitized employee IDs/names/roles to DISPATCH_CD_USER_EXPORT; checkDispatchDirectoryConnection records non-secret result in DISPATCH_CD_CHECK. No business/UI changes since v58. Feature: 316 Node, 23 Dispatch browser suites, Directory 11 scenarios passed; setup changes passed targeted compiled-GAS tests. Preserve data/users/properties/integration mappings. Do not run setup/reset/helpers or enable the HMAC connection. Owner follows OWNER_SETUP. Companion customer-directory COPY request revision 8 exports actor map for easy copy; real apps untouched."
 }
