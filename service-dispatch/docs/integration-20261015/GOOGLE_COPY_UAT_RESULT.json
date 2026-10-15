@@ -1,0 +1,16 @@
+{
+  "observed_at": "2026-10-15T09:52:24.022Z",
+  "finance_script_id": "1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf",
+  "configured_copy_id": "11KP6olMtDhuLziXTzo_gycoDWpswtAc98i0Bt5wbKlQ",
+  "live_writes": false,
+  "google_uat_executed": false,
+  "inventory_error": {
+    "status": 403,
+    "reason": "Không đọc được danh sách CHOT_SO của bản sao"
+  },
+  "private_api_deployment_id": "AKfycbyk7o1cepKRcRHu2zUjQUNM9XcbbIC8zWcg44pYi3zLyF3thoECd2TEAAMf7O6T_UwbPg",
+  "execution_error": {
+    "http_status": 403,
+    "reason": "PERMISSION_DENIED"
+  }
+}

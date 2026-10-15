@@ -26,6 +26,12 @@ Finance review commit local: `4b9abfc` trên nhánh `review/close-day-unlock-202
 - `ERP_TEST_CHROMIUM=/usr/bin/chromium node service-dispatch/test/cash-corrections-browser.cjs`: UI thợ/giám đốc/kế toán, lỗi Finance, hủy NQ và quyền thợ khác; chạy thêm các bộ hồi quy trong CI.
 - Kết quả Google và danh sách ngày chốt: báo cáo artifact UAT riêng. Không gộp pass mô phỏng với Google pass.
 
+## Kết quả Google 15/10/2026
+
+Dispatch staging v51 (`dc80d4a`), copy consumers và audit được cập nhật thành công. [Probe thực tế](GOOGLE_COPY_UAT_RESULT.json): quyền Google hiện có cho phép đẩy Apps Script nhưng Sheets API và Execution API đều trả **403 PERMISSION_DENIED**. Chưa có pass UAT hay danh sách ngày CHOT_SO từ Google; không suy ra từ kiểm thử native.
+
+Chủ mở [Finance COPY editor](https://script.google.com/d/1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf/edit), chọn `runFinanceCopyCorrectionUat` → **Chạy**. Nếu Google yêu cầu, cấp quyền cho chính project bản sao. Nhật ký trả JSON gồm `existing_closing_dates`, workbook UAT mới và từng kết quả; không chứa mật khẩu/token. Hàm chỉ đọc workbook copy đang cấu hình và ghi vào workbook mẫu mới. Có thể dùng ID workbook báo cáo để đối chiếu trực tiếp giao dịch/số dư. Chưa bật khóa trên workbook copy vận hành cho tới khi chủ xem danh sách ngày cũ.
+
 ## Khôi phục
 
 **Trước khi UAT dữ liệu của bản sao đang dùng:** sao lưu đồng bộ workbook Finance COPY, workbook trạng thái Điều phối và OUTBOX; lưu ID/phiên bản project hiện hành. Workbook UAT mới được giữ riêng theo ID trong báo cáo, không cần khôi phục dữ liệu copy gốc sau test tự động.
