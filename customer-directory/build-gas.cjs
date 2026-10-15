@@ -1,0 +1,11 @@
+"use strict";
+const fs = require("node:fs"), path = require("node:path"), esbuild = require("esbuild"), destination = path.resolve(process.argv[2] || "/tmp/thanhduc-customer-directory-gas");
+if (destination.startsWith(path.resolve(__dirname, "..") + path.sep)) throw Error("OUTPUT_OUTSIDE_CHECKOUT_REQUIRED");
+fs.mkdirSync(destination, { recursive: true });
+const code = esbuild.buildSync({ entryPoints: [path.join(__dirname, "bundle-entry.cjs")], bundle: true, platform: "neutral", format: "iife", globalName: "DirectoryBundle", target: "es2020", write: false }).outputFiles[0].text;
+fs.writeFileSync(path.join(destination, "Code.gs"), code + "\n" + fs.readFileSync(path.join(__dirname, "gas-entry.gs.txt"), "utf8"));
+const client = esbuild.transformSync(fs.readFileSync(path.join(__dirname, "ui.js"), "utf8"), { loader: "js", target: "es2017", charset: "ascii", supported: { "template-literal": false } }).code;
+const payload = JSON.stringify(Buffer.from(client).toString("base64")), loader = '<script type="application/json" id="directory-source">' + payload + '<\/script><script>(function(){var s=document.createElement("script");s.text=atob(JSON.parse(document.getElementById("directory-source").textContent));document.head.appendChild(s);}());<\/script>';
+fs.writeFileSync(path.join(destination, "Index.html"), fs.readFileSync(path.join(__dirname, "ui.html"), "utf8").replace('<script src="/app.js"><\/script>', () => loader));
+fs.writeFileSync(path.join(destination, "appsscript.json"), JSON.stringify({ timeZone: "Asia/Ho_Chi_Minh", runtimeVersion: "V8", exceptionLogging: "NONE", oauthScopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/script.storage", "https://www.googleapis.com/auth/userinfo.email"], webapp: { executeAs: "USER_DEPLOYING", access: "ANYONE" } }, null, 2));
+console.log("Built customer-directory COPY package (Google login required).");

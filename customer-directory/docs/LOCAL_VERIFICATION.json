@@ -1,0 +1,25 @@
+{
+  "scope": "local fixtures and compiled GAS VM, not Google UAT or real customer migration",
+  "node": {
+    "pass": 62,
+    "fail": 0
+  },
+  "browser": {
+    "pass": true,
+    "scenarios": [
+      "single accessible picker, accentless name/partial phone/address, 20 cap and 390px no overflow",
+      "late search response cannot replace the current query or select the wrong customer",
+      "clear selection and create from no results with phone prefilled",
+      "duplicate tax blocks creation and offers existing customer",
+      "shared company phone offers add contact without creating a duplicate customer",
+      "sales edit UI locks protected fields; forged payload roles rejected server-side",
+      "merge requires a real target choice, keeps history and old KTD searches resolve to destination",
+      "copy scan shows debt first; accounting plus different director approval, allocation and mapping display"
+    ],
+    "page_errors": []
+  },
+  "gas_build": "passed",
+  "sources_read_from_google": false,
+  "other_apps_written": false,
+  "existing_app_code_changed": false
+}

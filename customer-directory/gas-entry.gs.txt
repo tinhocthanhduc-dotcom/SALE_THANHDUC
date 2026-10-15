@@ -1,0 +1,318 @@
+var CD_BLOCKED_SCRIPTS_ = ["1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql", "1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu", "1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6", "16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N", "1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN", "1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH"];
+function cdOwner_() {
+  var a = Session.getActiveUser().getEmail().toLowerCase(), e = Session.getEffectiveUser().getEmail().toLowerCase();
+  if (!a || a !== e) throw new Error("OWNER_REQUIRED");
+  return a;
+}
+function cdLock_(fn) {
+  var l = LockService.getScriptLock();
+  l.waitLock(2e4);
+  try {
+    return fn();
+  } finally {
+    l.releaseLock();
+  }
+}
+function cdHash_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function(b) {
+    return ("0" + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join("");
+}
+function cdHmac_(s, key) {
+  return Utilities.computeHmacSha256Signature(s, key, Utilities.Charset.UTF_8).map(function(b) {
+    return ("0" + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join("");
+}
+function cdWriteRows_(sheet, start, rows) {
+  if (!rows.length) return;
+  var end = start + rows.length - 1;
+  if (end > sheet.getMaxRows()) sheet.insertRowsAfter(sheet.getMaxRows(), end - sheet.getMaxRows());
+  if (rows[0].length > sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), rows[0].length - sheet.getMaxColumns());
+  sheet.getRange(start, 1, rows.length, rows[0].length).setRichTextValues(rows.map(function(row) {
+    return row.map(function(v) {
+      return SpreadsheetApp.newRichTextValue().setText(String(v === void 0 || v === null ? "" : v)).build();
+    });
+  }));
+}
+function cdProtect_(wb) {
+  Object.keys(DirectoryBundle.SCHEMA).forEach(function(name) {
+    var sh = wb.getSheetByName(name);
+    if (!sh.getProtections(SpreadsheetApp.ProtectionType.SHEET).length) {
+      var p = sh.protect().setDescription("Customer directory single writer");
+      p.removeEditors(p.getEditors());
+      if (p.canDomainEdit()) p.setDomainEdit(false);
+      if (name === "DUYET_TRUNG") p.setUnprotectedRanges([sh.getRange(2, 4, sh.getMaxRows() - 1, 1), sh.getRange(2, 10, sh.getMaxRows() - 1, 1)]);
+    }
+  });
+  var review = wb.getSheetByName("DUYET_TRUNG");
+  review.getRange(2, 4, review.getMaxRows() - 1, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Cùng khách", "Khác khách"], true).setAllowInvalid(false).build());
+}
+function setupCustomerDirectory() {
+  var owner = cdOwner_(), p = PropertiesService.getScriptProperties(), actual = ScriptApp.getScriptId();
+  if (CD_BLOCKED_SCRIPTS_.indexOf(actual) >= 0 || p.getProperty("DISPATCH_ENV") || p.getProperty("CD_SCRIPT_ID") && p.getProperty("CD_SCRIPT_ID") !== actual) throw new Error("SEPARATE_PROJECT_REQUIRED");
+  return cdLock_(function() {
+    var id = p.getProperty("CD_WORKBOOK_ID"), marker = p.getProperty("CD_MARKER"), wb;
+    if (id) {
+      if (DirectoryBundle.ORIGINAL_IDS.indexOf(id) >= 0 || p.getProperty("CD_CREATED_WORKBOOK_ID") !== id) throw new Error("COPY_TARGET_REQUIRED");
+      wb = SpreadsheetApp.openById(id);
+    } else {
+      wb = SpreadsheetApp.create("THANH_DUC_CUSTOMER_DIRECTORY_COPY");
+      wb.getSheets()[0].setName("KHACH");
+      id = wb.getId();
+      marker = Utilities.getUuid();
+      p.setProperties({ CD_WORKBOOK_ID: id, CD_CREATED_WORKBOOK_ID: id, CD_MARKER: marker, CD_SCRIPT_ID: actual, CD_SETUP_AT: (/* @__PURE__ */ new Date()).toISOString() }, false);
+    }
+    var meta = wb.getSheetByName("CD_META");
+    if (meta && meta.getLastRow() > 1) {
+      var existing = meta.getRange(1, 1, meta.getLastRow(), 2).getDisplayValues();
+      if (!existing.some(function(r) {
+        return r[0] === "TOKEN" && r[1] === marker;
+      }) || !existing.some(function(r) {
+        return r[0] === "SCRIPT_ID" && r[1] === actual;
+      })) throw new Error("COPY_MARKER_MISMATCH");
+    }
+    Object.keys(DirectoryBundle.SCHEMA).forEach(function(name) {
+      var sh = wb.getSheetByName(name) || wb.insertSheet(name), head = DirectoryBundle.SCHEMA[name];
+      if (!sh.getLastRow()) cdWriteRows_(sh, 1, [head]);
+      else if (JSON.stringify(sh.getRange(1, 1, 1, head.length).getDisplayValues()[0]) !== JSON.stringify(head)) throw new Error("SCHEMA_MISMATCH");
+      sh.setFrozenRows(1);
+    });
+    if (wb.getSheetByName("CD_META").getLastRow() === 1) cdWriteRows_(wb.getSheetByName("CD_META"), 2, [["ENV", "COPY"], ["SCRIPT_ID", actual], ["TOKEN", marker], ["COUNTER", "0"], ["REVISION", "0"]]);
+    if (p.getProperty("CD_COUNTER") === null) {
+      var counters = wb.getSheetByName("CD_META").getDataRange().getDisplayValues().filter(function(r) {
+        return r[0] === "COUNTER";
+      });
+      if (counters.length !== 1 || !/^\d+$/.test(counters[0][1])) throw new Error("COUNTER_MISSING");
+      p.setProperty("CD_COUNTER", counters[0][1]);
+    }
+    if (!p.getProperty("CD_USERS")) {
+      var users = {};
+      users[owner] = { id: owner, name: "Chủ Danh bạ", roles: ["director", "finance"], active: true };
+      p.setProperty("CD_USERS", JSON.stringify(users));
+    }
+    if (!p.getProperty("CD_CLIENTS")) p.setProperty("CD_CLIENTS", "{}");
+    p.setProperties({ CD_ENV: "COPY", CD_ENABLE_WRITES: "true" }, false);
+    wb.setSpreadsheetTimeZone("Asia/Ho_Chi_Minh");
+    cdProtect_(wb);
+    wb.setActiveSheet(wb.getSheetByName("KHACH"));
+    SpreadsheetApp.flush();
+    return { configured: true, spreadsheet_url: wb.getUrl(), api_clients: Object.keys(JSON.parse(p.getProperty("CD_CLIENTS"))).length, source_apps_connected: false };
+  });
+}
+function cdProperties_() {
+  var p = PropertiesService.getScriptProperties(), s = p.getProperties();
+  if (s.CD_ENV !== "COPY" || s.CD_ENABLE_WRITES !== "true" || s.CD_SCRIPT_ID !== ScriptApp.getScriptId() || CD_BLOCKED_SCRIPTS_.indexOf(ScriptApp.getScriptId()) >= 0) throw new Error("DIRECTORY_NOT_CONFIGURED");
+  return { p, s };
+}
+function cdRepository_(config) {
+  var s = config.s;
+  return new DirectoryBundle.Repository(new DirectoryBundle.SheetsDriver({ workbook: SpreadsheetApp.openById(s.CD_WORKBOOK_ID), workbookId: s.CD_WORKBOOK_ID, scriptId: s.CD_SCRIPT_ID, marker: s.CD_MARKER, properties: config.p, lock: cdLock_, writeRows: cdWriteRows_, flush: function() {
+    SpreadsheetApp.flush();
+  }, hash: cdHash_, id: Utilities.getUuid }), { hash: cdHash_, id: Utilities.getUuid });
+}
+function cdActor_(config) {
+  var email = Session.getActiveUser().getEmail().toLowerCase();
+  if (!email) DirectoryBundle.Core.fail("GOOGLE_IDENTITY_REQUIRED");
+  var actor = JSON.parse(config.s.CD_USERS || "{}")[email];
+  DirectoryBundle.Core.access(actor);
+  return actor;
+}
+function provisionCustomerDirectoryUser() {
+  cdOwner_();
+  var c = cdProperties_(), raw = c.p.getProperty("CD_PROVISION_USER");
+  try {
+    if (!raw) throw new Error("USER_CONFIG_REQUIRED");
+    var user = JSON.parse(raw), email = String(user.email || "").trim().toLowerCase(), allowed = ["sales", "reception", "dispatcher", "finance", "director"];
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !Array.isArray(user.roles) || !user.roles.length || user.roles.some(function(r) {
+      return allowed.indexOf(r) < 0;
+    })) throw new Error("INVALID_USER");
+    return cdLock_(function() {
+      var users = JSON.parse(c.p.getProperty("CD_USERS"));
+      users[email] = { id: email, name: String(user.name || email), roles: user.roles, active: user.active !== false };
+      c.p.setProperty("CD_USERS", JSON.stringify(users));
+      return { configured: true };
+    });
+  } finally {
+    c.p.deleteProperty("CD_PROVISION_USER");
+  }
+}
+function provisionCustomerDirectoryClient() {
+  cdOwner_();
+  var c = cdProperties_();
+  try {
+    var raw = c.p.getProperty("CD_PROVISION_CLIENT");
+    if (!raw) throw new Error("CLIENT_CONFIG_REQUIRED");
+    var item = JSON.parse(raw), users = JSON.parse(c.s.CD_USERS);
+    if (!/^[a-z0-9_-]{2,50}$/i.test(item.id) || !Array.isArray(item.actors) || !item.actors.length || item.actors.some(function(id) {
+      return !users[id];
+    })) throw new Error("INVALID_CLIENT");
+    return cdLock_(function() {
+      var clients = JSON.parse(c.p.getProperty("CD_CLIENTS"));
+      if (clients[item.id]) throw new Error("CLIENT_EXISTS");
+      clients[item.id] = { secret: (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, ""), actors: item.actors, active: true };
+      c.p.setProperty("CD_CLIENTS", JSON.stringify(clients));
+      return { configured: true, secret_location: "Script Properties CD_CLIENTS; do not send to chat" };
+    });
+  } finally {
+    c.p.deleteProperty("CD_PROVISION_CLIENT");
+  }
+}
+function configureCustomerDirectorySources() {
+  cdOwner_();
+  var c = cdProperties_();
+  if (c.p.getProperty("CD_CONFIRM_SOURCE_COPIES") !== "true") throw new Error("COPY_CONFIRMATION_REQUIRED");
+  if (!Number.isFinite(Date.parse(c.s.CD_SETUP_AT))) throw new Error("SETUP_METADATA_REQUIRED");
+  var sources = JSON.parse(c.p.getProperty("CD_SOURCE_COPIES_JSON") || "{}"), ids = [];
+  ["SALE", "CARE", "FIN", "DISPATCH"].forEach(function(app) {
+    var id = sources[app];
+    if (!id || DirectoryBundle.ORIGINAL_IDS.indexOf(id) >= 0 || id === c.s.CD_WORKBOOK_ID || ids.indexOf(id) >= 0) throw new Error("COPY_SOURCE_REQUIRED");
+    ids.push(id);
+  });
+  ids.forEach(function(id) {
+    var f = DriveApp.getFileById(id), owner = f.getOwner();
+    if (!owner || owner.getEmail().toLowerCase() !== Session.getEffectiveUser().getEmail().toLowerCase() || f.getName().indexOf("CD_COPY_") !== 0 || f.getDateCreated().getTime() < Date.parse(c.s.CD_SETUP_AT) - 6e4) throw new Error("OWNER_CREATED_COPY_REQUIRED");
+  });
+  c.p.setProperties({ CD_SOURCES: JSON.stringify(sources), CD_SOURCES_SIGNATURE: cdHmac_(DirectoryBundle.stable(sources), c.s.CD_MARKER) }, false);
+  return { configured_sources: 4, read_only: true };
+}
+function cdReadTable_(book, name) {
+  var sh = book.getSheetByName(name);
+  if (!sh) DirectoryBundle.Core.fail("SOURCE_SHEET_MISSING");
+  var width = sh.getLastColumn(), height = sh.getLastRow();
+  if (!width || !height) DirectoryBundle.Core.fail("SOURCE_SCHEMA_MISMATCH");
+  return { headers: sh.getRange(1, 1, 1, width).getDisplayValues()[0].map(function(v) {
+    return v.trim();
+  }), rows: height < 2 ? [] : sh.getRange(2, 1, height - 1, width).getValues() };
+}
+function cdReadCopies_(config) {
+  var sources = JSON.parse(config.s.CD_SOURCES || "{}"), out = [];
+  if (!config.s.CD_SOURCES_SIGNATURE || !DirectoryBundle.Auth.equal(config.s.CD_SOURCES_SIGNATURE, cdHmac_(DirectoryBundle.stable(sources), config.s.CD_MARKER))) DirectoryBundle.Core.fail("COPY_SOURCES_REQUIRED");
+  ["SALE", "CARE", "FIN", "DISPATCH"].forEach(function(app) {
+    var id = sources[app];
+    if (!id || DirectoryBundle.ORIGINAL_IDS.indexOf(id) >= 0 || id === config.s.CD_WORKBOOK_ID) DirectoryBundle.Core.fail("COPY_SOURCES_REQUIRED");
+    var book = SpreadsheetApp.openById(id);
+    if (app === "DISPATCH") {
+      var state = cdReadTable_(book, "ERP_STATE"), journal = cdReadTable_(book, "ERP_JOURNAL"), snapshot = DirectoryBundle.Sources.decodeSnapshot(state.rows, cdHash_, ["SNAPSHOT"]), intent = DirectoryBundle.Sources.decodeSnapshot(journal.rows, cdHash_, ["PREPARED", "COMMITTED"]);
+      if (intent && (!snapshot || intent.revision > snapshot.revision)) DirectoryBundle.Core.fail("DISPATCH_COPY_UNSETTLED");
+      out = out.concat(DirectoryBundle.Sources.fromDispatch(snapshot ? snapshot.state : { customers: {}, orders: {} }));
+    } else {
+      var tables = {};
+      tables[DirectoryBundle.Sources.SOURCE_TABLES[app]] = cdReadTable_(book, DirectoryBundle.Sources.SOURCE_TABLES[app]);
+      if (app === "FIN") tables.CONG_NO_KH = cdReadTable_(book, "CONG_NO_KH");
+      out = out.concat(DirectoryBundle.Sources.fromTables(app, tables));
+    }
+  });
+  return out;
+}
+function cdApplyReviewChoices_(config, actor, repository) {
+  DirectoryBundle.Core.access(actor, ["finance"]);
+  var wb = SpreadsheetApp.openById(config.s.CD_WORKBOOK_ID), sheet = wb.getSheetByName("DUYET_TRUNG"), rows = sheet.getLastRow() < 2 ? [] : sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getDisplayValues(), count = 0;
+  rows.forEach(function(r) {
+    if (!r[3]) return;
+    repository.submit({ type: "review_import", payload: { id: r[0], decision: r[3] === "Cùng khách" ? "CUNG_KHACH" : r[3] === "Khác khách" ? "KHAC_KHACH" : r[3], reason: r[9] }, expected_version: Number(r[7]), idempotency_key: "sheet-review:" + r[0] + ":" + r[7] + ":" + actor.id }, actor);
+    count++;
+  });
+  return { approved: count };
+}
+function directoryUi(request) {
+  return DirectoryBundle.Service.response(function() {
+    if (request.action === "setup") return setupCustomerDirectory();
+    var c = cdProperties_(), actor = cdActor_(c), repo = cdRepository_(c);
+    if (request.action === "apply_review_choices") return cdApplyReviewChoices_(c, actor, repo);
+    var result = DirectoryBundle.Service.handle(request, actor, repo, function() {
+      return cdReadCopies_(c);
+    });
+    if (request.action === "bootstrap" && actor.roles.some(function(r) {
+      return r === "finance" || r === "director";
+    })) result.spreadsheet_url = "https://docs.google.com/spreadsheets/d/" + c.s.CD_WORKBOOK_ID + "/edit";
+    return result;
+  });
+}
+function doPost(e) {
+  var result = DirectoryBundle.Service.response(function() {
+    if (!e || !e.postData || e.postData.contents.length > 18e5) DirectoryBundle.Core.fail("INVALID_REQUEST");
+    var envelope = JSON.parse(e.postData.contents), c = cdProperties_(), actor = DirectoryBundle.Auth.authenticate(envelope, { clients: JSON.parse(c.s.CD_CLIENTS), users: JSON.parse(c.s.CD_USERS), hmac: cdHmac_ });
+    return DirectoryBundle.Service.handle(envelope, actor, cdRepository_(c), function() {
+      return cdReadCopies_(c);
+    });
+  });
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("Index").setTitle("Thành Đức · Danh bạ khách").addMetaTag("viewport", "width=device-width, initial-scale=1");
+}
+function checkCustomerDirectory() {
+  cdOwner_();
+  var c = cdProperties_(), r = cdRepository_(c).read("overview", {}, cdActor_(c));
+  return { configured: true, revision: r.revision, customer_count: r.customers, sources_configured: !!c.s.CD_SOURCES, anonymous_writes: false };
+}
+function runCustomerDirectoryCopyUat() {
+  cdOwner_();
+  var config = cdProperties_(), wb = SpreadsheetApp.create("CUSTOMER_DIRECTORY_UAT_PRIVATE"), marker = Utilities.getUuid(), prefix = "CD_UAT_COUNTER_" + Utilities.getUuid(), checks = 0;
+  Object.keys(DirectoryBundle.SCHEMA).forEach(function(name) {
+    var sh = wb.insertSheet(name);
+    cdWriteRows_(sh, 1, [DirectoryBundle.SCHEMA[name]]);
+  });
+  cdWriteRows_(wb.getSheetByName("CD_META"), 2, [["ENV", "COPY"], ["SCRIPT_ID", ScriptApp.getScriptId()], ["TOKEN", marker], ["COUNTER", "0"], ["REVISION", "0"]]);
+  var props = { getProperty: function() {
+    return config.p.getProperty(prefix);
+  }, setProperty: function(k, v) {
+    config.p.setProperty(prefix, v);
+  } }, driver = new DirectoryBundle.SheetsDriver({ workbook: wb, workbookId: wb.getId(), scriptId: ScriptApp.getScriptId(), marker, properties: props, lock: cdLock_, writeRows: cdWriteRows_, flush: function() {
+    SpreadsheetApp.flush();
+  }, hash: cdHash_, id: Utilities.getUuid }), repo = new DirectoryBundle.Repository(driver, { hash: cdHash_, id: Utilities.getUuid }), kt = { id: "uat-accountant", roles: ["finance"] }, gd = { id: "uat-director", roles: ["director"] }, sales = { id: "uat-sales", roles: ["sales"] };
+  function yes(v) {
+    if (!v) throw new Error("COPY_UAT_ASSERTION_FAILED");
+    checks++;
+  }
+  function rejected(fn, code) {
+    try {
+      fn();
+    } catch (e) {
+      yes((e.code || e.message) === code);
+      return;
+    }
+    throw new Error("COPY_UAT_ASSERTION_FAILED");
+  }
+  function submit(type, payload, actor, version, key) {
+    return repo.submit({ type, payload, expected_version: version, idempotency_key: key || Utilities.getUuid() }, actor || kt);
+  }
+  try {
+    var first = submit("create", { customer: { LOAI: "CONG_TY", TEN: "Đơn vị mẫu UAT", MST: "0101234567", DIEN_THOAI: "+84 90 123 4567" } }, kt, void 0, "uat-create");
+    yes(first.customer.MA_KHACH === "KTD-000001");
+    yes(first.customer.DIEN_THOAI[0] === "0901234567");
+    yes(submit("create", { customer: { LOAI: "CONG_TY", TEN: "Đơn vị mẫu UAT", MST: "0101234567", DIEN_THOAI: "+84 90 123 4567" } }, kt, void 0, "uat-create").replayed === true);
+    rejected(function() {
+      submit("create", { customer: { LOAI: "CONG_TY", TEN: "Trùng MST mẫu", MST: "0101234567" } });
+    }, "DUPLICATE_TAX");
+    var second = submit("create", { customer: { TEN: "Nguyễn mẫu", DIEN_THOAI: "0912345678" } }).customer;
+    rejected(function() {
+      submit("create", { customer: { TEN: "Trùng SĐT mẫu", DIEN_THOAI: "+84 91 234 5678" } });
+    }, "DUPLICATE_PHONE");
+    rejected(function() {
+      submit("update", { ma: second.MA_KHACH, customer: { TEN: "Không có quyền" } }, sales, 1);
+    }, "FORBIDDEN");
+    submit("update", { ma: second.MA_KHACH, customer: { TEN: "Nguyễn mẫu đã sửa" } }, kt, 1);
+    rejected(function() {
+      submit("update", { ma: second.MA_KHACH, customer: { TEN: "Version cũ" } }, kt, 1);
+    }, "VERSION_CONFLICT");
+    submit("merge", { source: second.MA_KHACH, target: first.customer.MA_KHACH, target_version: 1, reason: "Gộp mẫu UAT" }, gd, 2);
+    yes(repo.read("search", { q: "nguyen mau" }, kt).customers[0].MA_KHACH === first.customer.MA_KHACH);
+    var rows = [{ app: "SALE", ma_cu: "TEST-S1", TEN: "Đơn vị nhập mẫu", MST: "0201234567", DIEN_THOAI: "0981111111" }, { app: "FIN", ma_cu: "TEST-F1", TEN: "Đơn vị nhập mẫu", MST: "0201234567", DIEN_THOAI: "0981111111", open_debt: true }];
+    submit("scan_import", { rows }, kt, repo.read("overview", {}, kt).revision);
+    var review = repo.read("import_view", {}, kt).reviews[0];
+    yes(review.open_debt === true);
+    submit("review_import", { id: review.id, decision: "CUNG_KHACH", reason: "Đối chiếu mẫu" }, kt, review.VERSION);
+    var held = submit("finalize_import", {}, kt, repo.read("overview", {}, kt).revision);
+    yes(held.allocated === 0 && held.pending === 1);
+    submit("review_import", { id: review.id, director: true, reason: "Xác nhận nợ mẫu" }, gd, review.VERSION + 1);
+    yes(submit("finalize_import", {}, kt, repo.read("overview", {}, kt).revision).allocated === 1);
+    var before = repo.read("mappings", {}, kt);
+    submit("scan_import", { rows }, kt, repo.read("overview", {}, kt).revision);
+    yes(submit("finalize_import", {}, kt, repo.read("overview", {}, kt).revision).allocated === 0);
+    yes(JSON.stringify(repo.read("mappings", {}, kt)) === JSON.stringify(before));
+    return { pass: true, checks, synthetic_only: true, root_untouched: true, workbook_url: wb.getUrl() };
+  } finally {
+    config.p.deleteProperty(prefix);
+  }
+}

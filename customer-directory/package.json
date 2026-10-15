@@ -1,0 +1,1 @@
+{"name":"thanhduc-customer-directory-copy","version":"0.1.0","private":true,"scripts":{"test":"node --test test/*.test.cjs","test:browser":"node test/browser.cjs","start":"node server.cjs","build":"node build-gas.cjs"},"devDependencies":{"esbuild":"0.25.12"}}
