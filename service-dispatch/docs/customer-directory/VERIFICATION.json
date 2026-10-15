@@ -19,8 +19,8 @@
   "native_hmac_connection": "pending owner-run check; existing secret/mapping retained; native unsigned/bad-signature rejection verified",
   "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
   "deployment": {
-    "dispatch_native_version": 60,
-    "dispatch_workflow": 38772565658,
+    "dispatch_native_version": 61,
+    "dispatch_workflow": 38774232966,
     "directory_copy_native_version": 8,
     "directory_workflow": 38768136190,
     "same_urls": true,
@@ -48,5 +48,14 @@
     "run": 38768135834,
     "result": "success"
   },
-  "api_native_smoke": "customer-directory/API_NATIVE_VERIFICATION.json"
+  "api_native_smoke": "customer-directory/API_NATIVE_VERIFICATION.json",
+  "transport_followup": {
+    "commit": "e2ccf52",
+    "node_passed": 321,
+    "node_failed": 0,
+    "approved_copy_api_pinned": true,
+    "explicit_contentservice_get_redirect": true,
+    "sanitized_diagnostic_property": "DISPATCH_CD_TRANSPORT_CHECK",
+    "owner_signed_check": "pending"
+  }
 }

@@ -402,3 +402,5 @@ Dispatch deployment completed: v60, workflow 38772565658, original deployment ID
 ### 2026-10-16 — follow-up DIRECTORY_UNAVAILABLE
 
 Owner still reports generic failure after v60. Confirmed prior route only recognized one private UI deployment URL; other legacy URL values were not migrated. COPY now targets the approved pinned API regardless of stale URL property. ContentService 302/303 is explicitly fetched with GET, only on the trusted echo origin, without forwarding signed payload. Sanitized DISPATCH_CD_TRANSPORT_CHECK distinguishes HTTP/login/non-JSON/network failures without private response logging. Native signed success remains unconfirmed until owner reruns check; no claim that the observed underlying failure is proven. No setup, data, secret, role or enabled-flag changes.
+
+Follow-up deployed as Dispatch v61 at original staging URL, workflow 38774232966 succeeded. Commit e2ccf52; combined Node 321/321. Native signed check remains pending owner rerun after reloading Apps Script editor.
