@@ -18,5 +18,17 @@
     "archived command replay",
     "20-snapshot retention",
     "70 percent warning"
-  ]
+  ],
+  "deployment": {
+    "native_version": 56,
+    "source_commit": "9d828cb",
+    "request_commit": "5acc18d",
+    "workflow_run": 38761763575,
+    "workflow_conclusion": "success",
+    "same_deployment_id": true,
+    "http_status": 200,
+    "served_client_matches_local": true,
+    "cache_busting_query": "storage_fix=56",
+    "setup_reset_run": false
+  }
 }

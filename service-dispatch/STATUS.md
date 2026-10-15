@@ -4,7 +4,7 @@
 
 - Tự mở rộng lưới trong maxRows; giữ 20 snapshot, lưu journal COMMITTED cũ vào ERP_ARCHIVE có kiểm checksum trước khi xóa dưới ScriptLock. Không reset dữ liệu/người dùng/cấu hình. Màn Đồng bộ hiện dung lượng và cảnh báo 70%; lỗi đầy bộ nhớ bằng tiếng Việt.
 - Trước pilot vẫn phải chuyển bảng chuẩn hóa; archive tab vẫn tính quota workbook và snapshot vẫn giới hạn 1 triệu ký tự. [Cơ chế phục hồi, khôi phục và ước tính 30 đơn/ngày](docs/storage-capacity/README.md).
-- Local đạt 219/219 Node và 22/22 bộ trình duyệt, build GAS đạt. Chưa xác nhận giao dịch Google; [kiểm chứng](docs/storage-capacity/VERIFICATION.json).
+- Local đạt 219/219 Node và 22/22 bộ trình duyệt, build GAS đạt. Đã deploy staging v56, URL cũ; HTTP 200 và client khớp build khi tải mới. Chưa xác nhận thao tác Nhận đơn trên dữ liệu Google (cần phiên thợ); [kiểm chứng](docs/storage-capacity/VERIFICATION.json).
 
 ## 15/10/2026 — ô tìm/chọn hợp nhất
 
