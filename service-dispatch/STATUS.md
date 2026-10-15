@@ -372,3 +372,6 @@ Mọi ô tiền (đơn giá giao kèm/giá hàng, dòng công/vật tư, khoản
 MoneyInput là thành phần duy nhất cho desktop/mobile và các dòng động; helper cũ của thợ gọi lại adapter này. Money payload/đơn giá đọc số nguyên qua value(), không Number() trực tiếp trên chuỗi có dấu chấm. Ô số lượng và nút tăng/giảm giữ nguyên, không đổi API/quyền/nghiệp vụ server. Cache/nhật ký/idempotency các khoản thu không đổi.
 
 Kiểm tra: 138/138 Node Điều phối, 71/71 Node ERP nền; toàn bộ 22 suite browser đạt (gồm mới money-input-browser, 6 nhóm ca: gõ/server số nguyên, sửa giữa và con trỏ, clipboard thật, giới hạn/lỗi/đọc chữ, xóa dấu phân cách, giá cũ và đơn giá). Kiểm tra GAS build đạt. Xem money-input-verification.json. Hai test cũ cập nhật kỳ vọng desktop amount type=text và dữ liệu lỗi theo quy tắc lọc ký tự mới. Chưa deploy Google; DEPLOY_REQUEST giữ nguyên.
+
+
+Deploy ô tiền hoàn tất: Google staging **v55**, workflow **38754513113** success, cập nhật cùng deployment AKfycbwLOGN1y4s… / cùng URL. HTTP smoke 200, không chuyển tới đăng nhập Gmail; client được phục vụ khớp payload build đã test. Chưa chạy giao dịch Google bằng tài khoản nhân viên trong lượt smoke này. Không chạy setup/reset, không ghi giao dịch thử vào dữ liệu Google.

@@ -143,5 +143,16 @@
   ],
   "new_money_input_scenarios": 6,
   "gas_build": "passed",
-  "google_deployed": false
+  "google_deployed": true,
+  "deployment": {
+    "version": 55,
+    "ci_run": 38754513113,
+    "code_commit": "42fe696",
+    "deployment_request_commit": "5c6bf75",
+    "existing_deployment_updated": true,
+    "http_status": 200,
+    "google_login_redirect": false,
+    "served_client_matches_tested_build": true,
+    "authenticated_google_workflow_tested": false
+  }
 }
