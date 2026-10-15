@@ -127,11 +127,15 @@ jobs:
           clasp push --force
           clasp --json list-deployments > "$RUNNER_TEMP/customer-deployments.json"
           node "$GITHUB_WORKSPACE/customer-directory/deploy.cjs" "$RUNNER_TEMP/customer-registry/project.json" "$RUNNER_TEMP/customer-deployments.json" "$RUNNER_TEMP/customer-registry/deployment.json"
-      - name: Try owner setup and synthetic GAS UAT only in the new project
+      - name: Try owner setup/UAT only when explicitly requested
         shell: bash
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/customer-directory-gas"
+          if ! node -e 'process.exit(require(process.argv[1]).run_setup===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            node -e 'require("node:fs").writeFileSync(process.argv[1],JSON.stringify({confirmed:false,skipped:true,reason:"Owner setup/UAT not requested; preserve existing COPY data and configuration."}))' "$RUNNER_TEMP/customer-registry/setup-status.json"
+            exit 0
+          fi
           timeout 45s clasp --json run setupCustomerDirectory > "$RUNNER_TEMP/customer-setup-private.json" 2> "$RUNNER_TEMP/customer-setup-private.err" || true
           node "$GITHUB_WORKSPACE/customer-directory/execution-status.cjs" setup "$RUNNER_TEMP/customer-setup-private.json" "$RUNNER_TEMP/customer-registry/setup-status.json"
           if node -e 'process.exit(require(process.argv[1]).confirmed?0:1)' "$RUNNER_TEMP/customer-registry/setup-status.json"; then

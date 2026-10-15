@@ -46,7 +46,7 @@ function execute(state,command,context){
     const oldCode=o.ma_khach_chung||o.customer_snapshot.ma_khach_chung||null;
     // Keep original snapshots in history. Work address, prices and debt decisions never change.
     o.customer_snapshot=clone(entity);o.ma_khach_chung=c.ma_khach_chung;
-    if(oldCode!==c.ma_khach_chung)next.events.push({id:fresh(),entity_id:o.id,order_id:o.id,type:oldCode?'directory_customer_merged':'directory_customer_linked',actor_id:actor.id,actor_name:actor.name||actor.id,at,version:o.version,details:{from:oldCode,to:c.ma_khach_chung}});
+    if(oldCode!==c.ma_khach_chung)next.events.push({id:fresh(),entity_id:o.id,order_id:o.id,type:oldCode?'directory_customer_merged':'directory_customer_linked',actor_id:actor.id,actor_name:actor.name||actor.id,at,version:o.version,reason:(oldCode||'Chưa có mã chung')+' → '+c.ma_khach_chung,details:{from:oldCode,to:c.ma_khach_chung}});
   }
  }else if(Object.hasOwn(Integration.roles,command.type)){const applied=Integration.apply(next,command,{actor,at,cat:context.catalogue,verifiedResult:context.sync_verified});entity=applied.entity;}else if(Object.hasOwn(Money.roles,command.type)){const applied=Money.apply(next,command,{actor,at,fresh,number,cat:context.catalogue});entity=applied.entity;order=applied.order;eventDetails=applied.details;}else if(command.type==='create_customer'){
   if(context.directory_required)fail('DIRECTORY_SINGLE_WRITER');

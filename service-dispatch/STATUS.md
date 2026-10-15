@@ -8,7 +8,7 @@
 - Khách cũ cần Gán mã KTD rõ ràng, không tự ghép theo tên. Sau bật, server chặn đơn mới chưa có mã; đơn cũ tiếp tục được khi Danh bạ lỗi. Finance outbox mới kèm mã chung (NQ nhiều đơn kèm map theo order), chưa đổi consumer Finance ghép ID_KH.
 - Cấu hình OWNER còn phải làm: [hướng dẫn 5 bước](docs/customer-directory/OWNER_SETUP.md). Mặc định chưa bật kết nối cho đến khi chủ tạo client/actor, copy secret và check thành công. Chưa có xác nhận giao dịch native Google giữa hai project.
 - Giới hạn nền tảng: UI hết chờ sau 8s, HTTP UrlFetchApp có thể vẫn chạy muộn; không tuyên bố đã ngắt request server sau 8s. Toàn bộ luồng ghi retry cùng khóa. Cần backend/proxy khác nếu bắt buộc timeout network cứng.
-- Local: 316/316 Node hai app + ERP; 23/23 bộ browser Điều phối (bộ mới 10 kịch bản 390px) và 11 kịch bản browser Danh bạ. Hai gói GAS build đạt. Không đụng app/sheet thật.
+- Local: 316/316 Node hai app + ERP; 23/23 bộ browser Điều phối (bộ mới 11 kịch bản 390px) và 11 kịch bản browser Danh bạ. Hai gói GAS build đạt. Không đụng app/sheet thật.
 
 
 ## 15/10/2026 — vá dung lượng staging

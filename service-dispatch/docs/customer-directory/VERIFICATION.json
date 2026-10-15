@@ -11,7 +11,7 @@
     "passed": 11,
     "failed": 0
   },
-  "new_browser_scenarios": 10,
+  "new_browser_scenarios": 11,
   "gas_builds": [
     "service-dispatch",
     "customer-directory"
@@ -19,5 +19,6 @@
   "native_hmac_connection": "pending owner client/actor/secret provisioning",
   "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
   "deployment": "pending",
-  "snapshot_example": "synthetic fixtures only; KTD-000201 not inserted on Google"
+  "snapshot_example": "synthetic fixtures only; KTD-000201 not inserted on Google",
+  "directory_setup_workflow_note": "Existing workflow attempted setup via Execution API on COPY deployment v7; completion unconfirmed (NOT_FOUND). Future setup/UAT now requires explicit run_setup=true; default is skip. No source rescan requested."
 }
