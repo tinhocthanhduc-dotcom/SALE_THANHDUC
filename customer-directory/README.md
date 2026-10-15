@@ -84,3 +84,8 @@ node customer-directory/server.cjs
 ```
 
 Máy có Chromium có thể đặt `ERP_TEST_CHROMIUM=/usr/bin/chromium`. Server nội bộ chỉ 127.0.0.1, dữ liệu giả trong RAM, không đọc Google; dừng/mở lại mất fixture, không phải môi trường dữ liệu thật. Không nhập khách thật vào fixture. Build ra ngoài checkout, dùng loader base64 tránh lỗi HtmlService document.write đã gặp ở Điều phối. Không log payload hoặc tên/SĐT/MST khách. File cấu hình riêng `.private/`, `*.local.json`, node_modules bị ignore.
+
+
+## Bản sửa quét SĐT cũ (revision 2)
+
+Quét không dừng vì số điện thoại nguồn không hợp lệ. Tách từng số, chuẩn hóa phần hợp lệ; phần lỗi không dùng để ghép và không tự đoán. Giao diện Gộp khách cũ có danh sách tổng hợp nguồn/mã cũ/SĐT gốc/phần lỗi. Giá trị gốc và phần lỗi giữ ở JSON của sheet NGUON (DIEN_THOAI_GOC, DIEN_THOAI_LOI), kể cả sau cấp mã. Chủ có thể sửa nhiều dòng trên bản sao nguồn rồi quét lại. API tạo/sửa danh bạ vẫn kiểm SĐT nghiêm ngặt. Cần rà danh sách lỗi trước khi duyệt/cấp mã; SĐT chưa xác minh không được tự bổ sung vào khách. Không sửa dữ liệu nguồn hoặc app thật.

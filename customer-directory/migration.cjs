@@ -1,10 +1,21 @@
 "use strict";
 const C = require("./core.cjs");
 const SOURCES = ["SALE", "CARE", "FIN", "DISPATCH"];
+// Legacy imports retain untrusted phone text for review; live CRUD stays strict.
+function importPhones(value) {
+  const raw = Array.isArray(value) ? value.map(String).join("; ") : String(value ?? "");
+  const valid = [], invalid = [];
+  for (const part of raw.split(/[;,/\n]/).map(x => x.trim()).filter(Boolean)) {
+    try { valid.push(...C.phones(part)); }
+    catch (err) { if (err.code !== "INVALID_PHONE") throw err; invalid.push(part); }
+  }
+  return { raw, valid: [...new Set(valid)].sort(), invalid };
+}
 function normalize(row) {
   if (!SOURCES.includes(row.app) || !String(row.ma_cu || "").trim()) C.fail("SOURCE_ID_REQUIRED");
   if (/[;\r\n]/.test(String(row.ma_cu)) || String(row.ma_cu).length > 180) C.fail("SOURCE_ID_INVALID");
-  const r = { ...row, app: row.app, ma_cu: String(row.ma_cu).trim(), TEN: String(row.TEN || "").trim(), MST: C.tax(row.MST), DIEN_THOAI: C.phones(row.DIEN_THOAI), DIA_CHI: String(row.DIA_CHI || "").trim(), EMAIL: String(row.EMAIL || "").trim(), NGUOI_LIEN_HE: row.NGUOI_LIEN_HE || [], LOAI: row.LOAI === "CONG_TY" || C.tax(row.MST) ? "CONG_TY" : "CA_NHAN", CHO_PHEP_NO: row.CHO_PHEP_NO === true || row.terms === "credit", HAN_MUC_NO: Number(row.HAN_MUC_NO || 0), open_debt: row.open_debt === true, updated_at: row.updated_at && Number.isFinite(Date.parse(row.updated_at)) ? new Date(row.updated_at).toISOString() : null };
+  const phone = importPhones(row.DIEN_THOAI_GOC ?? row.DIEN_THOAI);
+  const r = { ...row, app: row.app, ma_cu: String(row.ma_cu).trim(), TEN: String(row.TEN || "").trim(), MST: C.tax(row.MST), DIEN_THOAI: phone.valid, DIEN_THOAI_GOC: phone.raw, DIEN_THOAI_LOI: phone.invalid, DIA_CHI: String(row.DIA_CHI || "").trim(), EMAIL: String(row.EMAIL || "").trim(), NGUOI_LIEN_HE: row.NGUOI_LIEN_HE || [], LOAI: row.LOAI === "CONG_TY" || C.tax(row.MST) ? "CONG_TY" : "CA_NHAN", CHO_PHEP_NO: row.CHO_PHEP_NO === true || row.terms === "credit", HAN_MUC_NO: Number(row.HAN_MUC_NO || 0), open_debt: row.open_debt === true, updated_at: row.updated_at && Number.isFinite(Date.parse(row.updated_at)) ? new Date(row.updated_at).toISOString() : null };
   if (!Number.isSafeInteger(r.HAN_MUC_NO) || r.HAN_MUC_NO < 0) C.fail("SOURCE_AMOUNT_INVALID");
   if (!r.TEN) C.fail("SOURCE_NAME_REQUIRED");
   r.key = r.app + ":" + r.ma_cu;
@@ -89,7 +100,7 @@ function plan(rows, oldReviews = {}, hash) {
     const keys = group.keys, id = "DT-AUTO-" + hash(keys.join("\n")).slice(0, 24), fingerprint = hash(C.stable(keys.map((k) => byKey[k]))), old = oldReviews[id], same = old?.fingerprint === fingerprint;
     reviews[id] = { id, kind: "AUTO_DEBT", rows: keys.map((k) => byKey[k]), fingerprint, keys, left: [keys[0]], right: keys.slice(1), open_debt: true, VERSION: same ? old.VERSION : old ? old.VERSION + 1 : 1, decision: same ? old.decision : null, approved_by: same ? old.approved_by : null, approved_at: same ? old.approved_at : null, director_by: same ? old.director_by : null, director_at: same ? old.director_at : null, reason: same ? old.reason : "", changed_since_approval: !!old && !same };
   }
-  const report = { sources: Object.fromEntries(SOURCES.map((app) => [app, records.filter((r) => r.app === app).length])), source_rows: records.length, automatic_joins: automatic, automatic_groups: autoGroups.filter((g) => g.keys.length > 1).length, pending_review: Object.values(reviews).filter((r) => !r.decision || r.open_debt && !r.director_by).length, missing_phone_and_tax: records.filter((r) => !r.MST && !r.DIEN_THOAI.length).length, missing_phone: records.filter((r) => !r.DIEN_THOAI.length).length, unknown_updated_at: records.filter((r) => !r.updated_at).length };
+  const report = { invalid_phone_rows: records.filter(r => r.DIEN_THOAI_LOI.length).map(r => ({ app: r.app, ma_cu: r.ma_cu, raw: r.DIEN_THOAI_GOC, invalid: r.DIEN_THOAI_LOI })), sources: Object.fromEntries(SOURCES.map((app) => [app, records.filter((r) => r.app === app).length])), source_rows: records.length, automatic_joins: automatic, automatic_groups: autoGroups.filter((g) => g.keys.length > 1).length, pending_review: Object.values(reviews).filter((r) => !r.decision || r.open_debt && !r.director_by).length, missing_phone_and_tax: records.filter((r) => !r.MST && !r.DIEN_THOAI.length).length, missing_phone: records.filter((r) => !r.DIEN_THOAI.length).length, unknown_updated_at: records.filter((r) => !r.updated_at).length };
   return { records, autoGroups, reviews, report };
 }
 function decide(state, p, ctx) {

@@ -156,3 +156,31 @@ test("equivalent source field order does not invalidate a reviewed group", () =>
   assert.equal(f.driver.state.reviews[r.id].decision, "CUNG_KHACH");
   assert.equal(f.driver.state.reviews[r.id].director_by, "director@example.test");
 });
+
+test("legacy bad phones are collected together, raw preserved, valid parts alone used for matching", () => {
+  const rows = [
+    { app: "SALE", ma_cu: "S1", TEN: "An", DIEN_THOAI: "+84 901 234 567; abc; 123" },
+    { app: "CARE", ma_cu: "C1", TEN: "An", DIEN_THOAI: "0901234567" },
+    { app: "SALE", ma_cu: "S2", TEN: "Bình", DIEN_THOAI: "abc" },
+    { app: "CARE", ma_cu: "C2", TEN: "Khác", DIEN_THOAI: "abc" }
+  ];
+  const p = M.plan(rows, {}, hash);
+  assert.equal(p.report.source_rows, 4);
+  assert.equal(p.report.invalid_phone_rows.length, 3);
+  assert.equal(p.report.automatic_groups, 1);
+  const r = p.records.find(x => x.ma_cu === "S1");
+  assert.deepEqual(r.DIEN_THOAI, ["0901234567"]);
+  assert.equal(r.DIEN_THOAI_GOC, rows[0].DIEN_THOAI);
+  assert.deepEqual(r.DIEN_THOAI_LOI, ["abc", "123"]);
+  assert.deepEqual(M.plan(p.records, {}, hash).report, p.report);
+  const f = fixture();
+  scan(f, rows);
+  finalize(f);
+  const code = f.driver.state.mappings["SALE:S1"];
+  assert.deepEqual(f.driver.state.customers[code].DIEN_THOAI, ["0901234567"]);
+  assert.equal(f.driver.state.sources["SALE:S1"].DIEN_THOAI_GOC, rows[0].DIEN_THOAI);
+  const mappings = C.clone(f.driver.state.mappings);
+  scan(f, rows); finalize(f);
+  assert.deepEqual(f.driver.state.mappings, mappings);
+  assert.throws(() => f.submit("create", { customer: { TEN: "Live", DIEN_THOAI: "abc" } }, "finance"), /INVALID_PHONE/);
+});

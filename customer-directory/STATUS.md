@@ -36,3 +36,10 @@
 Chưa sửa/ghi/deploy Sales, CARE, Finance thật; chưa nối Điều phối hoặc điền MA_KHACH_CHUNG, chưa gộp công nợ/số dư của app nguồn. Chưa cấp key tích hợp cho các app. Không công khai workbook/khách/khóa. Có gate workflow để đợt này không tự redeploy Điều phối hoặc consumer cũ; chỉ request deployment tương ứng đổi mới được chạy.
 
 Trước pilot: UAT Google nhiều tài khoản và số dữ liệu thật trên COPY; rà dữ liệu xấu/thiếu ngày/nợ cũ, đo thời gian/index/journal và backup/retention, xử lý nhóm vượt giới hạn30k quan hệ/8MB transaction, quy trình sửa gộp nhầm/gán nhóm vào khách tạo tay. Các bước nối app và triển khai dữ liệu thật cần đợt phê duyệt riêng.
+
+
+## Bản sửa quét SĐT cũ (revision 2)
+
+Quét không dừng vì số điện thoại nguồn không hợp lệ. Tách từng số, chuẩn hóa phần hợp lệ; phần lỗi không dùng để ghép và không tự đoán. Giao diện Gộp khách cũ có danh sách tổng hợp nguồn/mã cũ/SĐT gốc/phần lỗi. Giá trị gốc và phần lỗi giữ ở JSON của sheet NGUON (DIEN_THOAI_GOC, DIEN_THOAI_LOI), kể cả sau cấp mã. Chủ có thể sửa nhiều dòng trên bản sao nguồn rồi quét lại. API tạo/sửa danh bạ vẫn kiểm SĐT nghiêm ngặt. Cần rà danh sách lỗi trước khi duyệt/cấp mã; SĐT chưa xác minh không được tự bổ sung vào khách. Không sửa dữ liệu nguồn hoặc app thật.
+
+Kiểm tra revision 2: 63/63 Node; 8 nhóm trình duyệt 390px (gồm bảng SĐT lỗi, chuỗi HTML được escape); build GAS đạt. Chưa đối chiếu kết quả quét dữ liệu thật trên Google.
