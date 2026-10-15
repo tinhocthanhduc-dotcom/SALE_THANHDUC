@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-10-15T00:21:40.576Z",
+  "read_only": true,
+  "properties_read": false,
+  "sheets_read": false,
+  "projects": {
+    "dispatch": {
+      "readable": false,
+      "http_status": 403,
+      "status": "PERMISSION_DENIED"
+    },
+    "warehouse": {
+      "readable": false,
+      "http_status": 403,
+      "status": "PERMISSION_DENIED"
+    },
+    "finance": {
+      "readable": false,
+      "http_status": 403,
+      "status": "PERMISSION_DENIED"
+    }
+  }
+}

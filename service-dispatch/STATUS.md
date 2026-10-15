@@ -1,5 +1,12 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — người dùng báo đã hoàn tất cài hai consumer
+
+- Người dùng xác nhận đã làm setupCopyConsumer/chuyển khóa/enableCopyConsumer. Đây là xác nhận từ người dùng; chưa có kết quả ghi sổ UAT được đối chiếu.
+- Đã thử đọc metadata tiến trình bằng OAuth có sẵn, chỉ tên hàm/trạng thái/thời gian, không đọc secrets/sheet/log nội dung. Google trả 403 PERMISSION_DENIED cho cả Điều phối/Kho-copy/Finance-copy. Không suy thành consumer lỗi hoặc thiếu quyền ghi sheet; cũng không coi consumer/trigger đã được tự động xác minh. Kết quả: docs/integration-20261015/runtime-audit-after-owner.json.
+- Bước kế: owner cài installDispatchOutboxPump với director ID hợp lệ; giám đốc gán các ID Finance hiện hữu, rồi dùng UAT_FIRST_ORDER.md trên copies và đối chiếu ledger/số dư/số phiếu. Chưa bật đồng bộ thật hoặc deploy app thật.
+
+
 ## 15/10/2026 — đã tạo hai consumer Google riêng cho 4 copy ID được cung cấp
 
 - Warehouse project `1gU8n4jcCf52xqZyVzpP13Ba-M5B5Dko0c3qH12VWMOZnxz5xsIROseXn`; Finance project `1FuBiv-e2UbP-FjLaNoh56XX8BEllZWIX7lbiee_dejmqAVFgzF8uAuqf`. Source đã push, chưa deploy web app/cài trigger/chuyển token-HMAC/bật consumer. Đúng 4 ID trong ops/integration-copy-20261015.request.json; thay ID qua Properties khác pin bị chặn. Finance consumer không chuyển ảnh biên lai, ảnh giữ ở Điều phối; không cần thêm ID folder Finance để khởi động.
