@@ -657,6 +657,57 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
 .choice-field{position:relative;min-width:0;width:100%;font-size:16px;text-align:left}.choice-native{position:absolute!important;left:0;top:0;width:1px!important;min-width:0!important;height:1px!important;min-height:0!important;opacity:0!important;clip-path:inset(50%);overflow:hidden;pointer-events:none;padding:0!important;border:0!important}.choice-search{width:100%;padding-right:52px;min-height:50px;font-size:16px;text-overflow:ellipsis}.choice-field .choice-clear{position:absolute;right:2px;top:2px;width:46px;min-height:46px;padding:0;background:transparent;border:0;font-size:26px;z-index:2}.choice-popup{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:180;background:white;color:#19354b;border:1px solid #8aa1b3;border-radius:12px;box-shadow:0 8px 25px #16354d30;overflow:auto;overscroll-behavior:contain}.choice-field.opens-up .choice-popup{top:auto;bottom:calc(100% + 4px)}.choice-popup [role=option]{padding:12px;min-height:52px;border-bottom:1px solid #e7edf1;cursor:pointer;overflow-wrap:anywhere;font-size:16px;line-height:1.45}.choice-popup [role=option][aria-selected=true]{background:#e4f0fa;outline:2px solid #185b89;outline-offset:-2px}.choice-option-title,.choice-option-detail{display:block;font-size:16px}.choice-option-title{font-weight:600}.choice-option-detail{color:#526b7d;margin-top:3px}.choice-empty{padding:12px;margin:0}.choice-popup [data-choice-create]{margin:8px;width:calc(100% - 16px);min-height:48px}.choice-status{position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;clip-path:inset(50%)}.choice-chips{display:flex;gap:8px;flex-wrap:wrap}.choice-chips button{flex:1 1 auto;min-height:48px;padding:10px 14px;font-size:16px}.choice-chips [aria-checked=true]{background:#185b89;color:white;border-color:#185b89}.choice-search[aria-invalid=true]{border-color:#a12222}.choice-search:disabled{background:#eef2f6;color:#63798b}
 
 .money-input-help{display:block;font-size:14px;line-height:1.5;color:#526878;margin:4px 0 12px;white-space:normal}.money-input-help.money-input-error{color:#b42318}input[data-money][aria-invalid="true"]{border-color:#b42318}
+
+/* Shared camera controls retain the private upload queue and never expose Drive URLs. */
+.tech-camera{min-width:0;margin:8px 0}.camera-button{width:100%;min-height:48px;font-size:16px;font-weight:700;text-align:left}.camera-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.camera-photo{display:flex;flex-direction:column;gap:4px;width:calc(50% - 4px);padding:6px;border:1px solid #d6e0e8;border-radius:10px;overflow:hidden}.camera-photo img{width:100%;height:96px;object-fit:cover;border-radius:6px}.camera-photo progress{width:100%;height:8px}.camera-photo button{min-height:44px}.camera-photo.photo-error{border-color:#b42318}.charge-mode-buttons,.free-reasons{display:flex;gap:8px}.charge-mode-buttons button,.free-reasons button{flex:1;min-height:48px}.charge-mode [aria-pressed=true]{background:#16354d;color:white;border-color:#16354d}.charge-mode{border:0;padding:0;margin-bottom:12px}.quoted-goods{padding:8px;background:#edf3f8;border-radius:8px}.tech-camera input[hidden]{display:none!important}
+@media(max-width:480px){
+ body.is-tech{--tech-font-body:15px;--tech-font-small:13px;--tech-font-card:16px;--tech-font-screen:17px;--tech-card-padding:10px;--tech-gap:8px;--tech-tabs-height:56px;font-size:var(--tech-font-body);line-height:1.4}
+ body.is-tech :is(p,label,legend,summary,button,dt,dd,li,fieldset){font-size:var(--tech-font-body)}
+ body.is-tech :is(input,textarea,select,.choice-search){font-size:16px!important}
+ body.is-tech button{min-height:44px}
+ body.is-tech :is(h1,h2),body.is-tech #tech-header h1,body.is-tech #view h2,body.is-tech #dialog h2{font-size:var(--tech-font-screen)!important;line-height:1.3}
+ body.is-tech :is(h3,h4),body.is-tech .tech-order-customer,body.is-tech #dialog h3{font-size:var(--tech-font-card)!important;line-height:1.35}
+ body.is-tech :is(.muted,.tech-order-code,.tech-order-address,.tech-order-money,.tech-order-note,.tech-priority,.tech-delivery-chip,.pill,.tech-group-heading>span,.tech-primary-hint,.tech-cta-code,.tech-cash-codes,.tech-cash-age,.money-input-help,.tech-environment,.tech-pickup-code,.tech-complete-header h2 span){font-size:var(--tech-font-small)!important}
+ body.is-tech #tech-environment{font-size:var(--tech-font-small);padding:3px 8px;min-height:0}
+ body.is-tech #tech-header{padding:8px 12px;min-height:52px}
+ body.is-tech #tech-tabs{height:var(--tech-tabs-height);padding:3px 4px;gap:2px}
+ body.is-tech #tech-tabs button{padding:3px 2px;font-size:var(--tech-font-small)}
+ body.is-tech #tech-primary{padding:6px 12px}
+ body.is-tech #tech-primary .tech-primary-hint{margin:2px 0}
+ body.is-tech .tech-work-groups{gap:10px}
+ body.is-tech .tech-group-heading{margin-bottom:6px}
+ body.is-tech .tech-order-list{gap:8px}
+ body.is-tech button.tech-order-card{gap:3px;padding:9px 10px;border-left-width:5px;border-radius:10px;line-height:1.3}
+ body.is-tech .tech-order-address{-webkit-line-clamp:1;line-height:1.35}
+ body.is-tech .tech-order-plan{font-size:var(--tech-font-body);line-height:1.3}
+ body.is-tech .tech-order-note{padding:4px 6px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+ body.is-tech .tech-overdue-strip{padding:3px 6px;font-size:var(--tech-font-small)}
+ body.is-tech :is(.tech-complete-card,.tech-payment-card,.tech-pickup-item,.tech-detail-card,.tech-cash-receipt,.tech-deposit-card){padding:10px;margin-bottom:8px}
+ body.is-tech :is(.tech-complete-content,.tech-payment-content,.tech-pickup-content,.tech-deposit-content){padding:8px 10px}
+ body.is-tech :is(.tech-complete-header,.tech-payment-header,.tech-pickup-header,.tech-deposit-header){padding:8px 10px}
+ body.is-tech #dialog :is(.actions,.tech-complete-footer){padding:6px 10px}
+ body.is-tech .tech-complete-photos{display:block}
+ body.is-tech .tech-camera{margin:6px 0}
+ body.is-tech .camera-photos{gap:6px;margin-top:6px}
+ body.is-tech .camera-photo{font-size:var(--tech-font-small);width:calc(50% - 3px)}
+ body.is-tech .tech-complete-card h3{margin-bottom:8px}
+ body.is-tech #view .tech-cash-balance>strong{font-size:var(--tech-font-screen)}
+ body.is-tech :is(.tech-stepper,.tech-stepper button){min-height:44px}
+ body.is-tech .tech-complete-total dd,body.is-tech #complete-total{font-size:var(--tech-font-card)}
+ body.is-tech [data-charge-line] [data-charge-kind]{display:none}
+ body.is-tech [data-charge-line] label:has([data-charge-kind]){display:none}
+ body.is-tech .tech-detail-actions{gap:6px}
+}
+
+@media(max-width:480px){
+ body.is-tech :is(#view,#detail,#dialog,#tech-primary,#tech-tabs) :is(p,span,small,label,summary,button,legend,dt,dd,strong){font-size:var(--tech-font-body);line-height:1.4}
+ body.is-tech :is(#view,#detail,#dialog,#tech-primary,#tech-tabs) :is(.muted,.pill,.tech-order-code,.tech-order-address,.tech-order-money,.tech-order-note,.tech-priority,.tech-delivery-chip,.tech-primary-hint,.tech-cta-code,.money-input-help,.tech-cash-codes,.tech-cash-age,#complete-submit-hint,#payment-submit-hint){font-size:var(--tech-font-small)}
+ body.is-tech #view .tech-order-customer,body.is-tech #dialog #complete-total{font-size:var(--tech-font-card)}
+ body.is-tech #detail .tech-detail-heading h2{font-size:var(--tech-font-card)!important}
+ body.is-tech #dialog .tech-complete-checks label span{padding:8px;min-height:44px}
+ body.is-tech #tech-environment{font-size:var(--tech-font-small);line-height:1.3;padding:3px 8px}
+ body.is-tech .camera-photo>[data-image]{padding:0;border:0;background:transparent}
+}
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><section class="desktop-login-brand" aria-label="Thành Đức Điều phối dịch vụ"><span>TIN HỌC THÀNH ĐỨC</span><h2>Điều phối dịch vụ</h2><p>Mỗi người chỉ thấy các đơn được cấp quyền. Cùng theo dõi công việc, hàng hóa và thu tiền trong một ứng dụng.</p></section><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});

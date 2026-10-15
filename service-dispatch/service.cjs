@@ -18,7 +18,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
    let tick=clock();const {actor,directory}=auth.context(token);timings.auth_ms=clock()-tick;
    tick=clock();const current=state();timings.snapshot_ms=clock()-tick;
    const order=current.orders[payload.order_id];if(!order||!Domain.canRead(actor,order))fail('FORBIDDEN');
-   if(!['after','handover','payment_receipt'].includes(payload.kind)||!['image/jpeg','image/png','image/webp'].includes(payload.mime)||typeof payload.base64!=='string'||payload.base64.length>550000||!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.base64))fail('INVALID_IMAGE');
+   if(!['after','handover','payment_receipt','old_machine'].includes(payload.kind)||!['image/jpeg','image/png','image/webp'].includes(payload.mime)||typeof payload.base64!=='string'||payload.base64.length>550000||!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.base64))fail('INVALID_IMAGE');
    if(payload.thumbnail_base64!==undefined&&(typeof payload.thumbnail_base64!=='string'||payload.thumbnail_base64.length>40000||!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.thumbnail_base64)))fail('INVALID_IMAGE');
    if(!payload.idempotency_key)fail('REQUIRED_FIELD');
    const uploadDigest=digest(JSON.stringify({order_id:payload.order_id,kind:payload.kind,...(payload.payment_id?{payment_id:payload.payment_id}:{}),mime:payload.mime,base64:payload.base64,expected_version:payload.expected_version,...(payload.thumbnail_base64?{thumbnail_base64:payload.thumbnail_base64}:{})}));
@@ -26,7 +26,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
    const response=(receipt,projection)=>{timings.total_ms=clock()-started;console.info('dispatch-upload-timing',JSON.stringify(timings));return {...receipt,...projection,timings};};
    const prior=current.commands[actor.id+':'+payload.idempotency_key];
    if(prior){if(prior.result.upload_digest!==uploadDigest)fail('IDEMPOTENCY_CONFLICT');return response({...prior.result,replayed:true},project({state:current}));}
-   if(!actor.roles.includes('technician')||order.technician_id!==actor.id)fail('FORBIDDEN');if(payload.kind==='payment_receipt'){const receipt=current.payments?.[payload.payment_id];if(!receipt||receipt.actor_id!==actor.id||receipt.order_id!==order.id)fail('FORBIDDEN');if(!['accepted_work','unable'].includes(order.status))fail('INVALID_TRANSITION');}else if(order.status!=='working')fail('INVALID_TRANSITION');if(order.version!==payload.expected_version)fail('VERSION_CONFLICT');
+   if(!actor.roles.includes('technician')||order.technician_id!==actor.id)fail('FORBIDDEN');if(payload.kind==='payment_receipt'){const receipt=current.payments?.[payload.payment_id];if(!receipt||receipt.actor_id!==actor.id||receipt.order_id!==order.id)fail('FORBIDDEN');if(!['accepted_work','unable'].includes(order.status))fail('INVALID_TRANSITION');}else if(payload.kind==='old_machine'?!['working','accepted_work'].includes(order.status):order.status!=='working')fail('INVALID_TRANSITION');if(order.version!==payload.expected_version)fail('VERSION_CONFLICT');
    const saved=[];let projection;
    try{
     tick=clock();const file=files.save(payload.mime,payload.base64);saved.push(file);let thumbnail;

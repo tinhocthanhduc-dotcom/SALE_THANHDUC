@@ -1,5 +1,16 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 16/10/2026 — thu gọn màn thợ, chụp ảnh và chốt tiền nghiệm thu
+
+- CSS cho `body.is-tech`, rộng ≤480px: biến chữ nội dung 15px, phụ 13px, tiêu đề thẻ 16px, tiêu đề màn 17px; ô nhập luôn 16px. Giảm khoảng cách thẻ và thanh đáy, giữ nút tối thiểu 44px (nút chính giữ 62px). Không đổi CSS của vai trò khác hoặc desktop. Fixture 390×844 hiển thị trọn ít nhất 3 đơn phía trên thanh nút đáy.
+- Ảnh nghiệm thu có hai nút camera theo loại, input ẩn `accept="image/*" capture="environment" multiple`. Dùng chung thành phần với ảnh máy nhận về và biên lai. Chụp/chọn xong tự nén, xếp hàng tải, tiến trình không giả phần trăm, ảnh nhỏ theo đúng loại. Ảnh lỗi giữ bản chụp và khóa cũ để thử lại; không query toàn bộ sau upload.
+- Xóa ảnh đã lưu qua command riêng có quyền, expected_version, idempotency và lịch sử. Chỉ thợ phụ trách xóa ảnh của mình; ảnh nghiệm thu chỉ được xóa ở lần làm hiện tại khi đang làm. Không xóa bằng chứng sau nghiệm thu. Lưu metadata ảnh đã xóa để audit, file Drive vẫn riêng tư; không chia sẻ công khai. Xóa ảnh bắt buộc sẽ khóa nghiệm thu cho tới khi có ảnh thay thế đã lưu. Không làm mất form đang nhập.
+- Nghiệm thu phải chọn Có thu tiền / Miễn phí. Miễn phí chọn Bảo hành / Theo hợp đồng / Khác, Khác cần ghi chú; server tạo đúng một dòng 0đ có lý do. Có thu tiền: tên gợi ý hoặc nhập mới + số tiền dương, không tick miễn phí từng dòng; hàng giao giữ nguyên giá đã báo và tính theo số thực giao. Tổng tiền, tên/số tiền thiếu từng dòng và xác nhận khách được kiểm tra riêng. Thành công mở bước chọn hình thức thanh toán với số tiền còn trống, không tự tạo khoản thu.
+- Server chặn `free:true` kèm số tiền dương, miễn phí thiếu lý do, dòng 0đ trong chế độ có thu tiền và tổng phải thu 0đ. API cũ vẫn nhận các dòng có tiền hợp lệ; dòng miễn phí cũ khi gửi lại cần lý do. Giữ nguyên giới hạn phí 200.000đ, duyệt giá, xác nhận khách, quyết toán vật tư, thu/nợ/nộp quỹ. Không sửa snapshot lịch sử đã lưu.
+- Kiểm chứng local: **331/331 Node** (Điều phối + Danh bạ + ERP), **25/25 bộ browser Điều phối** gồm UAT luồng công việc, giao hàng, tiền, đồng bộ và phiên; browser Danh bạ 11/11, ERP UI 21/21. Có ca server miễn phí sai số/lý do, paid 0đ, quyền xóa ảnh/replay; ca browser nhiều ảnh tự tải/retry không trùng, ảnh máy nhận về/biên lai, form được giữ, mở bước thanh toán sau nghiệm thu. Build GAS và kiểm tra diff đạt.
+- [Báo cáo và ba ảnh 390×844](../docs/service-dispatch/MOBILE_REVIEW_20261016.md). Đây là Chromium mô phỏng màn điện thoại bằng dữ liệu giả; **chưa kiểm tra camera/zoom trên điện thoại Android/iPhone thật hoặc giao dịch trên Google thật**. Đợt này gửi code/commit để review, chưa đổi deployment v64. Không thay đổi app hoặc sheet thật.
+
+
 ## 15/10/2026 — nối Danh bạ COPY qua KTD
 
 - Server-only client DIEUPHOI, HMAC đúng canonical/timestamp/actor allowlist của Danh bạ. Mapping mỗi nhân viên → actor dispatcher hoặc director; secret/OAuth chỉ Script Properties/server, không sheet/browser/log. Tìm kiếm GAS đi thẳng client sau kiểm phiên/quyền, không mở workbook Điều phối, không giữ ScriptLock trong HTTP.

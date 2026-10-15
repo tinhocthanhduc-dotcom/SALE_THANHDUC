@@ -16,10 +16,42 @@ function available(s,p){if(Corrections.syncing(s,p.order_id))return 0;return hel
 function confirmedAmount(p){if(['replaced','awaiting_correction'].includes(p.status))return 0;return p.confirmations?sum(p.confirmations.map(c=>c.amount)):p.status==='confirmed'?p.amount:p.kind==='cash'?(p.deposited_amount||0):0;}
 function balance(s,o){const ps=payments(s,o),confirmed=sum(ps.map(confirmedAmount)),pending=sum(ps.filter(p=>p.status==='pending').map(p=>p.amount-confirmedAmount(p))),total=o.billing?.total??null;return {...Debt.metrics(s,o),allow_credit:Debt.allows(s.customers[o.customer_id]),total,confirmed,pending,reported:sum(ps.filter(p=>!['rejected','replaced','awaiting_correction'].includes(p.status)).map(p=>p.amount)),remaining:total===null?null:Math.max(0,total-confirmed),collectable:total===null?null:Math.max(0,total-confirmed-pending),held:sum(ps.map(held)),status:total===null?'unpriced':confirmed>=total?'paid':confirmed?'partial':'unpaid',fund_status:Object.values(s.deposits||{}).some(d=>d.status==='pending'&&d.allocations.some(a=>a.order_id===o.id))?'pending_deposit':ps.some(p=>held(p)>0)?'with_technician':ps.some(p=>p.kind==='cash'&&p.status!=='replaced')?'in_fund':'no_cash'};}
 function billing(o,p,actor,at,fee=false,allowGoodsOverride=false){
- if(p.customer_agreed!==true)fail('PRICE_CONSENT_REQUIRED');let goods=[],lines=[];
- if(fee){const value=amount(p.fee_amount);if(value>200000)fail('FEE_LIMIT');if(value===0&&p.free_of_charge!==true)fail('FREE_CONFIRMATION_REQUIRED');lines=[{kind:'labor',name:value?'Phí kiểm tra / đi lại':'Miễn phí kiểm tra / đi lại',amount:value,reason:text(p.reason)}];}
- else {if(p.goods_prices?.length&&!allowGoodsOverride)fail('FORBIDDEN');if(p.goods_prices!==undefined&&(!Array.isArray(p.goods_prices)||new Set(p.goods_prices.map(x=>x?.request_id)).size!==p.goods_prices.length||p.goods_prices.some(x=>!x||!o.parts_requests.some(r=>r.flow==='delivery'&&r.id===x.request_id&&(r.delivered_qty||0)>0))))fail('INVALID_PRICES');if(!Array.isArray(p.charge_lines)||p.charge_lines.length>50)fail('PRICES_REQUIRED');lines=p.charge_lines.map(l=>{if(!l||!['labor','material'].includes(l.kind))fail('PRICES_REQUIRED');const value=amount(l.amount);if(value===0&&l.free!==true)fail('FREE_CONFIRMATION_REQUIRED');return {name:text(l.name),kind:l.kind,amount:value,free:l.free===true};});goods=o.parts_requests.filter(r=>r.flow==='delivery'&&!r.cancelled&&(r.delivered_qty||0)>0).map(r=>{const override=p.goods_prices?.find(x=>x.request_id===r.id);const price=amount(override?override.unit_price:r.unit_price);return {request_id:r.id,item:r.item,qty:r.delivered_qty,unit_price:price,amount:amount(price*r.delivered_qty)};});if(!goods.length&&!lines.length)fail('PRICES_REQUIRED');}
- const goods_total=sum(goods.map(r=>r.amount)),labor_total=sum(lines.filter(l=>l.kind==='labor').map(l=>l.amount)),materials_total=sum(lines.filter(l=>l.kind==='material').map(l=>l.amount));return {goods,lines,goods_total,labor_total,materials_total,total:sum([goods_total,labor_total,materials_total]),source:'Báo giá riêng',customer_agreed:true,actor_id:actor.id,at,revision:(o.billing?.revision||0)+1};
+ if(p.customer_agreed!==true)fail('PRICE_CONSENT_REQUIRED');
+ if(p.billing_mode&&!['paid','free'].includes(p.billing_mode))fail('INVALID_PRICES');
+ let goods=[],lines=[];
+ if(fee){
+  const value=amount(p.fee_amount);if(value>200000)fail('FEE_LIMIT');
+  if(value===0&&p.free_of_charge!==true)fail('FREE_CONFIRMATION_REQUIRED');
+  lines=[{kind:'labor',name:value?'Phí kiểm tra / đi lại':'Miễn phí kiểm tra / đi lại',amount:value,reason:text(p.reason)}];
+ }else{
+  if(p.goods_prices?.length&&!allowGoodsOverride)fail('FORBIDDEN');
+  if(p.goods_prices!==undefined&&(!Array.isArray(p.goods_prices)||new Set(p.goods_prices.map(x=>x?.request_id)).size!==p.goods_prices.length||p.goods_prices.some(x=>!x||!o.parts_requests.some(r=>r.flow==='delivery'&&r.id===x.request_id&&(r.delivered_qty||0)>0))))fail('INVALID_PRICES');
+  const charges=p.charge_lines??(p.billing_mode==='free'?[]:null);
+  if(!Array.isArray(charges)||charges.length>50)fail('PRICES_REQUIRED');
+  lines=charges.map(l=>{
+   if(!l||!['labor','material'].includes(l.kind))fail('PRICES_REQUIRED');
+   const value=amount(l.amount);
+   if((p.billing_mode==='free'||l.free===true)&&value>0)fail('INVALID_FREE_AMOUNT');
+   if(p.billing_mode==='paid'&&value===0)fail('PAID_TOTAL_REQUIRED');
+   if(value===0&&l.free!==true)fail('FREE_CONFIRMATION_REQUIRED');
+   const reason=l.reason||p.free_reason||p.reason;
+   if(l.free===true&&!(typeof reason==='string'&&reason.trim()))fail('FREE_REASON_REQUIRED');
+   return {name:text(l.name),kind:l.kind,amount:value,free:l.free===true,...(l.free===true?{reason:text(reason)}:{})};
+  });
+  goods=o.parts_requests.filter(r=>r.flow==='delivery'&&!r.cancelled&&(r.delivered_qty||0)>0).map(r=>{
+   const override=p.goods_prices?.find(x=>x.request_id===r.id),price=amount(override?override.unit_price:r.unit_price);
+   return {request_id:r.id,item:r.item,qty:r.delivered_qty,unit_price:price,amount:amount(price*r.delivered_qty)};
+  });
+  if(p.billing_mode==='free'){
+   if(!['warranty','contract','other'].includes(p.free_category)||!(typeof p.free_reason==='string'&&p.free_reason.trim()))fail('FREE_REASON_REQUIRED');
+   if(goods.some(g=>g.amount>0))fail('INVALID_FREE_AMOUNT');
+   lines=[{kind:'labor',name:'Miễn phí',amount:0,free:true,reason:text(p.free_reason),category:p.free_category}];
+  }
+  if(!goods.length&&!lines.length)fail('PRICES_REQUIRED');
+  if(p.billing_mode==='paid'&&sum([...goods,...lines].map(l=>l.amount))===0)fail('PAID_TOTAL_REQUIRED');
+ }
+ const goods_total=sum(goods.map(r=>r.amount)),labor_total=sum(lines.filter(l=>l.kind==='labor').map(l=>l.amount)),materials_total=sum(lines.filter(l=>l.kind==='material').map(l=>l.amount));
+ return {goods,lines,goods_total,labor_total,materials_total,total:sum([goods_total,labor_total,materials_total]),source:'Báo giá riêng',customer_agreed:true,actor_id:actor.id,at,revision:(o.billing?.revision||0)+1};
 }
 const roles={...Debt.roles,...Corrections.roles,set_delivery_prices:['dispatcher','director'],save_payment_method:['director'],save_company_account:['director'],configure_prices:['director'],propose_prices:['technician'],approve_prices:['director'],revise_prices:['dispatcher','director'],report_payment:['technician'],confirm_payment:['finance','director'],reject_payment:['finance','director'],create_deposit:['technician'],confirm_deposit:['finance','director'],close_dossier:['finance','dispatcher','director']};
 function closure(s,o){const b=balance(s,o),issues=[];if(Corrections.pending(s,o.id).length)issues.push('CASH_CORRECTION_OPEN');if(!['accepted_work','unable'].includes(o.status))issues.push('WORK_NOT_ACCEPTED');if(!o.billing)issues.push('PRICES_REQUIRED');if(o.price_quote?.status==='pending')issues.push('PRICE_APPROVAL_REQUIRED');if(o.parts_requests.some(r=>!['resolved','rejected'].includes(r.status))||(o.collected_machines||[]).some(m=>m.status!=='in_warehouse'))issues.push('OPEN_MATERIALS');if(b.pending||b.credit_pending)issues.push('PENDING_PAYMENTS');if(b.total===null||b.uncovered>0)issues.push('BALANCE_DUE');if(b.held)issues.push('CASH_NOT_DEPOSITED');return issues;}
