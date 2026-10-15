@@ -1,0 +1,74 @@
+/** Re-enabled closing is opt-in. Legacy rows NEVER acquire locks automatically. */
+function financeClosingActivationKey_(){return 'FINANCE_CLOSE_GUARD_ENABLED_AT:'+getDb_().getId();}
+function financeClosingDayKey_(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const check = new Date(value + 'T00:00:00Z');
+    if (!isFinite(check.getTime()) || check.toISOString().slice(0, 10) !== value) throw new Error('FINANCE_INVALID_DATE');
+    return value;
+  }
+  const date = toDate_(value);
+  if (!date || !isFinite(date.getTime())) throw new Error('FINANCE_INVALID_DATE');
+  return Utilities.formatDate(date, 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
+}
+function financeClosingRows_() {
+  const sheet = getDb_().getSheetByName(SHEETS.CLOSINGS);
+  if (!sheet) throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu CHOT_SO');
+  const values = sheet.getDataRange().getValues(), headers = values[0] || [];
+  if(PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_())&&headers.indexOf('AP_DUNG_KHOA')<0)throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu AP_DUNG_KHOA');
+  if (['ID_CHOT_SO','NGAY_CHOT','TRANG_THAI','MO_KHOA_BOI','MO_KHOA_LUC'].some(k => headers.indexOf(k) < 0)) throw new Error('FINANCE_CLOSINGS_READ_FAILED: sai cấu trúc');
+  return values.slice(1).map((row,index) => ({rowNumber:index+2,object:headers.reduce((o,k,i) => {o[k]=row[i];return o;},{})})).filter(r=>Object.values(r.object).some(v=>v!==''&&v!=null));
+}
+function financeClosingLockEnabled_() {
+  const sheet = getDb_().getSheetByName(SHEETS.SETTINGS);
+  if (!sheet) throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu CAU_HINH');
+  const values=sheet.getDataRange().getValues(), h=values[0]||[], key=h.indexOf('KHOA'), val=h.indexOf('GIA_TRI');
+  if(key<0||val<0)throw new Error('FINANCE_CLOSINGS_READ_FAILED: cấu hình');
+  const rows=values.slice(1).filter(r=>r[key]==='LOCK_AFTER_CLOSE');
+  if(rows.length>1)throw new Error('FINANCE_CLOSINGS_READ_FAILED: cấu hình trùng');
+  const value=String(rows.length?rows[0][val]:'TRUE').toUpperCase();
+  if(!['TRUE','FALSE'].includes(value))throw new Error('FINANCE_CLOSINGS_READ_FAILED: LOCK_AFTER_CLOSE');
+  return value==='TRUE';
+}
+function isDateClosed_(date) {
+  const key=financeClosingDayKey_(date);
+  if(!PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_()))return false;
+  const rows=financeClosingRows_(); // deliberately bypass request cache; read failures propagate
+  if(!financeClosingLockEnabled_())return false;
+  return rows.some(({object:r})=>String(r.AP_DUNG_KHOA).toUpperCase()==='TRUE' && financeClosingDayKey_(r.NGAY_CHOT)===key && r.TRANG_THAI==='DA_CHOT' && !r.MO_KHOA_LUC && !r.MO_KHOA_BOI);
+}
+function listFinanceClosings() {
+  const user=getCurrentUser_();if(!['ADMIN','KE_TOAN'].includes(user.role))throw new Error('FORBIDDEN');
+  const enabledAt=PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_());
+  return {enabled_at:enabledAt||null,rows:financeClosingRows_().map(({object:r})=>({id:r.ID_CHOT_SO,date:financeClosingDayKey_(r.NGAY_CHOT),status:r.TRANG_THAI,legacy:String(r.AP_DUNG_KHOA).toUpperCase()!=='TRUE',locked:isDateClosed_(r.NGAY_CHOT),actual_cash:Number(r.TIEN_MAT_THUC_TE||0),difference:Number(r.CHENH_LECH||0),unlocked_by:r.MO_KHOA_BOI||'',unlocked_at:r.MO_KHOA_LUC?String(r.MO_KHOA_LUC):''}))};
+}
+function enableFinanceClosingGuard() {
+  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  try {
+    const user=getCurrentUser_();if(user.role!=='ADMIN')throw new Error('FORBIDDEN');
+    financeClosingRows_();financeClosingLockEnabled_();
+    const sheet=getDb_().getSheetByName(SHEETS.CLOSINGS),h=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
+    if(h.indexOf('AP_DUNG_KHOA')<0)sheet.getRange(1,h.length+1).setValue('AP_DUNG_KHOA');
+    const props=PropertiesService.getScriptProperties();if(!props.getProperty(financeClosingActivationKey_())){
+      const at=new Date().toISOString();writeAudit_('CHOT_SO','ACTIVATION','ENABLE_CLOSING_GUARD',null,{enabled_at:at,legacy_locks:false},'',user);props.setProperty(financeClosingActivationKey_(),at);
+    }
+    return listFinanceClosings();
+  } finally {lock.releaseLock();}
+}
+function unlockFinanceDay(payload) {
+  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  try {
+    const user=getCurrentUser_();if(user.role!=='ADMIN')throw new Error('FORBIDDEN');
+    const reason=String((payload||{}).reason||'').trim();if(!reason)throw new Error('REASON_REQUIRED');
+    const info=financeClosingRows_().find(r=>String(r.object.ID_CHOT_SO)===String((payload||{}).id));
+    if(!info||String(info.object.AP_DUNG_KHOA).toUpperCase()!=='TRUE'||info.object.TRANG_THAI!=='DA_CHOT'||info.object.MO_KHOA_LUC)throw new Error('FINANCE_CLOSING_NOT_LOCKED');
+    const old=info.object,next=Object.assign({},old,{TRANG_THAI:'DA_MO_LAI',MO_KHOA_BOI:user.email||user.id||user.name,MO_KHOA_LUC:new Date(),GHI_CHU:[old.GHI_CHU,'Mở khóa: '+reason].filter(Boolean).join(' | ')});
+    const sheet=getDb_().getSheetByName(SHEETS.CLOSINGS),h=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
+    writeAudit_('CHOT_SO',old.ID_CHOT_SO,'UNLOCK_DAY',old,next,reason,user);
+    sheet.getRange(info.rowNumber,1,1,h.length).setValues([h.map(k=>next[k]??'')]);
+    return {ok:true,message:'Đã mở khóa ngày '+financeClosingDayKey_(old.NGAY_CHOT)};
+  } finally {lock.releaseLock();}
+}
+function assertNoLockedFinanceDays_() {
+  if(!PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_()))return;
+  if(financeClosingRows_().some(({object:r})=>isDateClosed_(r.NGAY_CHOT)))throw new Error('FINANCE_DATE_CLOSED: mở khóa các ngày trước khi thay số dư đầu kỳ hoặc reset');
+}

@@ -1,0 +1,227 @@
+diff --git a/Index.html b/Index.html
+index 68e7949..e4d0a2a 100644
+--- a/Index.html
++++ b/Index.html
+@@ -4912,7 +4912,8 @@
+           <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM7 4h10v3M4 11h16M8 15h3"/></svg></span>
+           <span class="nav-label">Quỹ & Ngân hàng</span>
+         </button>
+-        <button class="nav-button finance-report-only" data-view="operatingExpenses">
++        <button class="nav-button finance-report-only" data-view="closings"><span class="nav-label">Chốt sổ / mở khóa</span></button>
++<button class="nav-button finance-report-only" data-view="operatingExpenses">
+           <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1.2-4 3 1.4 2.6 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3"/></svg></span>
+           <span class="nav-label">Chi phí hoạt động</span>
+         </button>
+@@ -5509,7 +5510,14 @@
+         </section>
+ 
+ 
+-        <section class="view" id="view-operatingExpenses">
++        <section class="view" id="view-closings">
++ <div class="card"><h2>Chốt sổ & mở khóa ngày</h2><p>Chỉ những lần chốt mới sau khi bật lại mới khóa ngày. Các dòng cũ được giữ để đối chiếu, không tự khóa lại.</p>
++ <button type="button" class="admin-only" onclick="enableClosingGuardUi()">Bật lại chốt sổ (giữ các ngày cũ mở)</button>
++ <form onsubmit="submitClosing(event)"><label>Ngày chốt<input id="closingDate" type="date" required></label><label>Tiền mặt đếm thực tế<input id="actualCash" inputmode="numeric" required></label><label>Ghi chú<input id="closingNote"></label><button type="submit" class="btn btn-primary">Chốt sổ ngày</button></form>
++ <button type="button" onclick="renderFinanceClosings()">Tải lại danh sách ngày</button><div id="financeClosingRows"></div></div>
++</section>
++
++<section class="view" id="view-operatingExpenses">
+           <div class="opex-filter-card">
+             <div class="opex-filter-head">
+               <div>
+@@ -6882,6 +6890,9 @@
+         case 'accounts':
+           renderAccounts();
+           break;
++        case 'closings':
++          renderFinanceClosings();
++          break;
+         case 'operatingExpenses':
+           renderOperatingExpenseReport(false);
+           break;
+@@ -6902,7 +6913,7 @@
+         showToast('Chỉ Admin được mở quản lý nhân viên.', 'error');
+         return;
+       }
+-      if (viewName === 'operatingExpenses' && (
++      if (['closings','operatingExpenses'].includes(viewName) && (
+         !state.data ||
+         ['ADMIN', 'KE_TOAN'].indexOf(String(state.data.user.role || '').toUpperCase()) < 0
+       )) {
+@@ -6927,7 +6938,7 @@
+         suppliers: 'Nhà cung cấp',
+         customerDebts: 'Công nợ khách hàng',
+         supplierDebts: 'Công nợ nhà cung cấp',
+-        accounts: 'Quỹ & Ngân hàng',
++        accounts: 'Quỹ & Ngân hàng',closings:'Chốt sổ / mở khóa',
+         operatingExpenses: 'Chi phí hoạt động',
+         employees: 'Nhân viên'
+       };
+@@ -10463,9 +10474,16 @@
+       }, handleError);
+     }
+ 
++function renderFinanceClosings() {
++ if(!state.data||!['ADMIN','KE_TOAN'].includes(state.data.user.role))return;
++ document.getElementById('closingDate').value=document.getElementById('closingDate').value||state.data.today;
++ runApi('listFinanceClosings',[],function(result){document.getElementById('financeClosingRows').innerHTML='<p>'+ (result.enabled_at?'Đã bật lại chốt sổ':'Chưa bật lại chốt sổ')+'</p><table><thead><tr><th>Ngày</th><th>Trạng thái</th><th>Thực đếm</th><th>Chênh lệch</th><th>Mở khóa</th></tr></thead><tbody>'+result.rows.map(function(r){return '<tr><td>'+escapeHtml(r.date)+'</td><td>'+escapeHtml(r.legacy?'Dòng cũ · không áp dụng khóa':r.locked?'Đã khóa':r.status)+'</td><td>'+money(r.actual_cash)+'</td><td>'+money(r.difference)+'</td><td>'+(r.locked&&state.data.user.role==='ADMIN'?'<button type="button" data-unlock-finance-day="'+escapeAttribute(r.id)+'">Mở khóa</button>':escapeHtml(r.unlocked_by))+'</td></tr>';}).join('')+'</tbody></table>';document.querySelectorAll('[data-unlock-finance-day]').forEach(function(button){button.onclick=function(){const reason=prompt('Lý do mở khóa ngày (bắt buộc):');if(!reason||!reason.trim())return;runApi('unlockFinanceDay',[{id:button.dataset.unlockFinanceDay,reason:reason}],function(r){showToast(r.message,'success');renderFinanceClosings();},handleError);};});},handleError);
++}
++function enableClosingGuardUi(){if(!confirm('Bật lại chốt sổ? Dòng chốt cũ không tự khóa lại.'))return;runApi('enableFinanceClosingGuard',[],function(){renderFinanceClosings();showToast('Đã bật lại chốt sổ, ngày cũ giữ mở.','success');},handleError);}
++
+     function submitClosing(event) {
+       event.preventDefault();
+-      if (!confirm('Xác nhận chốt sổ? Sau khi chốt sẽ không thể thêm giao dịch vào ngày này.')) {
++      if (!confirm('Xác nhận chốt sổ? Ngày này sẽ bị khóa khi LOCK_AFTER_CLOSE bật; Admin có thể mở khóa với lý do.')) {
+         return;
+       }
+ 
+diff --git a/code.js b/code.js
+index 3b56c38..5bbe3ed 100644
+--- a/code.js
++++ b/code.js
+@@ -134,7 +134,7 @@ const HEADERS = Object.freeze({
+     'ID_CHOT_SO', 'NGAY_CHOT', 'TONG_THU', 'TONG_CHI',
+     'SO_DU_HE_THONG', 'TIEN_MAT_HE_THONG', 'TIEN_MAT_THUC_TE',
+     'CHENH_LECH', 'NGUOI_CHOT', 'GHI_CHU', 'TRANG_THAI',
+-    'CHOT_LUC', 'MO_KHOA_BOI', 'MO_KHOA_LUC'
++    'CHOT_LUC', 'MO_KHOA_BOI', 'MO_KHOA_LUC', 'AP_DUNG_KHOA'
+   ],
+   NHAN_VIEN: [
+     'ID_NV', 'MA_NV', 'HO_TEN', 'EMAIL', 'DIEN_THOAI',
+@@ -257,6 +257,9 @@ function apiCall(action, args, authToken) {
+     cleanupCustomersMissingRequiredFieldsV022: cleanupCustomersMissingRequiredFieldsV022,
+     resetOperationalData: resetOperationalData,
+     closeDay: closeDay,
++    listFinanceClosings: listFinanceClosings,
++    enableFinanceClosingGuard: enableFinanceClosingGuard,
++    unlockFinanceDay: unlockFinanceDay,
+     uploadEvidence: uploadEvidence,
+     updateAccountOpeningBalance: updateAccountOpeningBalance,
+     recalculateAccountBalances: recalculateAccountBalances,
+@@ -1094,6 +1097,8 @@ function saveTransaction(payload) {
+   let debtUpdates = [];
+ 
+   try {
++    if(isDateClosed_(data.ngayGiaoDich))throw new Error('FINANCE_DATE_CLOSED');
++    validateTransactionMasterData_(data);
+     const debtType = getDebtTypeFromCategory_(data.danhMuc);
+     const allocationResult = preparePaymentAllocations_(
+       debtType,
+@@ -3546,6 +3551,7 @@ function resetOperationalData(payload) {
+ 
+   try {
+     const user = getCurrentUser_();
++    assertNoLockedFinanceDays_();
+     if (user.role !== 'ADMIN') {
+       throw new Error('Chỉ Admin được reset dữ liệu hệ thống.');
+     }
+@@ -3628,6 +3634,7 @@ function closeDay(payload) {
+       throw new Error('Ngày này đã được chốt sổ.');
+     }
+ 
++    if(!PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_()))throw new Error('FINANCE_CLOSING_ACTIVATION_REQUIRED');
+     recalculateAccounts_();
+     const dashboard = buildDashboard_(date);
+     const actualCash = parseMoney_((payload || {}).actualCash);
+@@ -3649,7 +3656,8 @@ function closeDay(payload) {
+       TRANG_THAI: 'DA_CHOT',
+       CHOT_LUC: now,
+       MO_KHOA_BOI: '',
+-      MO_KHOA_LUC: ''
++      MO_KHOA_LUC: '',
++      AP_DUNG_KHOA: true
+     });
+ 
+     writeAudit_('CHOT_SO', id, 'CLOSE_DAY', null, {
+@@ -4211,6 +4219,7 @@ function updateAccountOpeningBalance(payload) {
+   lock.waitLock(30000);
+   try {
+     const user = getCurrentUser_();
++    assertNoLockedFinanceDays_();
+     if (['ADMIN', 'KE_TOAN'].indexOf(user.role) < 0) {
+       throw new Error('Chỉ Admin hoặc Kế toán được nhập số dư đầu kỳ.');
+     }
+@@ -7479,11 +7488,82 @@ function normalizeTransactionPayload_(payload) {
+   };
+ }
+ 
++/** Re-enabled closing is opt-in. Legacy rows NEVER acquire locks automatically. */
++function financeClosingActivationKey_(){return 'FINANCE_CLOSE_GUARD_ENABLED_AT:'+getDb_().getId();}
++function financeClosingDayKey_(value) {
++  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
++    const check = new Date(value + 'T00:00:00Z');
++    if (!isFinite(check.getTime()) || check.toISOString().slice(0, 10) !== value) throw new Error('FINANCE_INVALID_DATE');
++    return value;
++  }
++  const date = toDate_(value);
++  if (!date || !isFinite(date.getTime())) throw new Error('FINANCE_INVALID_DATE');
++  return Utilities.formatDate(date, 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
++}
++function financeClosingRows_() {
++  const sheet = getDb_().getSheetByName(SHEETS.CLOSINGS);
++  if (!sheet) throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu CHOT_SO');
++  const values = sheet.getDataRange().getValues(), headers = values[0] || [];
++  if(PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_())&&headers.indexOf('AP_DUNG_KHOA')<0)throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu AP_DUNG_KHOA');
++  if (['ID_CHOT_SO','NGAY_CHOT','TRANG_THAI','MO_KHOA_BOI','MO_KHOA_LUC'].some(k => headers.indexOf(k) < 0)) throw new Error('FINANCE_CLOSINGS_READ_FAILED: sai cấu trúc');
++  return values.slice(1).map((row,index) => ({rowNumber:index+2,object:headers.reduce((o,k,i) => {o[k]=row[i];return o;},{})})).filter(r=>Object.values(r.object).some(v=>v!==''&&v!=null));
++}
++function financeClosingLockEnabled_() {
++  const sheet = getDb_().getSheetByName(SHEETS.SETTINGS);
++  if (!sheet) throw new Error('FINANCE_CLOSINGS_READ_FAILED: thiếu CAU_HINH');
++  const values=sheet.getDataRange().getValues(), h=values[0]||[], key=h.indexOf('KHOA'), val=h.indexOf('GIA_TRI');
++  if(key<0||val<0)throw new Error('FINANCE_CLOSINGS_READ_FAILED: cấu hình');
++  const rows=values.slice(1).filter(r=>r[key]==='LOCK_AFTER_CLOSE');
++  if(rows.length>1)throw new Error('FINANCE_CLOSINGS_READ_FAILED: cấu hình trùng');
++  const value=String(rows.length?rows[0][val]:'TRUE').toUpperCase();
++  if(!['TRUE','FALSE'].includes(value))throw new Error('FINANCE_CLOSINGS_READ_FAILED: LOCK_AFTER_CLOSE');
++  return value==='TRUE';
++}
+ function isDateClosed_(date) {
+-  // v0.23: Đã loại bỏ chức năng Chốt sổ.
+-  return false;
++  const key=financeClosingDayKey_(date);
++  if(!PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_()))return false;
++  const rows=financeClosingRows_(); // deliberately bypass request cache; read failures propagate
++  if(!financeClosingLockEnabled_())return false;
++  return rows.some(({object:r})=>String(r.AP_DUNG_KHOA).toUpperCase()==='TRUE' && financeClosingDayKey_(r.NGAY_CHOT)===key && r.TRANG_THAI==='DA_CHOT' && !r.MO_KHOA_LUC && !r.MO_KHOA_BOI);
++}
++function listFinanceClosings() {
++  const user=getCurrentUser_();if(!['ADMIN','KE_TOAN'].includes(user.role))throw new Error('FORBIDDEN');
++  const enabledAt=PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_());
++  return {enabled_at:enabledAt||null,rows:financeClosingRows_().map(({object:r})=>({id:r.ID_CHOT_SO,date:financeClosingDayKey_(r.NGAY_CHOT),status:r.TRANG_THAI,legacy:String(r.AP_DUNG_KHOA).toUpperCase()!=='TRUE',locked:isDateClosed_(r.NGAY_CHOT),actual_cash:Number(r.TIEN_MAT_THUC_TE||0),difference:Number(r.CHENH_LECH||0),unlocked_by:r.MO_KHOA_BOI||'',unlocked_at:r.MO_KHOA_LUC?String(r.MO_KHOA_LUC):''}))};
++}
++function enableFinanceClosingGuard() {
++  const lock=LockService.getScriptLock();lock.waitLock(30000);
++  try {
++    const user=getCurrentUser_();if(user.role!=='ADMIN')throw new Error('FORBIDDEN');
++    financeClosingRows_();financeClosingLockEnabled_();
++    const sheet=getDb_().getSheetByName(SHEETS.CLOSINGS),h=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
++    if(h.indexOf('AP_DUNG_KHOA')<0)sheet.getRange(1,h.length+1).setValue('AP_DUNG_KHOA');
++    const props=PropertiesService.getScriptProperties();if(!props.getProperty(financeClosingActivationKey_())){
++      const at=new Date().toISOString();writeAudit_('CHOT_SO','ACTIVATION','ENABLE_CLOSING_GUARD',null,{enabled_at:at,legacy_locks:false},'',user);props.setProperty(financeClosingActivationKey_(),at);
++    }
++    return listFinanceClosings();
++  } finally {lock.releaseLock();}
++}
++function unlockFinanceDay(payload) {
++  const lock=LockService.getScriptLock();lock.waitLock(30000);
++  try {
++    const user=getCurrentUser_();if(user.role!=='ADMIN')throw new Error('FORBIDDEN');
++    const reason=String((payload||{}).reason||'').trim();if(!reason)throw new Error('REASON_REQUIRED');
++    const info=financeClosingRows_().find(r=>String(r.object.ID_CHOT_SO)===String((payload||{}).id));
++    if(!info||String(info.object.AP_DUNG_KHOA).toUpperCase()!=='TRUE'||info.object.TRANG_THAI!=='DA_CHOT'||info.object.MO_KHOA_LUC)throw new Error('FINANCE_CLOSING_NOT_LOCKED');
++    const old=info.object,next=Object.assign({},old,{TRANG_THAI:'DA_MO_LAI',MO_KHOA_BOI:user.email||user.id||user.name,MO_KHOA_LUC:new Date(),GHI_CHU:[old.GHI_CHU,'Mở khóa: '+reason].filter(Boolean).join(' | ')});
++    const sheet=getDb_().getSheetByName(SHEETS.CLOSINGS),h=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
++    writeAudit_('CHOT_SO',old.ID_CHOT_SO,'UNLOCK_DAY',old,next,reason,user);
++    sheet.getRange(info.rowNumber,1,1,h.length).setValues([h.map(k=>next[k]??'')]);
++    return {ok:true,message:'Đã mở khóa ngày '+financeClosingDayKey_(old.NGAY_CHOT)};
++  } finally {lock.releaseLock();}
++}
++function assertNoLockedFinanceDays_() {
++  if(!PropertiesService.getScriptProperties().getProperty(financeClosingActivationKey_()))return;
++  if(financeClosingRows_().some(({object:r})=>isDateClosed_(r.NGAY_CHOT)))throw new Error('FINANCE_DATE_CLOSED: mở khóa các ngày trước khi thay số dư đầu kỳ hoặc reset');
+ }
+ 
++
+ function nextVoucherCode_(type, date) {
+   const prefix = type === 'THU' ? 'PT' : 'PC';
+   const dateKey = formatDate_(date, 'yyyyMMdd');

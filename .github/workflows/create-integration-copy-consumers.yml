@@ -60,7 +60,7 @@ jobs:
           const base=path.resolve(process.env.GITHUB_WORKSPACE,'..');
           for(const [kind,repo,marker] of [['kho','QL_KHO_THANH_DUC','function aiExecuteBatchPreview_'],['finance','FINANCE_THANHDUC','function saveInternalTransfer']]){
             const dir=path.join(process.env.RUNNER_TEMP,'native-'+kind),files=fs.readdirSync(dir).filter(n=>/\.(gs|js)$/.test(n)).map(n=>fs.readFileSync(path.join(dir,n),'utf8')).filter(s=>s.includes(marker));
-            if(files.length!==1)throw Error('UNSUPPORTED_NATIVE_SOURCE_LAYOUT');fs.mkdirSync(path.join(base,repo),{recursive:true});fs.writeFileSync(path.join(base,repo,'code.js'),files[0]);
+            if(files.length!==1)throw Error('UNSUPPORTED_NATIVE_SOURCE_LAYOUT');fs.mkdirSync(path.join(base,repo),{recursive:true});fs.writeFileSync(path.join(base,repo,'code.js'),files[0]);if(kind==='finance'){const html=fs.readdirSync(dir).filter(n=>/\.html$/.test(n)).map(n=>fs.readFileSync(path.join(dir,n),'utf8')).find(s=>s.includes('function submitClosing'));if(!html)throw Error('FINANCE_UI_SOURCE_REQUIRED');fs.writeFileSync(path.join(base,repo,'Index.html'),html);}
           }
           JS
       - name: Validate native copy adapters before creating any projects
@@ -69,6 +69,10 @@ jobs:
           set -euo pipefail
           if ! node service-dispatch/integration/test-native.cjs "$RUNNER_TEMP/test-native-copy" > "$RUNNER_TEMP/private-native-test.log" 2>&1; then
             echo 'Native copy adapter validation failed; no consumer projects created. Private source/logs were not published.'
+            exit 1
+          fi
+          if ! node --test service-dispatch/integration/test-cash-finance.cjs > "$RUNNER_TEMP/private-cash-finance-test.log" 2>&1; then
+            echo 'Cash/closing native tests failed. No consumer code pushed.'
             exit 1
           fi
           node service-dispatch/integration/build-copy-packages.cjs "$RUNNER_TEMP/copy-unconfigured" > "$RUNNER_TEMP/private-build.log" 2>&1
@@ -84,6 +88,18 @@ jobs:
         run: |
           set -euo pipefail
           node ops/create-integration-copy-projects.cjs "$RUNNER_TEMP/copy-configured" "$RUNNER_TEMP/copy-registry/projects.json"
+      - name: Probe owner-only Google UAT and list legacy copy closing dates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ops/probe-finance-copy-uat.cjs "$RUNNER_TEMP/clasp-tools" "$RUNNER_TEMP/copy-registry/projects.json" "$RUNNER_TEMP/finance-copy-uat.json"
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: FINANCE_COPY_CORRECTIONS_UAT_20261015
+          path: ${{ runner.temp }}/finance-copy-uat.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Persist only project IDs and copy IDs, including partial setup
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

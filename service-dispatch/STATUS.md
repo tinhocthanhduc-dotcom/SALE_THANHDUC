@@ -1,5 +1,15 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — ĐC tiền mặt và chốt sổ, chỉ bản sao
+
+- Theo quyết định chủ: thợ/kế toán đề nghị ĐC, giám đốc khác người lập duyệt; một đề nghị mở/PT, lý do bắt buộc. Chỉ PT tiền mặt chưa có NQ hiệu lực; NQ chờ được người lập/kế toán hủy có lý do/lịch sử; đã nhận một phần hoặc đủ thì chặn và yêu cầu giám đốc xử lý ngoài app.
+- Hủy THU gốc qua deleteTransaction (DA_HUY + audit), sau đó THU mới đúng snapshot tài khoản/danh mục. Keys DIEUPHOI:DC:<số>:HUY và :THU; fence bền vững chặn THU gốc đến muộn, retry từng bước không trùng. THU gốc chưa ghi thì chỉ ghi mới. PT gốc giữ nguyên dữ liệu và chuyển Đã thay thế; số đúng 0 không tạo PT mới. Chờ duyệt/chờ Finance không đổi số dư; trong lúc đồng bộ chặn thu thêm, NQ và đóng. Báo cáo loại PT đã thay thế, giữ tách còn phải thu đã xác nhận / còn được báo thu.
+- Finance review từ d3c4607: bật lại màn chốt/mở khóa; ADMIN/KE_TOAN chốt, ADMIN mở với lý do/audit; chốt lại thêm dòng. Chung isDateClosed_ theo giờ Việt Nam/LOCK_AFTER_CLOSE; lỗi đọc/schema không coi là mở. AP_DUNG_KHOA chỉ true cho lần chốt mới sau kích hoạt theo workbook, không tự khóa hàng cũ. Bảo vệ cả ngày cũ/mới khi sửa, native THU/CHI/chuyển quỹ/công nợ/import, chặn reset/số dư đầu kỳ khi có ngày mới khóa.
+- Kiểm chứng local: **126/126 Node, 14/14 native Finance, 19 bộ trình duyệt** đạt; hồi quy native Kho 98 ca và consumer cũ đạt. Bao gồm giảm/tăng/0, vượt thu, tự duyệt, trùng đề nghị, NQ chờ/hủy/đã nhận, THU gốc chưa ghi, hủy thành công rồi THU lỗi/retry, replay, quyền riêng tư, lệch ngày và lỗi đọc khóa. Đây là mô phỏng native/CI, chưa phải kết quả Google.
+- Bàn giao/diff và khôi phục: [CASH_CORRECTIONS_REVIEW.md](docs/integration-20261015/CASH_CORRECTIONS_REVIEW.md), [Finance diff](docs/integration-20261015/FINANCE_CLOSE_DAY_REVIEW.patch). Không đưa reader v50 trở lại riêng lẻ sau khi ĐC áp dụng. Finance chỉ nhánh review, không push main; Kho/Finance/AI thật giữ nguyên.
+- Google: pipeline sẽ cập nhật staging/copy hiện có, giữ dữ liệu/cấu hình, không tự kích hoạt chốt trên workbook copy đang dùng. Probe owner-only tạo workbook mẫu riêng; kết quả thực tế và danh sách ngày CHOT_SO cũ ghi vào artifact FINANCE_COPY_CORRECTIONS_UAT_20261015. Nếu Execution API không chạy được, ghi rõ và để owner Run hàm đã chuẩn bị; không nhận pass Google từ mô phỏng.
+- OWNER_SETUP và mốc pilot còn giữ: bảng gán Finance/mã TD, pump actor admin, đồng bộ bản sao, đối chiếu UAT; normalized tables, chống lạm dụng login/quota. Triển khai Finance thật/AI_KHO và chuyển consumer sang dữ liệu thật cần chủ duyệt riêng.
+
 ## 15/10/2026 — desktop đợt cuối, hoàn tất giao diện (o/p)
 
 - Đồng bộ: bảng chứng từ năm cột, dải bản sao và ba số liệu chia đều; lý do dài xuống dòng, số cần xử lý tô đỏ; lỗi đỏ, kết quả thật, thao tác theo quyền/trạng thái gốc. Gán Finance: bốn nhóm, nguồn chưa gán hiện đỏ, shortcut mở form gốc với nguồn và ID đã lưu; danh mục chưa xác minh thì khóa gán. Ngân hàng vẫn cấu hình hợp nhất trong hình thức thanh toán.

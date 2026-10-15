@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 27,
-  "update": "User-authorized Dispatch integration preparation on the SAME isolated staging project: readonly verified-copy TD catalogues for warehouse 58/145, atomic durable signed outbox and result board, director-only existing Finance ID mappings, missing-mapping hold/retry with frozen snapshots, default Cash/ACB/TCB and retired VCB. Integration stays disabled until owner configures copies and copy UAT. Add native consumer copy-package generators and AI_KHO audit/review ONLY; do not deploy/create/reset consumers or modify/push/deploy QL_KHO, FINANCE, AI_KHO or CARE. Keep staging Sheets/Drive/properties/users and all existing data. No bootstrap/reset/migration/backfill or real warehouse/Finance writes. Add integration domain/transport/browser tests and honest STATUS Google UAT still pending."
+  "revision": 28,
+  "update": "User-approved cash correction pilot on SAME Dispatch staging: request/director approval, cancel pending NQ, cancel original Finance THU before replacement THU with frozen mapping and replay fences. Update existing COPY consumers only with reviewed Finance closing/unlock guard and private synthetic-workbook UAT. Preserve all users, properties, Sheets/Drive and mappings. No bootstrap/reset/backfill. No real Kho/Finance/AI writes or deploy; no Finance main push."
 }

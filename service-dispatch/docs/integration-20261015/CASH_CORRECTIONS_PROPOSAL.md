@@ -1,22 +1,34 @@
-# Điều chỉnh tiền mặt báo nhầm — đề xuất trước pilot
+# Điều chỉnh tiền mặt — quyết định chủ ngày 15/10/2026, triển khai trên bản sao
 
-Trạng thái: **chưa triển khai**, cần chủ chốt nghiệp vụ và duyệt riêng trước pilot. Bản nối hiện ghi THU vào tài khoản Tiền nhân viên đang giữ ngay khi thợ báo tiền mặt; đây là tiền báo thu, chưa phải tiền đã về Quỹ tiền mặt. NQ chỉ chuyển số thực nhận giữa hai tài khoản, không tạo doanh thu mới.
+Thay thế đề xuất phiếu âm trước đây: **hủy THU gốc bằng `deleteTransaction` (DA_HUY, giữ audit), rồi tạo THU đúng số**. Chưa triển khai Finance thật.
 
-## Hiện tại khi phát hiện sai
+- Thợ đang được giao và là người báo PT, hoặc kế toán, lập `request_cash_correction`: số đúng nguyên VND ≥0 khác số cũ, lý do bắt buộc, ảnh có thể chọn từ ảnh đã lưu trên đơn. Mỗi PT một ĐC mở. Giám đốc khác người đề nghị duyệt/từ chối. ĐC chưa duyệt giữ nguyên toàn bộ tiền; người khác không xem tiền thợ.
+- PT phải là tiền mặt, chưa có NQ nào còn hiệu lực. NQ chờ được người lập/kế toán/giám đốc hủy bằng `cancel_deposit`, lý do và lịch sử giữ nguyên. NQ đã xác nhận, kể cả thiếu/0 thực nhận, chặn điều chỉnh trong bản đầu: cần giám đốc xử lý ngoài app. Không đảo NQ.
+- Duyệt kiểm lại phiên bản PT, khoản nộp và khả năng thu tăng; tạm chặn thu thêm/nộp quỹ/đóng hồ sơ trong lúc Finance xử lý để không đua số tiền. ĐC chờ duyệt cũng chặn đóng hồ sơ nhưng không thay số dư.
+- External keys: `DIEUPHOI:DC:<DC-no>:HUY`, `DIEUPHOI:DC:<DC-no>:THU`. Một PT có phân bổ hàng/công thì native chứng từ con thêm `:goods` / `:service`, như consumer trước đây. Giữ key nhóm đúng theo quyết định chủ; không dùng số âm. HUY phải ack trước khi THU được xuất sang Finance. Với 0đ chỉ HUY.
+- Nếu gốc chưa ghi Finance: xuất tombstone đã ký thay envelope gốc, không phát THU gốc; bước HUY ghi chặn bền vững trên Finance và xác minh chưa có chứng từ thực tế. Nếu có yêu cầu gốc đã đọc envelope cũ đang chạy, hoặc Finance đã ghi nhưng Điều phối mất ack: native lock và chặn bền vững đảm bảo gốc được hủy và không thể ghi lại sau HUY.
+- Bản sao Finance lưu fence trong `DISPATCH_FINANCE_CORRECTIONS`, gồm external key, nguồn, trạng thái, fingerprint và kết quả. Khóa native dùng chung với saveTransaction. Chỉ consumer riêng tư mới được dùng external key Điều phối; không cho giả qua API ghi phiếu công khai.
+- Tài khoản và danh mục lấy từ mapping snapshot PT gốc; không lấy gán mới. Số đúng chia theo tỷ trọng hàng/công trên các dòng THU gốc (làm tròn VND, tổng chính xác); không đổi doanh thu nghiệm thu. Native so khớp loại/account/category/amount trước hủy, không hủy nhầm chứng từ đã được sửa thủ công.
+- Sau ack thành công đầy đủ: PT gốc `replaced` (UI Đã thay thế), nguyên số tiền/người/ảnh giữ nguyên; PT mới liên kết gốc và ĐC, giữ người thợ cũ, ngày lập mới là ngày duyệt. 0đ không tạo PT/THU mới. NQ sau đó tham chiếu key Finance của PT thay thế.
+- Trong lúc Finance đang ghi dở, sổ Điều phối chưa áp dụng delta; hiển thị trạng thái chờ/lỗi và khóa NQ/đóng hồ sơ. Retry từng bước, replay không lặp THU/hủy/ĐC. Không dùng duyệt ngoại lệ đồng bộ để bỏ qua ĐC đang xử lý.
+- Ngày gốc đã chốt theo guard Finance dùng chung: báo FINANCE_DATE_CLOSED, Admin phải mở khóa trước. Không tự đổi ngày gốc để né chốt.
 
-- Giữ PT gốc, lịch sử và chứng từ Finance; không sửa/xóa dòng đã ghi, không nhập trực tiếp số âm vào Sheets.
-- Không dùng NQ thiếu tiền để sửa PT báo nhầm: thiếu do thợ chưa nộp vẫn là tiền thợ giữ; không đồng nghĩa khách chưa trả. Không tạo phiếu CHI giả hoặc tự thay đổi giá đơn để bù.
-- Dừng thử đơn đó và báo quản trị đối chiếu. Hiện chưa có nút điều chỉnh được duyệt; đơn chưa đối soát xong không đưa vào vận hành thật.
-- Không retry chứng từ đang có nghi vấn để đổi số tiền. Retry phải giữ nguyên nội dung và external key của chứng từ gốc.
+## Các số đối chiếu
 
-## Luồng đề nghị
+Ví dụ doanh thu đã nghiệm thu 200k, tiền mặt báo 100k sửa còn 80k:
 
-1. Thợ hoặc kế toán lập đề nghị ĐC liên kết PT, đơn TD, tài khoản Finance đã chốt trên PT, số đúng, chênh lệch và lý do; có ảnh/đối chiếu khi cần. Chỉ được một đề nghị mở trên mỗi PT.
-2. Kế toán đối chiếu; giám đốc khác người đề nghị duyệt. Cấm tự duyệt, kiểm phiên bản PT/đề nghị; đề nghị chưa duyệt không thay số dư hoặc số còn phải thu.
-3. Khi duyệt, tạo chứng từ bù bất biến và outbox trong cùng command, không sửa PT. Phải bổ sung nghiệp vụ điều chỉnh native Finance cho khoản giảm (phiếu âm/reversal có liên kết nguồn và kiểm quyền); không giả định THU hiện tại chấp nhận số âm. Tài khoản/danh mục phân bổ theo snapshot PT gốc, không theo cấu hình vừa đổi.
-4. External key riêng `DIEUPHOI:DC:<so-DC>` cùng liên kết nguồn PT; Finance kiểm durable dedupe trong lock. Lỗi mạng/replay không ghi hai lần, kết quả ký như chứng từ khác. Không hủy/xóa outbox gốc đã gửi: trước hết xác minh PT gốc đã ghi hoặc chưa ghi, tránh đua giữa ghi gốc và điều chỉnh.
-5. Sau khi Finance trả kết quả ghi thành công mới áp dụng delta vào sổ Điều phối, số còn phải thu, tiền thợ giữ và báo cáo; giữ audit trước/sau và liên kết hai chứng từ. Trong khi chờ thì chặn NQ/đóng hồ sơ của khoản liên quan. Nếu đổi bản ghi trong lúc chờ, bắt đối soát lại trước khi duyệt.
-6. PT chưa nộp quỹ: ví dụ báo 100k nhưng khách thực trả 80k → điều chỉnh -20k; tiền thợ giữ giảm 20k, số còn phải thu tăng 20k, doanh thu nghiệm thu không đổi. Nếu thực thu 120k, phải kiểm số còn phải thu trước khi cho tăng, không thu vượt tổng.
-7. PT đã có NQ chờ hoặc đã nộp: không giảm tiền giữ xuống âm. Phải hủy đề nghị NQ chưa xác nhận bằng nghiệp vụ có lịch sử hoặc đối soát/đảo phần NQ liên quan có duyệt trước; thừa tiền đã nhận cần luồng hoàn/điều chỉnh riêng, không tự trừ quỹ. Ngày gốc đã chốt thì ghi điều chỉnh ngày đang mở, liên kết ngày gốc; không mở lại/ngầm đổi ngày.
+| Chỉ tiêu | Trước / chưa duyệt / đang chờ Finance | Sau đủ ack | Sau kế toán nhận NQ 80k |
+|---|---:|---:|---:|
+| Finance: Tiền nhân viên đang giữ | 100k trước HUY | 80k | 0 |
+| Điều phối: thợ giữ | 100k | 80k | 0 |
+| Đã báo thu | 100k | 80k | 80k |
+| Còn **được báo thu** (`collectable`) | 100k | 120k | 120k |
+| Còn chưa xác nhận (`remaining`, quy tắc cũ) | 200k | 200k | 120k |
+| Doanh thu nghiệm thu | 200k | 200k | 200k |
 
-Kiểm thử bắt buộc khi làm: giảm/tăng báo nhầm, thu vượt, tự duyệt, phiên bản cũ, hai đề nghị trùng, NQ chờ/đã nhận một phần/đủ, ngày đóng, Finance ghi nửa chừng, replay và lỗi sau ghi nhưng trước ack; đối chiếu cả số dư Finance, tiền giữ, phải thu và báo cáo. Đây là hạng mục riêng, không được coi UAT nối cơ bản là đã kiểm xong điều chỉnh.
+Finance có thể tạm 0 / 40k trong lúc HUY xong / THU ghi được một phần; Điều phối vẫn 100k và khóa NQ đến ack đủ. Đây là trạng thái đối soát đang xử lý, không được đóng hồ sơ. Cách tính `remaining`/`collectable` của app cũ được giữ nguyên: báo tiền mặt chưa đồng nghĩa kế toán đã nhận quỹ.
+
+## Kiểm chứng và vận hành
+
+- Domain, native Finance, HTTP/browser và signed outbox: xem `CASH_CORRECTIONS_REVIEW.md` và kết quả kiểm thử kèm diff.
+- `runFinanceCopyCorrectionUat` chỉ owner, tạo **một workbook Google mới với dữ liệu mẫu**, không ghi workbook Finance copy đã cấu hình hoặc Finance thật. Kết quả trả workbook ID, danh sách ngày chốt cũ (đọc), các ca pass/fail và số dư mẫu. Google Execution API được thử tự động; nếu không trả kết quả, cần owner chạy đúng hàm trên editor bản sao. Không gọi kết quả mô phỏng là Google UAT.
