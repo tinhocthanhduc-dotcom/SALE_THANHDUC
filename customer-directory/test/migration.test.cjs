@@ -184,3 +184,25 @@ test("legacy bad phones are collected together, raw preserved, valid parts alone
   assert.deepEqual(f.driver.state.mappings, mappings);
   assert.throws(() => f.submit("create", { customer: { TEN: "Live", DIEN_THOAI: "abc" } }, "finance"), /INVALID_PHONE/);
 });
+
+test("all invalid legacy taxes collected without guessing or matching by invalid tax, rerun preserves raw", () => {
+  const rows = [
+    { app: "SALE", ma_cu: "S1", TEN: "A", MST: "123", DIEN_THOAI: "bad" },
+    { app: "CARE", ma_cu: "C1", TEN: "B", MST: "123" },
+    { app: "FIN", ma_cu: "F1", TEN: "C", MST: "030-123-4567" },
+    { app: "SALE", ma_cu: "S2", TEN: "D", MST: "<bad-tax>" }
+  ];
+  const p = M.plan(rows, {}, hash);
+  assert.equal(p.report.invalid_tax_rows.length, 3);
+  assert.equal(p.report.invalid_phone_rows.length, 1);
+  assert.equal(p.report.automatic_groups, 0);
+  assert.equal(p.records.find(r => r.ma_cu === "F1").MST, "0301234567");
+  assert.equal(p.records.find(r => r.ma_cu === "S1").LOAI, "CONG_TY");
+  assert.deepEqual(M.plan(p.records, {}, hash).report, p.report);
+  const f = fixture(); scan(f, rows); finalize(f);
+  const mapping = C.clone(f.driver.state.mappings);
+  assert.equal(f.driver.state.sources["SALE:S1"].MST_GOC, "123");
+  assert.equal(f.driver.state.customers[mapping["SALE:S1"]].MST, "");
+  scan(f, rows); finalize(f); assert.deepEqual(f.driver.state.mappings, mapping);
+  assert.throws(() => f.submit("create", { customer: { TEN: "Live", MST: "123" } }, "finance"), /INVALID_TAX/);
+});

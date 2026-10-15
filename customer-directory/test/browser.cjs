@@ -1,7 +1,7 @@
 "use strict";
 const { chromium } = require("../../erp-prototype/node_modules/playwright"), { createApp } = require("../server.cjs"), { actors, sourceRows } = require("./helpers.cjs"), assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path");
 (async () => {
-  const app = createApp({ actor: (req) => actors[req.headers["x-fixture-actor"]] || null, readSources: () => sourceRows().map((r, i) => i === 0 ? { ...r, DIEN_THOAI: [...(Array.isArray(r.DIEN_THOAI) ? r.DIEN_THOAI : [r.DIEN_THOAI || ""]), "bad <phone>"] } : r) }), scenarios = [], errors = [];
+  const app = createApp({ actor: (req) => actors[req.headers["x-fixture-actor"]] || null, readSources: () => sourceRows().map((r, i) => i === 0 ? { ...r, DIEN_THOAI: [...(Array.isArray(r.DIEN_THOAI) ? r.DIEN_THOAI : [r.DIEN_THOAI || ""]), "bad <phone>"] } : i === 7 ? { ...r, MST: "<bad-tax>" } : r) }), scenarios = [], errors = [];
   let n = 0;
   const run = (type, payload, role = "finance", expected_version) => app.repository.submit({ type, payload, idempotency_key: "browser-" + n++, expected_version }, actors[role]), seed = (c) => run("create", { customer: { LOAI: "CA_NHAN", ...c } }).customer;
   const company = seed({ TEN: "Công ty Nguyễn", LOAI: "CONG_TY", MST: "0301234567", DIEN_THOAI: "0901234567", DIA_CHI: "Thảo Điền" }), personal = seed({ TEN: "Nguyễn Bình", DIEN_THOAI: "0912345678" });
@@ -137,6 +137,8 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     await page.getByText("1 dòng có SĐT cần kiểm tra · quét vẫn tiếp tục").waitFor();
     await page.getByText("1 dòng có SĐT cần kiểm tra · quét vẫn tiếp tục").click();
     await page.getByRole("cell", { name: "bad <phone>", exact: true }).waitFor();
+    await page.getByText("1 dòng có MST cần kiểm tra · quét vẫn tiếp tục").click();
+    await page.getByRole("cell", { name: "<bad-tax>", exact: true }).waitFor();
     await page.waitForFunction(() => document.getElementById("import").textContent.includes("8 dòng nguồn"));
     assert((await page.locator("#import tbody tr").filter({ has: page.locator("[data-review]") }).first().innerText()).includes("Có nợ mở"));
     const review = Object.values(app.driver.state.reviews).find((r) => r.kind === "AUTO_DEBT");

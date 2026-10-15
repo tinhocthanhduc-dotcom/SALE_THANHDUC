@@ -89,3 +89,8 @@ Máy có Chromium có thể đặt `ERP_TEST_CHROMIUM=/usr/bin/chromium`. Server
 ## Bản sửa quét SĐT cũ (revision 2)
 
 Quét không dừng vì số điện thoại nguồn không hợp lệ. Tách từng số, chuẩn hóa phần hợp lệ; phần lỗi không dùng để ghép và không tự đoán. Giao diện Gộp khách cũ có danh sách tổng hợp nguồn/mã cũ/SĐT gốc/phần lỗi. Giá trị gốc và phần lỗi giữ ở JSON của sheet NGUON (DIEN_THOAI_GOC, DIEN_THOAI_LOI), kể cả sau cấp mã. Chủ có thể sửa nhiều dòng trên bản sao nguồn rồi quét lại. API tạo/sửa danh bạ vẫn kiểm SĐT nghiêm ngặt. Cần rà danh sách lỗi trước khi duyệt/cấp mã; SĐT chưa xác minh không được tự bổ sung vào khách. Không sửa dữ liệu nguồn hoặc app thật.
+
+
+## Quét MST cũ (revision 3)
+
+MST không hợp lệ không dừng quét; liệt kê toàn bộ trong mục MST cần kiểm tra, đồng thời với SĐT lỗi. NGUON giữ MST_GOC và MST_LOI; MST chuẩn hóa để trống khi sai, không dùng giá trị sai để ghép, không tự đoán/thêm số 0. Có thông tin MST gốc vẫn giữ loại công ty. Cần rà lỗi trước cấp mã; sửa trên bản sao rồi quét lại. CRUD vẫn chặn MST sai. Kiểm tra: 64/64 Node, 8 nhóm trình duyệt (cả lỗi SĐT/MST cùng lượt, HTML escape), build GAS đạt; chưa xác nhận quét dữ liệu Google thực tế.
