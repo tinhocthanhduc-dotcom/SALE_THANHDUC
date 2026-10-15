@@ -1,9 +1,10 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 8,
+  "revision": 9,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
-  "scope": "Update SAME separate customer-directory COPY project/deployment only. Add owner-only bulk setup helper for DIEUPHOI HMAC client/actors, no customer data writes or changes to existing signed API/auth behavior. No real app or source workbook changes.",
+  "scope": "Owner approved separate HMAC-only API deployment on SAME COPY script. Preserve private UI deployment, data, properties, keys and actors. Restore normal private UI HEAD in finally.",
   "run_source_zero_rescan": false,
-  "update": "COPY-only owner onboarding helper exports non-secret mapping to CD_DISPATCH_ACTOR_MAP so Google editor return values do not require logging. Same project/deployment URL, authenticated web app unchanged. Do not run setup/UAT/rescan/provisioning helpers. Preserve all existing customer data, KTD/counters/users/clients/secrets. Dispatch staging request revision 35 is companion. 316 combined Node + all browser regressions passed; compiled-GAS setup tests verify private exports and owner-only roles.",
-  "run_setup": false
+  "update": "Publish isolated signed DIEUPHOI API transport. No setup, provisioning, customer writes, source rescan, or real app changes.",
+  "run_setup": false,
+  "deploy_api_only": true
 }

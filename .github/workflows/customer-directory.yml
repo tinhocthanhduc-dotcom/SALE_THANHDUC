@@ -31,6 +31,12 @@ jobs:
           name: CUSTOMER_DIRECTORY_COPY_PACKAGE
           path: ${{ runner.temp }}/customer-directory-gas/
           retention-days: 14
+      - run: node customer-directory/build-api-gas.cjs "${{ runner.temp }}/customer-directory-api"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_API_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-api/
+          retention-days: 14
       - id: request
         env:
           BEFORE_SHA: ${{ github.event.before }}
@@ -80,6 +86,10 @@ jobs:
         with:
           name: CUSTOMER_DIRECTORY_COPY_PACKAGE
           path: ${{ runner.temp }}/customer-directory-gas/
+      - uses: actions/download-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_API_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-api/
       - name: Restore or create ONLY the separate directory project
         shell: bash
         run: |
@@ -124,6 +134,10 @@ jobs:
           fs.writeFileSync(path.join(root,'customer-directory-gas/.clasp.json'),JSON.stringify({scriptId:p.script_id,rootDir:'.'}));
           JS
           cd "$RUNNER_TEMP/customer-directory-gas"
+          if node -e 'process.exit(require(process.argv[1]).deploy_api_only===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            node "$GITHUB_WORKSPACE/customer-directory/deploy-api.cjs" "$RUNNER_TEMP/customer-registry/project.json" "$RUNNER_TEMP/customer-directory-gas" "$RUNNER_TEMP/customer-directory-api" "$RUNNER_TEMP/customer-registry/api-deployment.json"
+            exit 0
+          fi
           clasp push --force
           clasp --json list-deployments > "$RUNNER_TEMP/customer-deployments.json"
           node "$GITHUB_WORKSPACE/customer-directory/deploy.cjs" "$RUNNER_TEMP/customer-registry/project.json" "$RUNNER_TEMP/customer-deployments.json" "$RUNNER_TEMP/customer-registry/deployment.json"
