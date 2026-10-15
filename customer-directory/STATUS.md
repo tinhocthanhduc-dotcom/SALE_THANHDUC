@@ -77,3 +77,5 @@ Khi quét, tự sửa hồ sơ đã nhập nếu có bằng chứng số tương
 Kiểm tra: 85/85 Node, 11 nhóm browser 390px, build GAS đạt; test setup chạy lại giữ dữ liệu/bộ đếm, scan giữ mã/rerun, quyền/marker và số lượt tìm ≤6 vẫn đạt. Trên mô hình offline dựng từ 1.769 dòng của bốn Excel chủ gửi: 991 mã cũ giữ nguyên, 21 hồ sơ sửa, lần 2 sửa 0. Đây không phải số đo/lần ghi Google thực tế; xem docs/SOURCE_ZERO_VERIFICATION.json.
 
 Bổ sung test bảo toàn CHO_PHEP_NO khi Google hiển thị TRUE viết hoa: đọc cùng quy tắc với customerMap để việc sửa SĐT/MST không ghi nhầm quyền nợ thành false. Request revision 6 giữ cùng endpoint.
+
+Deploy cuối: Google COPY v6, CI 38758829676 success, cùng URL đã ghim. Thử quét qua Execution API vẫn chưa nhận được kết quả xác nhận; không coi là đã quét Google thành công. Chủ tải lại app → Gộp khách cũ → Quét bốn bản sao để áp dụng định dạng và sửa số. Kết quả native/offline được phân biệt tại docs/SOURCE_ZERO_VERIFICATION.json.

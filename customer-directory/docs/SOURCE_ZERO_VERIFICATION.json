@@ -19,5 +19,22 @@
   "google_rescan_confirmed": false,
   "credit_flags_preserved": true,
   "initial_google_deployment_version": 5,
-  "initial_google_rescan_result": "unconfirmed"
+  "initial_google_rescan_result": "unconfirmed",
+  "code_commit": "e115f6885ef0faa9986f9e8b843153dd4c460b6d",
+  "ci_run": 38758829676,
+  "ci_tests": "success",
+  "ci_deploy": "success",
+  "google_deployment": {
+    "script_id": "1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW",
+    "deployment_id": "AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2",
+    "version": 6,
+    "web_app_url": "https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec",
+    "google_login_required": true,
+    "owner_setup_required": true,
+    "existing_apps_modified": false
+  },
+  "google_rescan_result": {
+    "confirmed": false,
+    "reason": "Google rescan result unconfirmed. Owner can click Quét bốn bản sao or run normalizeCustomerDirectorySourceNumbers; rerun preserves allocated KTD."
+  }
 }
