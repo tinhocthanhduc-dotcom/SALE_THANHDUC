@@ -41,3 +41,9 @@ test("latest known source phone/address wins, original rows are retained separat
   assert.equal(c.DIA_CHI, "Mới");
   assert.deepEqual(rows[0].DIEN_THOAI, ["0901234567"]);
 });
+
+test("numeric CARE phone reaches source normalization without strict live-phone rejection, finance fields remain typed", () => {
+  const r=S.fromTables("CARE",{"Khách hàng":{headers:["Mã khách hàng","Tên khách hàng","Số điện thoại","Địa chỉ","Công ty"],rows:[["C1","Liên hệ",2837542072,"Source address","Company"]]}})[0];
+  assert.equal(r.DIEN_THOAI,2837542072);
+  const normalized=M.normalize(r);assert.deepEqual(normalized.DIEN_THOAI,["02837542072"]);assert.deepEqual(normalized.NGUOI_LIEN_HE[0].dien_thoai,["02837542072"]);
+});

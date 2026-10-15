@@ -1,7 +1,7 @@
 "use strict";
 const { chromium } = require("../../erp-prototype/node_modules/playwright"), { createApp } = require("../server.cjs"), { actors, sourceRows } = require("./helpers.cjs"), assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path");
 (async () => {
-  const app = createApp({ actor: (req) => actors[req.headers["x-fixture-actor"]] || null, readSources: () => sourceRows().map((r, i) => i === 0 ? { ...r, DIEN_THOAI: [...(Array.isArray(r.DIEN_THOAI) ? r.DIEN_THOAI : [r.DIEN_THOAI || ""]), "bad <phone>"] } : i === 7 ? { ...r, MST: "<bad-tax>" } : r) }), scenarios = [], errors = [];
+  const app = createApp({ actor: (req) => actors[req.headers["x-fixture-actor"]] || null, readSources: () => sourceRows().map((r, i) => i === 0 ? { ...r, DIEN_THOAI: [...(Array.isArray(r.DIEN_THOAI) ? r.DIEN_THOAI : [r.DIEN_THOAI || ""]), "bad <phone>"] } : i === 7 ? { ...r, MST: "<bad-tax>" } : i === 5 ? {...r, DIEN_THOAI:2837542072, MST:312345670} : r) }), scenarios = [], errors = [];
   let n = 0;
   const run = (type, payload, role = "finance", expected_version) => app.repository.submit({ type, payload, idempotency_key: "browser-" + n++, expected_version }, actors[role]), seed = (c) => run("create", { customer: { LOAI: "CA_NHAN", ...c } }).customer;
   const company = seed({ TEN: "Công ty Nguyễn", LOAI: "CONG_TY", MST: "0301234567", DIEN_THOAI: "0901234567", DIA_CHI: "Thảo Điền" }), personal = seed({ TEN: "Nguyễn Bình", DIEN_THOAI: "0912345678" });
@@ -86,6 +86,9 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     assert((await page.locator("#detail").innerText()).includes("Khách mới từ ô tìm"));
     scenarios.push("clear selection and create from no results with phone prefilled");
     await page.locator("#create").click();
+    assert.equal(await page.locator("[name=DIEN_THOAI]").getAttribute("type"), "tel");
+    assert.equal(await page.locator("[name=MST]").getAttribute("type"), "text");
+    assert.equal(await page.locator("[name=MST]").getAttribute("inputmode"), "numeric");
     await page.locator("[name=TEN]").fill("Công ty trùng");
     await page.getByRole("radio", { name: "Công ty", exact: true }).check();
     await page.locator("[name=MST]").fill("0301234567");
@@ -193,6 +196,9 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     await page.getByRole("cell", { name: "bad <phone>", exact: true }).waitFor();
     await page.getByText("1 dòng có MST cần kiểm tra · quét vẫn tiếp tục").click();
     await page.getByRole("cell", { name: "<bad-tax>", exact: true }).waitFor();
+    await page.getByText("1 dòng đã bù số 0 đầu", {exact:true}).click();
+    await page.getByRole("cell", {name:"02837542072",exact:true}).waitFor();
+    await page.getByRole("cell", {name:"0312345670",exact:true}).waitFor();
     await page.waitForFunction(() => document.getElementById("import").textContent.includes("8 dòng nguồn"));
     assert((await page.locator("#import tbody tr").filter({ has: page.locator("[data-review]") }).first().innerText()).includes("Có nợ mở"));
     const review = Object.values(app.driver.state.reviews).find((r) => r.kind === "AUTO_DEBT");
@@ -215,6 +221,11 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     await page.waitForFunction(() => document.getElementById("mapping-view").textContent.includes("SALE"));
     assert((await page.locator("#mapping-view").innerText()).includes("SALE"));
     scenarios.push("copy scan shows debt first; accounting plus different director approval, allocation and mapping display");
+    await page.locator("[data-tab=directory]").click();
+    await open(page,"02837542072");
+    assert((await page.locator("#detail").innerText()).includes("02837542072"));
+    assert((await page.locator("#detail").innerText()).includes("0312345670"));
+    scenarios.push("numeric source phone/tax regain leading zeros, audit displays original/corrected fields and tel/text UI preserves them");
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ pass: true, scenarios, page_errors: errors }, null, 2));
   } finally {

@@ -1,6 +1,8 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 4,
+  "revision": 5,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
-  "scope": "New separate project and workbook for steps 1 and 2 only. Google login required, signed HTTP API, source copies read only. No existing app writes or integration. Owner runs setup and registers privately created copies. Never publish customer source data or HMAC secrets."
+  "scope": "New separate project and workbook for steps 1 and 2 only. Google login required, signed HTTP API, source copies read only. No existing app writes or integration. Owner runs setup and registers privately created copies. Never publish customer source data or HMAC secrets.",
+  "run_source_zero_rescan": true,
+  "update": "Restore source-only leading zeros, audit originals/corrections, flag misplaced phone-as-tax, apply plain-text target columns, preserve KTD/mappings and manual edits. Rescan verified configured COPY sources only; no source or existing app writes."
 }

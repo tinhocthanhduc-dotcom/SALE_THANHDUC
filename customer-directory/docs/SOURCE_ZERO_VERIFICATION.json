@@ -1,0 +1,20 @@
+{
+  "node_tests": 84,
+  "browser_groups": 11,
+  "gas_build": "passed",
+  "offline_import_model_from_uploaded_copies": {
+    "source_rows": 1769,
+    "existing_customers": 991,
+    "repaired_customers": 21,
+    "leading_zero_rows": 31,
+    "invalid_phone_rows": 7,
+    "invalid_tax_rows": 11,
+    "ktd_codes_preserved": true,
+    "mappings_preserved": true,
+    "counter_preserved": true,
+    "second_scan_repairs": 0,
+    "google_written": false
+  },
+  "offline_baseline_code": "1697eca",
+  "google_rescan_confirmed": false
+}

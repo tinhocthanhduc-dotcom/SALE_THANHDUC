@@ -145,6 +145,15 @@ jobs:
           cd "$RUNNER_TEMP/customer-directory-gas"
           timeout 45s clasp --json run benchmarkCustomerDirectorySearch > "$RUNNER_TEMP/customer-search-private.json" 2> "$RUNNER_TEMP/customer-search-private.err" || true
           node "$GITHUB_WORKSPACE/customer-directory/search-timing-status.cjs" "$RUNNER_TEMP/customer-search-private.json" "$RUNNER_TEMP/customer-registry/search-timing.json"
+      - name: Try authorized source-number rescan on the configured COPY
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_source_zero_rescan===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            cd "$RUNNER_TEMP/customer-directory-gas"
+            timeout 55s clasp --json run normalizeCustomerDirectorySourceNumbers > "$RUNNER_TEMP/customer-zeros-private.json" 2> "$RUNNER_TEMP/customer-zeros-private.err" || true
+            node "$GITHUB_WORKSPACE/customer-directory/source-zero-status.cjs" "$RUNNER_TEMP/customer-zeros-private.json" "$RUNNER_TEMP/customer-registry/source-zero-rescan.json"
+          fi
       - name: Persist directory links only, never source rows or keys
         if: always()
         uses: actions/upload-artifact@v4

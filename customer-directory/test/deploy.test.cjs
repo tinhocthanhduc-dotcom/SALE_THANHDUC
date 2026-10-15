@@ -33,3 +33,15 @@ test("execution status never treats error/empty output as successful Google setu
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("deployment always preserves the pinned URL even if clasp listing omits entryPoint metadata", () => {
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),"directory-pinned-"));
+  try{
+    fs.writeFileSync(path.join(dir,"project.json"),JSON.stringify({script_id:"directory-only",deployment_id:"pinned-url"}));
+    fs.writeFileSync(path.join(dir,"list.json"),JSON.stringify({deployments:[{deploymentId:"another-url",versionNumber:4}]}));
+    const log=path.join(dir,"args.json");
+    fs.writeFileSync(path.join(dir,"clasp"),'#!/usr/bin/env node\nrequire("fs").writeFileSync(process.env.DEPLOY_ARG_LOG,JSON.stringify(process.argv.slice(2)));process.stdout.write(JSON.stringify({deploymentId:"pinned-url",versionNumber:5}));',{mode:0o755});
+    execFileSync(process.execPath,[path.join(__dirname,"../deploy.cjs"),path.join(dir,"project.json"),path.join(dir,"list.json"),path.join(dir,"out.json")],{env:{...process.env,PATH:dir+path.delimiter+process.env.PATH,DEPLOY_ARG_LOG:log}});
+    const args=JSON.parse(fs.readFileSync(log));assert.equal(args[args.indexOf("--deploymentId")+1],"pinned-url");
+  }finally{fs.rmSync(dir,{recursive:true,force:true})}
+});

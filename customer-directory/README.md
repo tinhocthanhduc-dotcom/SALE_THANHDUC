@@ -94,3 +94,14 @@ Quét không dừng vì số điện thoại nguồn không hợp lệ. Tách t�
 ## Quét MST cũ (revision 3)
 
 MST không hợp lệ không dừng quét; liệt kê toàn bộ trong mục MST cần kiểm tra, đồng thời với SĐT lỗi. NGUON giữ MST_GOC và MST_LOI; MST chuẩn hóa để trống khi sai, không dùng giá trị sai để ghép, không tự đoán/thêm số 0. Có thông tin MST gốc vẫn giữ loại công ty. Cần rà lỗi trước cấp mã; sửa trên bản sao rồi quét lại. CRUD vẫn chặn MST sai. Kiểm tra: 64/64 Node, 8 nhóm trình duyệt (cả lỗi SĐT/MST cùng lượt, HTML escape), build GAS đạt; chưa xác nhận quét dữ liệu Google thực tế.
+
+
+## Khôi phục số 0 nguồn (revision 5)
+
+Chỉ áp dụng khi quét nguồn (không đổi kiểm tra MST của API tạo/sửa): SĐT dạng số/chỉ chữ số: 9 chữ số đầu 3/5/7/8/9 thêm 0; 10 chữ số đầu 2 thêm 0. MST 9/12 chữ số thêm 0 thành 10/13. Number được đổi chuỗi đầy đủ không dạng mũ; chuỗi ký pháp mũ không được đoán. NGUON JSON giữ DIEN_THOAI_GOC, MST_GOC, BU_SO_0 (trường/gốc/sau), MST_LOI_LY_DO và MST_CHUYEN_SDT. MST trùng SĐT đã chuẩn hóa của chính dòng hoặc bản thân có dạng 02 + 9 số được đánh lỗi và chuyển sang SĐT; không suy đoán mọi MST 10 chữ số bắt đầu 2 là số bàn.
+
+Setup đặt định dạng @ cho các cột mã/SĐT/MST/mã cũ/chỉ mục/JSON liên quan ở toàn bộ bảng. Mọi lần ghi của app cũng đặt @ trước khi ghi literal text. Bản đang dùng: chỉ cần **Gộp khách cũ → Quét bốn bản sao**; lượt quét đầu sẽ nâng định dạng đích một lần sau khi kiểm tra COPY marker. Có hàm owner normalizeCustomerDirectorySourceNumbers để chạy cùng bước trên editor. Chỉ ghi Danh bạ; không sửa nguồn (kể cả bản sao nguồn), không cấp lại KTD.
+
+Khi quét, tự sửa hồ sơ đã nhập nếu có bằng chứng số tương đương thiếu 0/giá trị nhập cũ trống vì lỗi này. Ghi lịch sử CHUAN_HOA_SO_0, tăng version hồ sơ và làm lại chỉ mục; không ghi đè các chỉnh sửa tay khác. Nếu MST phục hồi đụng một mã KTD khác thì giữ mã/giá trị hiện tại; khi hai nhóm đã có mã cần GĐ xử lý gộp, không tự gộp/cấp lại. Quyết định duyệt giữ khi chỉ khác metadata audit; thông tin đối chiếu thực sự đổi thì cần duyệt lại.
+
+Kiểm tra: 84/84 Node, 11 nhóm browser 390px, build GAS đạt; test setup chạy lại giữ dữ liệu/bộ đếm, scan giữ mã/rerun, quyền/marker và số lượt tìm ≤6 vẫn đạt. Trên mô hình offline dựng từ 1.769 dòng của bốn Excel chủ gửi: 991 mã cũ giữ nguyên, 21 hồ sơ sửa, lần 2 sửa 0. Đây không phải số đo/lần ghi Google thực tế; xem docs/SOURCE_ZERO_VERIFICATION.json.

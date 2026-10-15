@@ -33,7 +33,7 @@ function cdWriteRows_(sheet, start, rows) {
   var end = start + rows.length - 1;
   if (end > sheet.getMaxRows()) sheet.insertRowsAfter(sheet.getMaxRows(), end - sheet.getMaxRows());
   if (rows[0].length > sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), rows[0].length - sheet.getMaxColumns());
-  sheet.getRange(start, 1, rows.length, rows[0].length).setRichTextValues(rows.map(function(row) {
+  sheet.getRange(start, 1, rows.length, rows[0].length).setNumberFormat("@").setRichTextValues(rows.map(function(row) {
     return row.map(function(v) {
       return SpreadsheetApp.newRichTextValue().setText(String(v === void 0 || v === null ? "" : v)).build();
     });
@@ -51,6 +51,23 @@ function cdProtect_(wb) {
   });
   var review = wb.getSheetByName("DUYET_TRUNG");
   review.getRange(2, 4, review.getMaxRows() - 1, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Cùng khách", "Khác khách"], true).setAllowInvalid(false).build());
+}
+function cdTextColumns_(sheet, headers) {
+  var names = ["MA_KHACH", "DIEN_THOAI", "MST", "MA_CU", "GOP_VAO", "ID", "APP", "GIA_TRI", "KHONG_DAU", "DU_LIEU", "CHI_TIET", "DONG_NGUON"];
+  headers.forEach(function(name, i) {
+    if (names.indexOf(name) >= 0) sheet.getRange(1, i + 1, sheet.getMaxRows(), 1).setNumberFormat("@");
+  });
+}
+function cdEnsureTextFormats_(config, actor) {
+  DirectoryBundle.Core.access(actor, ["finance", "director"]);
+  if (config.s.CD_TEXT_FORMAT_VERSION === "1") return;
+  cdLock_(function() {
+    cdRepository_(config); // Validate COPY identity and marker before formatting.
+    var book = SpreadsheetApp.openById(config.s.CD_WORKBOOK_ID);
+    Object.keys(DirectoryBundle.SCHEMA).forEach(function(name) { cdTextColumns_(book.getSheetByName(name), DirectoryBundle.SCHEMA[name]); });
+    SpreadsheetApp.flush();
+    config.p.setProperty("CD_TEXT_FORMAT_VERSION", "1");
+  });
 }
 function setupCustomerDirectory() {
   var owner = cdOwner_(), p = PropertiesService.getScriptProperties(), actual = ScriptApp.getScriptId();
@@ -81,6 +98,7 @@ function setupCustomerDirectory() {
       if (!sh.getLastRow()) cdWriteRows_(sh, 1, [head]);
       else if (JSON.stringify(sh.getRange(1, 1, 1, head.length).getDisplayValues()[0]) !== JSON.stringify(head)) throw new Error("SCHEMA_MISMATCH");
       sh.setFrozenRows(1);
+      cdTextColumns_(sh, head);
     });
     if (wb.getSheetByName("CD_META").getLastRow() === 1) cdWriteRows_(wb.getSheetByName("CD_META"), 2, [["ENV", "COPY"], ["SCRIPT_ID", actual], ["TOKEN", marker], ["COUNTER", "0"], ["REVISION", "0"]]);
     if (p.getProperty("CD_COUNTER") === null) {
@@ -96,7 +114,7 @@ function setupCustomerDirectory() {
       p.setProperty("CD_USERS", JSON.stringify(users));
     }
     if (!p.getProperty("CD_CLIENTS")) p.setProperty("CD_CLIENTS", "{}");
-    p.setProperties({ CD_ENV: "COPY", CD_ENABLE_WRITES: "true" }, false);
+    p.setProperties({ CD_ENV: "COPY", CD_ENABLE_WRITES: "true", CD_TEXT_FORMAT_VERSION: "1" }, false);
     wb.setSpreadsheetTimeZone("Asia/Ho_Chi_Minh");
     cdProtect_(wb);
     wb.setActiveSheet(wb.getSheetByName("KHACH"));
@@ -223,6 +241,7 @@ function directoryUi(request) {
   return DirectoryBundle.Service.response(function() {
     if (request.action === "setup") return setupCustomerDirectory();
     var c = cdProperties_(), actor = cdActor_(c), repo = cdRepository_(c);
+    if (request.action === "scan_copies") cdEnsureTextFormats_(c, actor);
     if (request.action === "apply_review_choices") return cdApplyReviewChoices_(c, actor, repo);
     var result = DirectoryBundle.Service.handle(request, actor, repo, function() {
       return cdReadCopies_(c);
@@ -237,6 +256,7 @@ function doPost(e) {
   var result = DirectoryBundle.Service.response(function() {
     if (!e || !e.postData || e.postData.contents.length > 18e5) DirectoryBundle.Core.fail("INVALID_REQUEST");
     var envelope = JSON.parse(e.postData.contents), c = cdProperties_(), actor = DirectoryBundle.Auth.authenticate(envelope, { clients: JSON.parse(c.s.CD_CLIENTS), users: JSON.parse(c.s.CD_USERS), hmac: cdHmac_ });
+    if (envelope.action === "scan_copies") cdEnsureTextFormats_(c, actor);
     return DirectoryBundle.Service.handle(envelope, actor, cdRepository_(c), function() {
       return cdReadCopies_(c);
     });
@@ -335,4 +355,14 @@ function benchmarkCustomerDirectorySearch() {
   });
   Logger.log(JSON.stringify({environment:"Google_COPY",samples:rows,target_ms:1500}));
   return rows;
+}
+
+// Existing COPY upgrade: text formatting + authenticated rescan, without allocating KTD codes.
+function normalizeCustomerDirectorySourceNumbers() {
+  cdOwner_();
+  var c = cdProperties_(), actor = cdActor_(c);
+  cdEnsureTextFormats_(c, actor);
+  var rows = cdReadCopies_(c), repo = cdRepository_(c), revision = repo.read("overview", {}, actor).revision;
+  var result = repo.submit({type:"scan_import", payload:{rows:rows}, expected_version:revision, idempotency_key:"source-zeros:" + revision + ":" + cdHash_(DirectoryBundle.stable(rows))}, actor);
+  return {source_rows:result.report.source_rows,leading_zero_rows:result.report.leading_zero_rows.length,repaired_customers:result.repaired_customers,revision:result.revision,ktd_allocated:0};
 }

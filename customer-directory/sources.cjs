@@ -26,7 +26,7 @@ function fromTables(app, tables) {
   if (app === "SALE") {
     rows = objects(source.headers, source.rows, ["MaKhachHang", "TenKhachHang", "DienThoai", "MaSoThue"]).map((r) => ({ app, ma_cu: r.MaKhachHang, TEN: r.TenKhachHang, MST: r.MaSoThue, DIEN_THOAI: r.DienThoai, DIA_CHI: r.DiaChi, EMAIL: r.Email, LOAI: r.MaSoThue || /cong ty|doanh nghiep/.test(C.fold(r.LoaiKhach)) ? "CONG_TY" : "CA_NHAN", NGUOI_LIEN_HE: r.NguoiDaiDien ? [{ ten: String(r.NguoiDaiDien), dien_thoai: [], ghi_chu: String(r.ChucVu || "") }] : [], updated_at: date(r.CapNhatLuc || r.NgayCapNhat) }));
   } else if (app === "CARE") {
-    rows = objects(source.headers, source.rows, ["Mã khách hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ"]).map((r) => ({ app, ma_cu: r["Mã khách hàng"], TEN: r["Công ty"] || r["Tên khách hàng"], DIEN_THOAI: r["Số điện thoại"], DIA_CHI: r["Địa chỉ"], LOAI: r["Công ty"] ? "CONG_TY" : "CA_NHAN", NGUOI_LIEN_HE: r["Công ty"] && r["Tên khách hàng"] ? [{ ten: String(r["Tên khách hàng"]), dien_thoai: C.phones(r["Số điện thoại"]), ghi_chu: "" }] : [], updated_at: date(r["Cập nhật lúc"]) }));
+    rows = objects(source.headers, source.rows, ["Mã khách hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ"]).map((r) => ({ app, ma_cu: r["Mã khách hàng"], TEN: r["Công ty"] || r["Tên khách hàng"], DIEN_THOAI: r["Số điện thoại"], DIA_CHI: r["Địa chỉ"], LOAI: r["Công ty"] ? "CONG_TY" : "CA_NHAN", NGUOI_LIEN_HE: r["Công ty"] && r["Tên khách hàng"] ? [{ ten: String(r["Tên khách hàng"]), dien_thoai: [r["Số điện thoại"]], ghi_chu: "" }] : [], updated_at: date(r["Cập nhật lúc"]) }));
   } else if (app === "FIN") {
     const debt = tables.CONG_NO_KH;
     if (!debt) C.fail("DEBT_SOURCE_REQUIRED");

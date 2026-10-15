@@ -206,3 +206,90 @@ test("all invalid legacy taxes collected without guessing or matching by invalid
   scan(f, rows); finalize(f); assert.deepEqual(f.driver.state.mappings, mapping);
   assert.throws(() => f.submit("create", { customer: { TEN: "Live", MST: "123" } }, "finance"), /INVALID_TAX/);
 });
+
+test("source-only padding covers numeric/string mobile, landline, 9/12-digit tax with original audit and no exponents", () => {
+  const row={app:"SALE",ma_cu:"001",TEN:"Nguồn",DIEN_THOAI:2837542072,MST:312345678};
+  const a=M.normalize(row);
+  assert.deepEqual(a.DIEN_THOAI,["02837542072"]);assert.equal(a.MST,"0312345678");
+  assert.equal(a.DIEN_THOAI_GOC,"2837542072");assert.equal(a.MST_GOC,"312345678");
+  assert.deepEqual(a.BU_SO_0,[{truong:"DIEN_THOAI",goc:"2837542072",sau:"02837542072"},{truong:"MST",goc:"312345678",sau:"0312345678"}]);
+  assert.equal(a.ma_cu,"001");assert.deepEqual(M.normalize(a),a);
+  assert.equal(M.normalize({...row,MST:312345678001}).MST,"0312345678001");
+  assert.equal(M.normalize({...row,MST:"312345678001"}).MST,"0312345678001");
+  assert.equal(M.normalize({...row,DIEN_THOAI:"909123456"}).DIEN_THOAI[0],"0909123456");
+  assert.equal(M.normalize({...row,MST:3.12e8}).MST_GOC,"312000000");
+  assert.equal(M.sourceText(1e21),"1000000000000000000000");
+  assert.equal(M.normalize({...row,MST:"3.12e8"}).MST_LOI,true);
+  assert.equal(M.normalize({...row,MST:"312 345 678"}).MST_LOI,true);
+  assert.throws(()=>C.tax("312345678"),/INVALID_TAX/);
+  assert.throws(()=>C.phones("2837542072"),/INVALID_PHONE/);
+});
+test("misplaced tax equal to own phone or 02x landline stays an error and transfers to phone", () => {
+  for(const tax of [2837542072,"02837542072"]){
+    const r=M.normalize({app:"SALE",ma_cu:"1",TEN:"A",MST:tax,DIEN_THOAI:typeof tax === "number" ? tax : ""});
+    assert.equal(r.MST,"");assert.equal(r.MST_LOI_LY_DO,"MST_IS_PHONE");assert.deepEqual(r.MST_CHUYEN_SDT,["02837542072"]);assert.deepEqual(r.DIEN_THOAI,["02837542072"]);
+    assert.deepEqual(M.normalize(r),r);
+  }
+  const r=M.normalize({app:"FIN",ma_cu:"2",TEN:"B",DIEN_THOAI:"+84 909 123 456",MST:909123456});
+  assert.equal(r.MST,"");assert.equal(r.MST_LOI,true);assert.deepEqual(r.DIEN_THOAI,["0909123456"]);
+  assert.equal(M.normalize({app:"SALE",ma_cu:"3",TEN:"C",MST:"0312345678001"}).MST,"0312345678001");
+  assert.equal(M.normalize({app:"SALE",ma_cu:"4",TEN:"D",MST:"2837542072"}).MST,"2837542072");
+});
+test("rescan repairs old imported numbers with audit, preserves KTD/counter and reruns without new repairs", () => {
+  const f=fixture(),row={app:"SALE",ma_cu:"S",TEN:"Source",DIEN_THOAI:2837542072,MST:312345678};
+  // Simulate data allocated by the pre-fix importer, including old source evidence.
+  scan(f,[{...row,DIEN_THOAI:"",MST:""}]);finalize(f);
+  const code=f.driver.state.mappings["SALE:S"],counter=f.driver.counter;
+  Object.assign(f.driver.state.sources["SALE:S"],{DIEN_THOAI_GOC:"2837542072",DIEN_THOAI:[],MST_GOC:"312345678",MST:""});
+  const result=scan(f,[row]);assert.equal(result.repaired_customers,1);
+  assert.equal(f.driver.state.customers[code].MST,"0312345678");assert.deepEqual(f.driver.state.customers[code].DIEN_THOAI,["02837542072"]);
+  assert.equal(f.driver.state.history.filter(e=>e.LOAI==="CHUAN_HOA_SO_0").length,1);
+  assert.equal(scan(f,[row]).repaired_customers,0);finalize(f);
+  assert.equal(f.driver.state.mappings["SALE:S"],code);assert.equal(f.driver.counter,counter);
+});
+test("rescan does not overwrite manual tax/contact edits, allocate new codes or auto merge code collisions", () => {
+  const f=fixture(),row={app:"SALE",ma_cu:"S",TEN:"Source",DIEN_THOAI:"",MST:""};
+  scan(f,[row]);finalize(f);const code=f.driver.state.mappings["SALE:S"];
+  Object.assign(f.driver.state.sources["SALE:S"],{MST_GOC:"312345678",MST:""});
+  const old=f.driver.state.customers[code];f.submit("update",{ma:code,customer:{MST:"0319999999",DIEN_THOAI:"0912345678"}},"finance",old.VERSION);
+  scan(f,[{...row,MST:312345678,DIEN_THOAI:2837542072}]);
+  assert.equal(f.driver.state.customers[code].MST,"0319999999");assert.deepEqual(f.driver.state.customers[code].DIEN_THOAI,["0912345678"]);
+  assert.equal(f.driver.counter,1);
+});
+
+test("rescan moves a legacy phone mistakenly stored as MST without changing the customer code", () => {
+  const f=fixture();scan(f,[{app:"SALE",ma_cu:"S",TEN:"A",MST:""}]);finalize(f);
+  const code=f.driver.state.mappings["SALE:S"];
+  Object.assign(f.driver.state.sources["SALE:S"],{MST_GOC:"2837542072",MST:"2837542072"});
+  f.driver.state.customers[code].MST="2837542072";
+  scan(f,[{app:"SALE",ma_cu:"S",TEN:"A",MST:2837542072,DIEN_THOAI:2837542072}]);
+  assert.equal(f.driver.state.customers[code].MST,"");assert.deepEqual(f.driver.state.customers[code].DIEN_THOAI,["02837542072"]);assert.equal(f.driver.counter,1);
+});
+test("normalization audit metadata alone preserves existing accounting decisions and approval versions", () => {
+  const f=fixture();scan(f);
+  const review=Object.values(f.driver.state.reviews).find(r=>!r.open_debt);
+  approve(f,review,"KHAC_KHACH");const old=f.driver.state.reviews[review.id];
+  old.fingerprint="old-normalizer-fingerprint";
+  for(const row of old.rows)for(const field of ["BU_SO_0","NGUOI_LIEN_HE_GOC","MST_LOI_LY_DO","MST_CHUYEN_SDT"])delete row[field];
+  const version=old.VERSION;
+  scan(f);const next=f.driver.state.reviews[review.id];assert.equal(next.VERSION,version);assert.equal(next.decision,"KHAC_KHACH");assert.equal(next.changed_since_approval,false);
+});
+
+test("restored tax collision retains both allocated codes and requires director merge instead of reallocation", () => {
+  const f=fixture(),rows=[{app:"SALE",ma_cu:"S1",TEN:"A",MST:""},{app:"CARE",ma_cu:"C1",TEN:"B",MST:"0312345678"}];
+  scan(f,rows);finalize(f);const map=C.clone(f.driver.state.mappings);
+  f.driver.state.sources["SALE:S1"].MST_GOC="312345678";
+  scan(f,[{...rows[0],MST:312345678},rows[1]]);
+  assert.deepEqual(f.driver.state.mappings,map);assert.equal(f.driver.counter,2);
+  assert.equal(f.driver.state.customers[map["SALE:S1"]].MST,"");
+  assert.throws(()=>finalize(f),/EXISTING_GROUPS_NEED_DIRECTOR_MERGE/);
+});
+
+test("rescan repairs zeros lost in KHACH cells even when normalized source evidence was already correct", () => {
+  const f=fixture(),rows=[{app:"SALE",ma_cu:"1",TEN:"A",DIEN_THOAI:2837542072,MST:312345678}];
+  scan(f,rows);finalize(f);const code=f.driver.state.mappings["SALE:1"],counter=f.driver.counter;
+  f.driver.state.customers[code].DIEN_THOAI=["2837542072"];f.driver.state.customers[code].MST="312345678";
+  assert.equal(scan(f,rows).repaired_customers,1);
+  assert.equal(f.driver.state.customers[code].MST,"0312345678");assert.deepEqual(f.driver.state.customers[code].DIEN_THOAI,["02837542072"]);
+  assert.equal(f.driver.counter,counter);assert.equal(scan(f,rows).repaired_customers,0);
+});

@@ -16,6 +16,7 @@ function runtime(active = actors.finance.id) {
     sheet.getMaxColumns = () => 100;
     sheet.getRange = (...args) => {
       const r = range(...args);
+      r.setNumberFormat = format => { (sheet.formats ||= []).push({args,format}); return r; };
       r.setRichTextValues = (rows) => r.setValues(rows.map((row) => row.map((v) => v.text)));
       return r;
     };
@@ -98,3 +99,31 @@ test("source-copy configuration rejects originals before any source access, and 
   assert.throws(() => f.ctx.setupCustomerDirectory(), /SEPARATE_PROJECT_REQUIRED/);
 });
 process.on("exit", () => fs.rmSync(output, { recursive: true, force: true }));
+
+test("setup applies text format to identity/phone/tax/alias columns and repeated setup preserves existing records", () => {
+  const f=runtime(actors.director.id), wb=f.raw.wb;
+  f.raw.properties.values.CD_CREATED_WORKBOOK_ID="directory-copy";
+  wb.getUrl=()=>"https://docs.google.com/spreadsheets/d/directory-copy/edit";
+  wb.setSpreadsheetTimeZone=()=>{};wb.setActiveSheet=()=>{};
+  f.ctx.SpreadsheetApp.ProtectionType={SHEET:"SHEET"};
+  f.ctx.SpreadsheetApp.newDataValidation=()=>({requireValueInList(){return this},setAllowInvalid(){return this},build(){return {}}});
+  for(const sh of Object.values(f.raw.sheets)){
+    sh.setFrozenRows=()=>{};sh.getProtections=()=>[{}];const range=sh.getRange.bind(sh);
+    sh.getRange=(...args)=>{const r=range(...args);r.setDataValidation=()=>r;return r;};
+  }
+  const first=f.ctx.directoryUi({action:"create",idempotency_key:"format-fixture",payload:{customer:{TEN:"Text fixture",DIEN_THOAI:"02837542072",MST:"0312345678"}}});
+  assert.equal(first.ok,true);
+  const before=JSON.stringify(f.raw.sheets.KHACH.rows),counter=f.raw.properties.values.CD_COUNTER;
+  assert.equal(f.ctx.setupCustomerDirectory().configured,true);
+  assert.equal(f.ctx.setupCustomerDirectory().configured,true);
+  assert.equal(JSON.stringify(f.raw.sheets.KHACH.rows),before);assert.equal(f.raw.properties.values.CD_COUNTER,counter);
+  for(const [name,columns] of Object.entries({KHACH:[1,4,5,11,12],CHI_MUC:[1,3,4,5],NGUON:[1,2,3,4],ANH_XA:[1,2,3,4]}))
+    for(const col of columns) assert(f.raw.sheets[name].formats.some(r=>r.format==="@"&&r.args[1]===col&&r.args[2]===100000),name+" col "+col);
+  assert.equal(f.raw.sheets.KHACH.rows[1][4],"02837542072");assert.equal(f.raw.sheets.KHACH.rows[1][3],"0312345678");
+});
+
+test("existing-copy text upgrade validates marker before formatting any target cells", () => {
+  const f=runtime(actors.director.id);f.raw.properties.values.CD_MARKER="wrong-marker";
+  assert.throws(()=>f.ctx.normalizeCustomerDirectorySourceNumbers(),/COPY_MARKER_MISMATCH/);
+  assert.equal(Object.values(f.raw.sheets).reduce((n,s)=>n+(s.formats||[]).length,0),0);
+});
