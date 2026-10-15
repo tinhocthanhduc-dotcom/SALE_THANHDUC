@@ -1,6 +1,10 @@
 # Nối Điều phối staging → Danh bạ COPY
 
-Bản đã triển khai: Điều phối staging v59, Danh bạ COPY v8. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
+Danh bạ COPY: giao diện riêng tư v8 giữ nguyên; API riêng có HMAC v9. Điều phối dùng API riêng qua server. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
+
+## Đã cài xong nhưng gặp DIRECTORY_UNAVAILABLE
+
+Không làm lại bước 1–3. Sau khi bản Điều phối mới triển khai xong, mở project Điều phối → chọn **checkDispatchDirectoryConnection** → **Chạy**. Nếu thành công, chạy **enableDispatchCustomerDirectory**, rồi tải lại app. Kiểm tra `DISPATCH_CD_CHECK` có `ok: true`. API URL hiện tại được lưu trong `customer-directory/api.copy.json`.
 
 ## 1. Lấy danh sách người dùng Điều phối
 
@@ -18,7 +22,7 @@ Sau Run, mở Script Properties bên Danh bạ, sao chép giá trị **CD_DISPAT
 
 | Script Property | Giá trị |
 |---|---|
-| DISPATCH_CD_URL | URL /exec của Danh bạ COPY ở trên, không có query string |
+| DISPATCH_CD_URL | URL `web_app_url` trong `customer-directory/api.copy.json` (API v9), không phải URL giao diện |
 | DISPATCH_CD_SECRET | Secret của `DIEUPHOI` trong JSON Script Property **CD_CLIENTS** bên Danh bạ |
 | DISPATCH_CD_ACTORS | Giá trị **CD_DISPATCH_ACTOR_MAP** từ bước 2 |
 | DISPATCH_CD_COPY_ACK | `CUSTOMER_DIRECTORY_COPY` |
@@ -29,7 +33,7 @@ Secret chỉ copy giữa hai trang Script Properties. Không gửi vào chat, kh
 
 Bên Điều phối Run **checkDispatchDirectoryConnection**, cấp quyền UrlFetch khi Google yêu cầu. Hàm chỉ gọi bootstrap có chữ ký, kiểm actor/role từng người, không tạo khách. Sau Run, xem Script Property **DISPATCH_CD_CHECK**: phải có `ok: true` và thời điểm mới. Nếu hàm lỗi thì Google hiển thị lỗi và thuộc tính giữ ok=false, không dùng kết quả cũ. Sau đó Run **enableDispatchCustomerDirectory** (kiểm lại rồi mới đặt DISPATCH_CD_ENABLED=true). Tải lại app Điều phối.
 
-Lỗi DIRECTORY_ACTOR_UNMAPPED: kiểm ID/mapping và vai trò; không tự gán tất cả người dùng thành director. Sai chữ ký: copy lại đúng secret DIEUPHOI, không tạo secret mới ở một phía. DIRECTORY_UNAVAILABLE hoặc Google trả trang đăng nhập: kiểm URL deployment COPY và quyền chạy của tài khoản chủ. Client gửi OAuth bearer của chủ qua UrlFetch bên cạnh HMAC; không đổi sang anonymous hoặc bỏ kiểm HMAC để vượt lỗi. Chưa kiểm thành công trên Google thì chưa bật. Hàm check cố ý không in response/secret.
+Lỗi DIRECTORY_ACTOR_UNMAPPED: kiểm ID/mapping và vai trò; không tự gán tất cả người dùng thành director. Sai chữ ký: copy lại đúng secret DIEUPHOI, không tạo secret mới ở một phía. DIRECTORY_UNAVAILABLE hoặc Google trả trang đăng nhập: kiểm URL deployment COPY và quyền chạy của tài khoản chủ. API riêng cho phép HTTP từ server đến doPost, rồi bắt buộc HMAC; không gửi OAuth bearer. Giao diện Danh bạ vẫn yêu cầu đăng nhập Google. Không bỏ HMAC. Nếu đã cài URL giao diện v8 được ghim trong project.copy.json thì bản Điều phối mới tự chuyển sang API riêng, không cần sửa secret hoặc ánh xạ. Chưa kiểm thành công trên Google thì chưa bật. Hàm check cố ý không in response/secret.
 
 **Giới hạn GAS:** UrlFetchApp không có tham số timeout 8 giây. Giao diện dừng chờ sau 8 giây và hiện Thử lại; request server có thể hoàn tất muộn. Bấm Thử lại trong cùng form giữ nguyên idempotency_key. Nếu cần ngắt HTTP thực sự sau 8 giây thì cần một proxy/backend khác; chưa thêm trong bản này.
 

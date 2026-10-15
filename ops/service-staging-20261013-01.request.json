@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 35,
-  "update": "Deploy final owner onboarding helpers to SAME Dispatch staging URL. listDispatchDirectoryUsers exports sanitized employee IDs/names/roles to DISPATCH_CD_USER_EXPORT; checkDispatchDirectoryConnection records non-secret result in DISPATCH_CD_CHECK. No business/UI changes since v58. Feature: 316 Node, 23 Dispatch browser suites, Directory 11 scenarios passed; setup changes passed targeted compiled-GAS tests. Preserve data/users/properties/integration mappings. Do not run setup/reset/helpers or enable the HMAC connection. Owner follows OWNER_SETUP. Companion customer-directory COPY request revision 8 exports actor map for easy copy; real apps untouched."
+  "revision": 36,
+  "update": "Owner-approved separate Directory COPY signed API v9 now pinned. Route existing private-UI URL setting to approved API endpoint server-side; preserve secret, actor map, enabled flag, orders and all integration properties. Remove redundant Google OAuth bearer from HMAC request. Update SAME Dispatch staging deployment only. Do not run setup/reset/provisioning or enable connection. Owner reruns check and enable; no re-entry of secret/mapping required."
 }

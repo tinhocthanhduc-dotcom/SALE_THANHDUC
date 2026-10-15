@@ -4,7 +4,8 @@ const destination=path.resolve(process.argv[2]||'/tmp/thanhduc-dispatch-gas');
 const root=path.resolve(__dirname,'..');if(destination===root||destination.startsWith(root+path.sep))throw Error('OUTPUT_MUST_BE_OUTSIDE_CHECKOUT');
 fs.mkdirSync(destination,{recursive:true});
 const bundle=require('esbuild').buildSync({entryPoints:[path.join(__dirname,'bundle-entry.cjs')],bundle:true,platform:'neutral',format:'iife',globalName:'DispatchBundle',target:'es2020',write:false,minify:false}).outputFiles[0].text;
-fs.writeFileSync(path.join(destination,'Code.gs'),bundle+'\n'+fs.readFileSync(path.join(__dirname,'gas-entry.gs.txt'),'utf8')+'\n'+fs.readFileSync(path.join(__dirname,'customer-directory.gs.txt'),'utf8')+'\nvar DispatchIntegration=DispatchBundle.IntegrationCatalogue;\n'+fs.readFileSync(path.join(__dirname,'integration/transport.gs.txt'),'utf8')+'\n'+fs.readFileSync(path.join(__dirname,'integration/runtime.gs.txt'),'utf8'));
+const directoryEndpoint=require('../customer-directory/api.copy.json');
+fs.writeFileSync(path.join(destination,'Code.gs'),'var DispatchDirectoryCopyEndpoint = '+JSON.stringify(directoryEndpoint)+';\n'+bundle+'\n'+fs.readFileSync(path.join(__dirname,'gas-entry.gs.txt'),'utf8')+'\n'+fs.readFileSync(path.join(__dirname,'customer-directory.gs.txt'),'utf8')+'\nvar DispatchIntegration=DispatchBundle.IntegrationCatalogue;\n'+fs.readFileSync(path.join(__dirname,'integration/transport.gs.txt'),'utf8')+'\n'+fs.readFileSync(path.join(__dirname,'integration/runtime.gs.txt'),'utf8'));
 // Normalize frontend syntax before HtmlService serializes it into its document.write wrapper.
 const client=require('esbuild').transformSync(fs.readFileSync(path.join(__dirname,'ui.js.txt'),'utf8'),{loader:'js',target:'es2017',charset:'ascii',supported:{'template-literal':false},minifySyntax:false});
 const script=client.code.replace(/<\/script/gi,'<\\/script');

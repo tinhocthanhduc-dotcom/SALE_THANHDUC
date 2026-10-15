@@ -1,14 +1,14 @@
 /** COPY-only directory client. All credentials remain in Script Properties. */
 function dispatchDirectoryClient_(props) {
  return DispatchBundle.CustomerDirectory.createClient({
-  config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');return {url:p.DISPATCH_CD_URL,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
+  config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');var url=p.DISPATCH_CD_URL;if(typeof DispatchDirectoryCopyEndpoint!=='undefined'&&url==='https://script.google.com/macros/s/'+DispatchDirectoryCopyEndpoint.private_ui_deployment_id+'/exec')url=DispatchDirectoryCopyEndpoint.web_app_url;return {url:url,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
   id:function(){return Utilities.getUuid();},
   hmac:function(raw,key){return Utilities.computeHmacSha256Signature(raw,key,Utilities.Charset.UTF_8).map(function(b){return ('0'+((b+256)%256).toString(16)).slice(-2);}).join('');},
   send:function(url,envelope){
    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url))throw new Error('DIRECTORY_NOT_CONFIGURED');
    // GAS has no configurable HTTP timeout. The browser enforces its 8s wait budget;
    // retries reuse the original command key even if this fetch completes later.
-   var response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken()},muteHttpExceptions:true,followRedirects:true});
+   var response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true,followRedirects:true});
    if(response.getResponseCode()!==200)throw new Error('DIRECTORY_UNAVAILABLE');
    var raw=response.getContentText();if(raw.length>1500000)throw new Error('DIRECTORY_UNAVAILABLE');return JSON.parse(raw);
   }

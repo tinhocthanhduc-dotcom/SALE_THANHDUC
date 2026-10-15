@@ -1,0 +1,27 @@
+{
+  "workflow": 38772111587,
+  "api_version": 9,
+  "private_ui_version": 8,
+  "smoke": [
+    {
+      "case": "GET",
+      "status": 200,
+      "error": "HMAC_REQUIRED",
+      "ms": 3686
+    },
+    {
+      "case": "unsigned",
+      "status": 200,
+      "error": "HMAC_REQUIRED",
+      "ms": 4590
+    },
+    {
+      "case": "invalid_signature",
+      "status": 200,
+      "error": "BAD_SIGNATURE",
+      "ms": 3811
+    }
+  ],
+  "signed_connection": "pending owner-run check using existing private secret/mapping",
+  "customer_data_written": false
+}

@@ -86,3 +86,7 @@ Kiểm tra: 85/85 Node, 11 nhóm browser 390px, build GAS đạt; test setup ch�
 Bổ sung test bảo toàn CHO_PHEP_NO khi Google hiển thị TRUE viết hoa: đọc cùng quy tắc với customerMap để việc sửa SĐT/MST không ghi nhầm quyền nợ thành false. Request revision 6 giữ cùng endpoint.
 
 Deploy cuối: Google COPY v6, CI 38758829676 success, cùng URL đã ghim. Thử quét qua Execution API vẫn chưa nhận được kết quả xác nhận; không coi là đã quét Google thành công. Chủ tải lại app → Gộp khách cũ → Quét bốn bản sao để áp dụng định dạng và sửa số. Kết quả native/offline được phân biệt tại docs/SOURCE_ZERO_VERIFICATION.json.
+
+### 2026-10-15 — owner-approved COPY HMAC endpoint
+
+Separate API v9 on SAME Directory COPY project, no public UI and no changes to customer data/properties/keys/actors. Private UI v8 stays pinned. Workflow 38772111587 succeeded and restored private editor HEAD. Native unsigned GET/POST: HMAC_REQUIRED; bad signature: BAD_SIGNATURE. Dispatch routes pinned old UI URL to API URL server-side; bearer removed, HMAC retained. Existing owner only reruns check/enable; no secret/mapping recreation. Local combined Node 321/321, Directory browser 11/11; native signed owner check remains pending.

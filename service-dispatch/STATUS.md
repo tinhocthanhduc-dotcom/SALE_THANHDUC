@@ -392,3 +392,7 @@ Kiểm tra: 138/138 Node Điều phối, 71/71 Node ERP nền; toàn bộ 22 sui
 
 
 Deploy ô tiền hoàn tất: Google staging **v55**, workflow **38754513113** success, cập nhật cùng deployment AKfycbwLOGN1y4s… / cùng URL. HTTP smoke 200, không chuyển tới đăng nhập Gmail; client được phục vụ khớp payload build đã test. Chưa chạy giao dịch Google bằng tài khoản nhân viên trong lượt smoke này. Không chạy setup/reset, không ghi giao dịch thử vào dữ liệu Google.
+
+### 2026-10-15 — owner-approved COPY HMAC endpoint
+
+Separate API v9 on SAME Directory COPY project, no public UI and no changes to customer data/properties/keys/actors. Private UI v8 stays pinned. Workflow 38772111587 succeeded and restored private editor HEAD. Native unsigned GET/POST: HMAC_REQUIRED; bad signature: BAD_SIGNATURE. Dispatch routes pinned old UI URL to API URL server-side; bearer removed, HMAC retained. Existing owner only reruns check/enable; no secret/mapping recreation. Local combined Node 321/321, Directory browser 11/11; native signed owner check remains pending.

@@ -1,10 +1,10 @@
-# COPY: separate signed API endpoint — pending owner approval
+# COPY: separate signed API endpoint — owner approved and deployed
 
 ## Evidence
 
 2026-10-15: current UI deployment GET redirects to accounts.google.com and returns HTML. An unauthenticated POST returns HTTP 401 HTML before doPost/HMAC. Owner's Dispatch check reports DIRECTORY_UNAVAILABLE because transport collapses non-JSON/HTTP failures. Sending an Apps Script OAuth bearer to this Google-login web deployment was not verified during initial delivery and did not provide a working connection in owner's check. Existing secrets or actor mappings should not be recreated based on this error.
 
-## Prepared change (NOT DEPLOYED)
+## Approved change
 
 Keep existing UI deployment and its Google sign-in access. Add a second deployment in the SAME customer-directory COPY Apps Script project, preserving one ScriptLock and writer/workbook/counter.
 
@@ -19,7 +19,7 @@ Only this separate API package has manifest access ANYONE_ANONYMOUS, because ser
 - Existing per-field permissions, expected_version, idempotency and audit actor remain in the original core/repository.
 - No secret, actor or customer provisioning/reset. Secret stays in Script Properties.
 
-The default build remains Google authenticated (ANYONE); current UI deployment ID must NEVER be used for API deployment. No deployment request file has changed for this preview.
+The default build remains Google authenticated (ANYONE); current UI deployment ID must NEVER be used for API deployment. Owner approved publication in chat; request revision 9 creates the separate API and restores private HEAD.
 
 ## Deployment after explicit approval
 
@@ -33,4 +33,4 @@ Rollback: stop/remove the additional API deployment and disable Dispatch directo
 
 ## Local validation
 
-89/89 Directory Node tests, including separate package access isolation, no GET/UI/owner bypass, signed DIEUPHOI create/search with replay, bad signatures rejected before Sheets, forbidden merge/import/other clients. Package built for review only. Native API URL/access change not yet created.
+91/91 Directory Node tests, including separate package access isolation, no GET/UI/owner bypass, signed DIEUPHOI create/search with replay, bad signatures rejected before Sheets, forbidden merge/import/other clients. API v9 deployed through workflow 38772111587. Native GET and unsigned POST return HMAC_REQUIRED; invalid signature returns BAD_SIGNATURE. Private UI v8 remains unchanged. Full signed connection still needs owner-run check with existing Script Properties.
