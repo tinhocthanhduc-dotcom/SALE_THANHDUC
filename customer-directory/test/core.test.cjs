@@ -108,3 +108,44 @@ test("merged-source tax remains unique and merged contacts remain visible/search
   assert.equal(C.get(f.driver.state, b.MA_KHACH).NGUOI_LIEN_HE.length, 1);
   assert.equal(f.repo.read("history", { ma: b.MA_KHACH }, actors.finance).events.length, 4);
 });
+
+test("company sharing a personal phone requires PHONE_OF_PERSON; convert keeps code/history and manager permission", () => {
+  const f = fixture(), person = f.create({ TEN: "Anh Nam", DIEN_THOAI: "0909123456" });
+  const customer = { LOAI: "CONG_TY", TEN: "Cty Nam Phát", MST: "0312345678", DIEN_THOAI: "+84 909 123 456" };
+  assert.throws(() => f.submit("create", { customer }), e => e.code === "PHONE_OF_PERSON" && e.details.existing.MA_KHACH === person.MA_KHACH && e.details.choices.length === 3);
+  assert.equal(f.driver.counter, 1);
+  assert.throws(() => f.submit("update", { ma: person.MA_KHACH, customer }, "sales", person.VERSION), /FORBIDDEN/);
+  const converted = f.submit("update", { ma: person.MA_KHACH, customer }, "finance", person.VERSION);
+  assert.equal(converted.customer.MA_KHACH, person.MA_KHACH);
+  assert.equal(converted.customer.LOAI, "CONG_TY");
+  assert.equal(f.driver.counter, 1);
+  assert.equal(f.driver.state.history.at(-1).TRUOC.TEN, "Anh Nam");
+});
+test("company creation can atomically link existing person or explicitly create separately, replay and stale version protected", () => {
+  const f = fixture(), person = f.create({ TEN: "Anh Nam", DIEN_THOAI: "0909123456" });
+  const customer = { LOAI: "CONG_TY", TEN: "Nam Phát", MST: "0312345678", DIEN_THOAI: "0909123456" };
+  assert.throws(() => f.submit("create", { customer, confirmation: { mode: "CREATE_SEPARATE", reason: " " } }), /PHONE_OF_PERSON/);
+  assert.throws(() => f.submit("create", { customer, confirmation: { mode: "CREATE_COMPANY_WITH_CONTACT", person_id: person.MA_KHACH, person_version: 0 } }), /VERSION_CONFLICT/);
+  const payload = { customer, confirmation: { mode: "CREATE_COMPANY_WITH_CONTACT", person_id: person.MA_KHACH, person_version: 1 } };
+  const a = f.submit("create", payload, "sales", undefined, "link-person");
+  assert.equal(a.customer.NGUOI_LIEN_HE[0].ten, person.TEN);
+  assert.deepEqual(a.customer.NGUOI_LIEN_HE[0].dien_thoai, person.DIEN_THOAI);
+  assert.equal(a.warnings[0].code, "PERSON_LINKED_AS_CONTACT");
+  assert.equal(f.submit("create", payload, "sales", undefined, "link-person").customer.MA_KHACH, a.customer.MA_KHACH);
+  assert.equal(f.driver.state.customers[person.MA_KHACH].LOAI, "CA_NHAN");
+  const g = fixture(); g.create({ TEN: "Khác", DIEN_THOAI: "0909123456" });
+  const separate = g.submit("create", { customer, confirmation: { mode: "CREATE_SEPARATE", reason: "Hai pháp nhân độc lập, đã đối chiếu" } });
+  assert.equal(separate.warnings[0].code, "PERSON_PHONE_SEPARATE");
+  assert.equal(g.driver.state.history.at(-1).LY_DO, "Hai pháp nhân độc lập, đã đối chiếu");
+});
+
+test("service action preserves PHONE_OF_PERSON details and rejects forged conversion role", () => {
+  const {handle,response}=require("../service.cjs"),f=fixture();
+  const person=f.create({TEN:"Anh Nam",DIEN_THOAI:"0909123456"});
+  const customer={TEN:"Nam Phát",LOAI:"CONG_TY",MST:"0312345678",DIEN_THOAI:"0909123456"};
+  const warning=response(()=>handle({action:"create",idempotency_key:"api-warning",payload:{customer}},actors.sales,f.repo));
+  assert.equal(warning.error,"PHONE_OF_PERSON");
+  assert.equal(warning.details.existing.MA_KHACH,person.MA_KHACH);
+  const denied=response(()=>handle({action:"update",idempotency_key:"api-convert",expected_version:person.VERSION,payload:{ma:person.MA_KHACH,customer,roles:["director"]}},actors.sales,f.repo));
+  assert.equal(denied.error,"FORBIDDEN");
+});

@@ -97,6 +97,12 @@ function conflicts(state, c, except = "", confirmation = {}) {
     if (c.MST && x.MST === c.MST) fail("DUPLICATE_TAX", { existing: resolve(state, x.MA_KHACH) });
     const shared = allPhones(c).some((p) => allPhones(x).includes(p));
     if (shared && owner.LOAI === "CA_NHAN" && c.LOAI === "CA_NHAN") fail("DUPLICATE_PHONE", { existing: resolve(state, x.MA_KHACH) });
+    if (shared && owner.LOAI === "CA_NHAN" && c.LOAI === "CONG_TY") {
+      const linked = confirmation.mode === "CREATE_COMPANY_WITH_CONTACT" && confirmation.person_id === owner.MA_KHACH && confirmation.person_version === owner.VERSION && c.NGUOI_LIEN_HE.some(contact => contact.ten === owner.TEN && owner.DIEN_THOAI.every(phone => contact.dien_thoai.includes(phone)));
+      const separate = confirmation.mode === "CREATE_SEPARATE" && String(confirmation.reason || "").trim();
+      if (!linked && !separate) fail("PHONE_OF_PERSON", { existing: owner, choices: ["CONVERT_PERSON", "CREATE_COMPANY_WITH_CONTACT", "CREATE_SEPARATE"] });
+      warnings.push({ code: linked ? "PERSON_LINKED_AS_CONTACT" : "PERSON_PHONE_SEPARATE", customer: owner.MA_KHACH });
+    }
     if (shared && owner.LOAI === "CONG_TY") {
       if (confirmation.mode !== "CREATE_SEPARATE" || !String(confirmation.reason || "").trim()) fail("COMPANY_PHONE_WARNING", { existing: resolve(state, x.MA_KHACH), choices: ["ADD_CONTACT", "CREATE_SEPARATE"] });
       warnings.push({ code: "COMPANY_PHONE_SEPARATE", customer: x.MA_KHACH });
@@ -118,6 +124,13 @@ function change(state, command, ctx) {
     const values = clean(p.customer || {});
     if ((values.CHO_PHEP_NO || values.HAN_MUC_NO) && !ctx.actor.roles.some((r) => ["finance", "director"].includes(r))) fail("FIELD_FORBIDDEN");
     const c = { LOAI: "CA_NHAN", TEN: "", MST: "", DIEN_THOAI: [], EMAIL: "", DIA_CHI: "", NGUOI_LIEN_HE: [], CHO_PHEP_NO: false, HAN_MUC_NO: 0, GHI_CHU: "", TRANG_THAI: "DANG_DUNG", ...values };
+    if (p.confirmation?.mode === "CREATE_COMPANY_WITH_CONTACT") {
+      const person = s.customers[p.confirmation.person_id];
+      if (!person || person.LOAI !== "CA_NHAN" || person.TRANG_THAI === "DA_GOP" || c.LOAI !== "CONG_TY") fail("INVALID_CONTACT_SOURCE");
+      if (p.confirmation.person_version !== person.VERSION) fail("VERSION_CONFLICT", { current: person.VERSION });
+      if (!c.DIEN_THOAI.some(phone => allPhones(person).includes(phone))) fail("INVALID_CONTACT_SOURCE");
+      c.NGUOI_LIEN_HE = clean({ NGUOI_LIEN_HE: [...c.NGUOI_LIEN_HE, { ten: person.TEN, dien_thoai: person.DIEN_THOAI, ghi_chu: "Liên hệ từ " + person.MA_KHACH }] }).NGUOI_LIEN_HE;
+    }
     validate(c);
     const warnings = conflicts(s, c, "", p.confirmation);
     c.MA_KHACH = ctx.allocate();

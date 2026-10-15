@@ -50,3 +50,14 @@ Không có API ghi nguồn, export vào app nguồn hoặc giả lập quyền. 
 ## Cấp client sau này (chưa làm kết nối)
 
 Chủ cài `CD_PROVISION_CLIENT={"id":"sales-copy","actors":["email-da-cap-quyen@example.com"]}` rồi Run provisionCustomerDirectoryClient. Khóa sinh ngẫu nhiên, giữ trong CD_CLIENTS của project Danh bạ; hàm không in khóa. Chuyển khóa qua kênh bí mật đến Script Properties của client ở bước tích hợp đã được duyệt. Mặc định không có client/key nào được cấp cho Sales/CARE/Finance/Điều phối.
+
+
+### SĐT cá nhân khi tạo công ty
+
+`PHONE_OF_PERSON` trả `details.existing` và `choices`: `CONVERT_PERSON`, `CREATE_COMPANY_WITH_CONTACT`, `CREATE_SEPARATE`. Không cấp mã khi chưa xác nhận.
+
+- Chuyển: dùng `update` trên mã cá nhân, `expected_version` của cá nhân và thông tin công ty. Chỉ finance/director; giữ KTD và lịch sử. UI giữ quyền nợ/hạn mức và thông tin liên hệ cũ khi ô mới trống.
+- Tạo công ty + liên hệ: `create` với `confirmation={mode:"CREATE_COMPANY_WITH_CONTACT",person_id:"KTD-...",person_version:1}`. Server tự lấy tên/SĐT từ cá nhân và thêm liên hệ cùng transaction; không đổi hồ sơ cá nhân, kiểm phiên bản, không nhận nguồn cá nhân giả/mã đã gộp. Dùng lại idempotency key khi gửi lại.
+- Tạo riêng: `confirmation={mode:"CREATE_SEPARATE",reason:"lý do bắt buộc"}`; ghi lý do vào lịch sử.
+
+Các cảnh báo trùng MST, cá nhân trùng cá nhân, SĐT công ty và quyền cột giữ nguyên.

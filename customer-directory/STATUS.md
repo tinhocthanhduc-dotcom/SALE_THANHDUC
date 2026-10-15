@@ -48,3 +48,10 @@ Kiểm tra revision 2: 63/63 Node; 8 nhóm trình duyệt 390px (gồm bảng S�
 ## Quét MST cũ (revision 3)
 
 MST không hợp lệ không dừng quét; liệt kê toàn bộ trong mục MST cần kiểm tra, đồng thời với SĐT lỗi. NGUON giữ MST_GOC và MST_LOI; MST chuẩn hóa để trống khi sai, không dùng giá trị sai để ghép, không tự đoán/thêm số 0. Có thông tin MST gốc vẫn giữ loại công ty. Cần rà lỗi trước cấp mã; sửa trên bản sao rồi quét lại. CRUD vẫn chặn MST sai. Kiểm tra: 64/64 Node, 8 nhóm trình duyệt (cả lỗi SĐT/MST cùng lượt, HTML escape), build GAS đạt; chưa xác nhận quét dữ liệu Google thực tế.
+
+
+## PHONE_OF_PERSON
+
+Đã bổ sung cảnh báo chiều cá nhân → công ty, kèm mã cá nhân và ba lựa chọn. Chuyển loại dùng update có version/quyền KT/GĐ; tạo công ty + liên hệ atomically lấy thông tin cá nhân từ server, kiểm version; tạo riêng bắt buộc lý do. Không tự gộp, không đổi phạm vi migration/tích hợp.
+
+Kiểm tra: 67/67 Node (gồm service API, quyền giả, replay, stale version), 9 nhóm browser 390px (cả 3 lựa chọn và sales không thấy chuyển loại), build GAS đạt. Chưa UAT Google thay đổi này. DEPLOY_REQUEST không đổi: chưa triển khai bản vá, OWNER_SETUP vẫn do chủ chạy trên bản sao.

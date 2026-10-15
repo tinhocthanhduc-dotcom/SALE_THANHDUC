@@ -3,7 +3,7 @@
   const $ = (s) => document.querySelector(s), e = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]), key = () => crypto.randomUUID(), can = (role) => actor?.roles.includes(role), manager = () => can("finance") || can("director");
   let actor = null, selected = null, overview = null, picker, importEpoch = 0;
   const roleLabel = (r) => ({ sales: "Kinh doanh", reception: "Tiếp nhận", dispatcher: "Điều phối", finance: "Kế toán", director: "Giám đốc" })[r] || r, statusLabel = (s) => ({ DANG_DUNG: "Đang dùng", NGUNG: "Ngừng sử dụng", DA_GOP: "Đã gộp" })[s] || s, actionLabel = (s) => ({ TAO: "Tạo khách", SUA: "Sửa khách", THEM_LIEN_HE: "Thêm người liên hệ", GOP_NGUON: "Gộp khách nguồn", GOP_DICH: "Nhận gộp vào khách đích", QUET_BAN_SAO: "Quét bản sao", KT_DUYET_TRUNG: "Kế toán duyệt trùng", GD_XAC_NHAN: "Giám đốc xác nhận", NHAP_KHACH: "Nhập khách", THEM_MA_CU: "Bổ sung mã cũ" })[s] || s;
-  const errors = { AUTO_MATCH_SOURCE_REVIEW_REQUIRED: "Nhóm ghép chắc chắn có thông tin sai: sửa trên bản sao rồi Quét lại trước khi duyệt.", MASTER_CUSTOMER_CONFLICT: "Danh bạ đã có khách khớp với nhóm nhập. Kế toán và giám đốc cần đối chiếu, không tự cấp mã trùng.", GOOGLE_IDENTITY_REQUIRED: "Không xác định được tài khoản Google. Dùng tài khoản đã được cấp quyền; không mở quyền ẩn danh.", FORBIDDEN: "Tài khoản chưa được cấp quyền cho thao tác này.", DIRECTORY_NOT_CONFIGURED: "Chủ project mở Apps Script, chọn Run setupCustomerDirectory để tạo file danh bạ riêng.", SERVER_ERROR: "Máy chủ chưa xử lý được. Giữ nội dung và thử lại.", VERSION_CONFLICT: "Dữ liệu vừa được người khác sửa. Đóng form, tìm lại khách rồi mở để sửa.", FIELD_FORBIDDEN: "Chỉ kế toán hoặc giám đốc được sửa tên, MST, loại khách và quyền ghi nợ.", INVALID_PHONE: "Số điện thoại không hợp lệ. Dùng số Việt Nam, có thể nhập +84 hoặc nhiều số ngăn bằng dấu ;.", INVALID_TAX: "MST phải có 10 hoặc 13 chữ số.", REASON_REQUIRED: "Hãy ghi lý do.", SECOND_APPROVER_REQUIRED: "Giám đốc xác nhận phải khác người kế toán đã duyệt.", COPY_SOURCES_REQUIRED: "Chủ project cần cấu hình đủ bốn bản sao trước.", USE_VERIFIED_COPY_SCAN: "Chỉ nhập từ các bản sao đã xác minh.", CONTRADICTORY_DECISIONS: "Các quyết định Cùng khách / Khác khách đang mâu thuẫn; cần duyệt lại nhóm liên quan.", OWNER_CREATED_COPY_REQUIRED: "Nguồn phải là bản sao mới do chủ tạo, đặt tên CD_COPY_…", EXISTING_GROUPS_NEED_DIRECTOR_MERGE: "Các nhóm đã có mã KTD khác nhau. Giám đốc gộp các mã đó trước; không cấp mã thay thế." };
+  const errors = { PHONE_OF_PERSON: "Số điện thoại thuộc khách cá nhân. Chọn cách xử lý để giữ đúng lịch sử khách.", AUTO_MATCH_SOURCE_REVIEW_REQUIRED: "Nhóm ghép chắc chắn có thông tin sai: sửa trên bản sao rồi Quét lại trước khi duyệt.", MASTER_CUSTOMER_CONFLICT: "Danh bạ đã có khách khớp với nhóm nhập. Kế toán và giám đốc cần đối chiếu, không tự cấp mã trùng.", GOOGLE_IDENTITY_REQUIRED: "Không xác định được tài khoản Google. Dùng tài khoản đã được cấp quyền; không mở quyền ẩn danh.", FORBIDDEN: "Tài khoản chưa được cấp quyền cho thao tác này.", DIRECTORY_NOT_CONFIGURED: "Chủ project mở Apps Script, chọn Run setupCustomerDirectory để tạo file danh bạ riêng.", SERVER_ERROR: "Máy chủ chưa xử lý được. Giữ nội dung và thử lại.", VERSION_CONFLICT: "Dữ liệu vừa được người khác sửa. Đóng form, tìm lại khách rồi mở để sửa.", FIELD_FORBIDDEN: "Chỉ kế toán hoặc giám đốc được sửa tên, MST, loại khách và quyền ghi nợ.", INVALID_PHONE: "Số điện thoại không hợp lệ. Dùng số Việt Nam, có thể nhập +84 hoặc nhiều số ngăn bằng dấu ;.", INVALID_TAX: "MST phải có 10 hoặc 13 chữ số.", REASON_REQUIRED: "Hãy ghi lý do.", SECOND_APPROVER_REQUIRED: "Giám đốc xác nhận phải khác người kế toán đã duyệt.", COPY_SOURCES_REQUIRED: "Chủ project cần cấu hình đủ bốn bản sao trước.", USE_VERIFIED_COPY_SCAN: "Chỉ nhập từ các bản sao đã xác minh.", CONTRADICTORY_DECISIONS: "Các quyết định Cùng khách / Khác khách đang mâu thuẫn; cần duyệt lại nhóm liên quan.", OWNER_CREATED_COPY_REQUIRED: "Nguồn phải là bản sao mới do chủ tạo, đặt tên CD_COPY_…", EXISTING_GROUPS_NEED_DIRECTOR_MERGE: "Các nhóm đã có mã KTD khác nhau. Giám đốc gộp các mã đó trước; không cấp mã thay thế." };
   function notify(text, bad = false) {
     $("#notice").textContent = text;
     $("#notice").className = bad ? "error" : "success";
@@ -178,13 +178,26 @@
               picker.choose(c);
             };
             wrap.append(document.createElement("br"), open);
-            if (err.message === "COMPANY_PHONE_WARNING") {
+            if (err.message === "PHONE_OF_PERSON") {
+              const f = ev.target;
+              if (manager()) {
+                const convert = document.createElement("button"); convert.type = "button";
+                convert.textContent = "Chuyển cá nhân thành công ty (giữ mã)";
+                convert.onclick = () => { f.personToConvert = c; f.requestSubmit(); };
+                wrap.append(convert);
+              }
+              const linked = document.createElement("button"); linked.type = "button";
+              linked.textContent = "Tạo công ty và thêm cá nhân làm liên hệ";
+              linked.onclick = () => { f.personContact = c; f.requestSubmit(); };
+              wrap.append(linked);
+            }
+            if (["COMPANY_PHONE_WARNING", "PHONE_OF_PERSON"].includes(err.message)) {
               const contact = document.createElement("button");
               contact.type = "button";
               contact.textContent = "Thêm người liên hệ";
               const f = ev.target, prefill = { ten: f.elements.TEN.value, dien_thoai: f.elements.DIEN_THOAI.value };
               contact.onclick = () => contactForm(c, prefill);
-              wrap.append(contact);
+              if (err.message === "COMPANY_PHONE_WARNING") wrap.append(contact);
               let reason = f.querySelector("[name=separate_reason]");
               if (!reason) {
                 reason = document.createElement("textarea");
@@ -201,6 +214,7 @@
                     return;
                   }
                   reason.setCustomValidity("");
+                  f.personContact = null; f.personToConvert = null;
                   f.dataset.separate = "true";
                   f.requestSubmit();
                 };
@@ -225,11 +239,17 @@
       customer.CHO_PHEP_NO = f2.elements.CHO_PHEP_NO.checked;
       customer.HAN_MUC_NO = Number(f2.elements.HAN_MUC_NO.value || 0);
       if (c && manager()) customer.TRANG_THAI = f2.elements.TRANG_THAI.value;
-      const confirmation = f2.dataset.separate ? { mode: "CREATE_SEPARATE", reason: f2.elements.separate_reason.value } : void 0;
-      const r = await api({ action: c ? "update" : "create", idempotency_key: idem, expected_version: c?.VERSION, payload: { ma: c?.MA_KHACH, customer, confirmation } });
+      const target = f2.personToConvert || c;
+      if (f2.personToConvert) {
+        customer.CHO_PHEP_NO = target.CHO_PHEP_NO;
+        customer.HAN_MUC_NO = target.HAN_MUC_NO;
+        for (const field of ["EMAIL", "DIA_CHI", "GHI_CHU"]) if (!customer[field]) customer[field] = target[field];
+      }
+      const confirmation = f2.personContact ? { mode: "CREATE_COMPANY_WITH_CONTACT", person_id: f2.personContact.MA_KHACH, person_version: f2.personContact.VERSION } : f2.dataset.separate ? { mode: "CREATE_SEPARATE", reason: f2.elements.separate_reason.value } : void 0;
+      const r = await api({ action: target ? "update" : "create", idempotency_key: idem, expected_version: target?.VERSION, payload: { ma: target?.MA_KHACH, customer, confirmation, reason: f2.personToConvert ? "Chuyển cá nhân thành công ty theo thông tin hóa đơn" : undefined } });
       close();
       picker.choose(r.customer);
-      notify("Đã lưu " + r.customer.MA_KHACH + (r.warnings?.length ? " · Có tên giống khách khác; kiểm tra trước khi tạo thêm." : ""));
+      notify("Đã lưu " + r.customer.MA_KHACH + (r.warnings?.length ? " · Đã ghi nhận cảnh báo / liên hệ liên quan." : ""));
     });
     f.elements.LOAI.value = c?.LOAI || "CA_NHAN";
     if (f.elements.TRANG_THAI) f.elements.TRANG_THAI.value = c.TRANG_THAI;
