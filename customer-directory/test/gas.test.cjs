@@ -22,7 +22,7 @@ function runtime(active = actors.finance.id) {
   }
   const ctx = { console: { log() {
     throw Error("No PII logs allowed");
-  } }, PropertiesService: { getScriptProperties: () => raw.properties }, ScriptApp: { getScriptId: () => "directory-script" }, Session: { getActiveUser: () => ({ getEmail: () => active }), getEffectiveUser: () => ({ getEmail: () => actors.director.id }) }, LockService: { getScriptLock: () => ({ waitLock() {
+  } }, PropertiesService: { getScriptProperties: () => raw.properties }, ScriptApp: { getScriptId: () => "directory-script" }, Session: { getActiveUser: () => ({ getEmail: () => active }), getEffectiveUser: () => ({ getEmail: () => actors.director.id }) }, LockService: { getScriptLock: () => ({ tryLock() { return true; }, waitLock() {
   }, releaseLock() {
   } }) }, SpreadsheetApp: { openById(id) {
     opens++;

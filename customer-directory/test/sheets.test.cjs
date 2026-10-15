@@ -69,3 +69,52 @@ test("DUYET_TRUNG exports each source identity/details and puts open-debt groups
   const lastDebt = rows.map((r) => r[1]).lastIndexOf("Có"), firstNoDebt = rows.map((r) => r[1]).indexOf("Không");
   assert(firstNoDebt < 0 || lastDebt < firstNoDebt);
 });
+
+test("201 customers: full repository search reads at most six Sheets ranges/row counts for 20 or 1 result", () => {
+  const raw=sheetDriver(), f=fixture(raw.driver);
+  for(let i=0;i<201;i++) f.create({TEN:"Load fixture "+String(i).padStart(3,"0")});
+  let calls=0, locks=0;
+  for(const sh of Object.values(raw.sheets)) for(const method of ["getRange","getLastRow","getDataRange"]) {
+    const original=sh[method].bind(sh); sh[method]=(...args)=>{calls++;return original(...args)};
+  }
+  const originalLock=raw.driver.lock; raw.driver.lock=fn=>{locks++;return originalLock(fn)};
+  for(const [q,n] of [["Load fixture",20],["Load fixture 200",1]]) {
+    calls=0; f.repo.driver = new SheetsDriver({...raw.options, lock: raw.driver.lock});
+    const found=f.repo.read("search",{q},actors.sales).customers;
+    assert.equal(found.length,n); assert(calls<=6,`search ${n} called Sheets ${calls} times`);
+  }
+  assert.equal(locks,0);
+});
+test("lock-free searches resolve merged customers and old aliases from one in-memory map", () => {
+  const raw=sheetDriver(),f=fixture(raw.driver),a=f.create({TEN:"Old searchable",DIEN_THOAI:"0901234567"}),b=f.create({TEN:"Target searchable"});
+  f.submit("merge",{source:a.MA_KHACH,target:b.MA_KHACH,target_version:b.VERSION,reason:"verified"},"director",a.VERSION);
+  const old=f.repo.read("get",{ma:a.MA_KHACH},actors.sales).customer;
+  assert.equal(old.MA_KHACH,b.MA_KHACH);
+  assert.equal(f.repo.read("search",{q:a.MA_KHACH},actors.sales).customers[0].MA_KHACH,b.MA_KHACH);
+  assert(f.repo.read("history",{ma:a.MA_KHACH},actors.sales).events.length);
+});
+test("reader during writer lock sees last committed customer, never partial new tables or LOCK_BUSY", () => {
+  let f,observed;
+  const raw=sheetDriver(stage=>{
+    if(f && stage==="KHACH") observed=f.repo.read("search",{q:"Concurrent"},actors.sales).customers;
+  });
+  f=fixture(raw.driver);
+  const c=f.create({TEN:"Concurrent before"});
+  f.submit("update",{ma:c.MA_KHACH,customer:{TEN:"Concurrent after"}},"finance",c.VERSION);
+  assert.equal(observed[0].TEN,"Concurrent before");
+  assert.equal(f.repo.read("search",{q:"Concurrent"},actors.sales).customers[0].TEN,"Concurrent after");
+});
+test("writer starting midway through optimistic query is detected by journal fence", () => {
+  const raw=sheetDriver(),f=fixture(raw.driver),c=f.create({TEN:"Fence before"});
+  const original=raw.driver.query.bind(raw.driver);let once=true;
+  raw.driver.query=(action,p)=>{const answer=original(action,p);if(once){once=false;f.submit("update",{ma:c.MA_KHACH,customer:{TEN:"Fence after"}},"finance",1);}return answer;};
+  assert.equal(f.repo.read("search",{q:"Fence"},actors.sales).customers[0].TEN,"Fence after");
+});
+
+test("reader recovers an abandoned prepared write only when the write lock is available", () => {
+  let interrupted=false;
+  const raw=sheetDriver(stage=>{if(stage==="KHACH"&&!interrupted){interrupted=true;throw Error("Stopped writer")}}),f=fixture(raw.driver);
+  assert.throws(()=>f.create({TEN:"Recovered by reader"}),/Stopped writer/);
+  assert.equal(f.repo.read("search",{q:"Recovered"},actors.sales).customers[0].TEN,"Recovered by reader");
+  assert.equal(raw.sheets.CD_JOURNAL.rows.at(-1)[1],"COMMITTED");
+});

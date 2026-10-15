@@ -55,3 +55,10 @@ MST không hợp lệ không dừng quét; liệt kê toàn bộ trong mục MST
 Đã bổ sung cảnh báo chiều cá nhân → công ty, kèm mã cá nhân và ba lựa chọn. Chuyển loại dùng update có version/quyền KT/GĐ; tạo công ty + liên hệ atomically lấy thông tin cá nhân từ server, kiểm version; tạo riêng bắt buộc lý do. Không tự gộp, không đổi phạm vi migration/tích hợp.
 
 Kiểm tra: 67/67 Node (gồm service API, quyền giả, replay, stale version), 9 nhóm browser 390px (cả 3 lựa chọn và sales không thấy chuyển loại), build GAS đạt. Chưa UAT Google thay đổi này. DEPLOY_REQUEST không đổi: chưa triển khai bản vá, OWNER_SETUP vẫn do chủ chạy trên bản sao.
+
+
+## Search performance
+
+201-customer fixture: full request including driver construction reduced Sheets acquisitions from 99→6 (20 results), 42→6 (1 result). Lazy in-range header validation, one metadata read, Map-based customer resolution; stable reads skip ScriptLock and journal races use verified committed state or nonblocking recovery. Client debounce 300ms, 30s/50-query cache, empty focus skipped, loading feedback and safe elapsed/count logs. Details: docs/SEARCH_PERFORMANCE.md.
+
+72/72 Node and 10 browser groups pass locally; build GAS passes. Native Google before/after timing not yet available; read-only owner benchmark and sanitized CI attempt added. No claim that 1500ms Google target has been met. Deployment request revision 4 targets only the directory COPY.

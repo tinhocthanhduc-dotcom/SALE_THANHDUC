@@ -8,6 +8,8 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
   for (let i = 0; i < 25; i++) seed({ TEN: "Khách mẫu " + i });
   await new Promise((r) => app.server.listen(0, "127.0.0.1", r));
   const base = "http://127.0.0.1:" + app.server.address().port, browser = await chromium.launch({ headless: true, ...process.env.ERP_TEST_CHROMIUM ? { executablePath: process.env.ERP_TEST_CHROMIUM } : {}, args: ["--no-sandbox", "--disable-dev-shm-usage"] }), context = await browser.newContext({ viewport: { width: 390, height: 844 }, extraHTTPHeaders: { "x-fixture-actor": "finance" } }), page = await context.newPage();
+  let searchRequests = 0;
+  page.on("request", r => { if(r.url() === base + "/api" && r.postDataJSON()?.action === "search") searchRequests++; });
   page.on("pageerror", (e) => errors.push(e.message));
   const open = async (p, query) => {
     const input = p.locator("#search [role=combobox]");
@@ -20,6 +22,9 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     await page.goto(base);
     await page.locator("#nav").waitFor();
     await page.locator("#search [role=combobox]").focus();
+    await page.waitForTimeout(350);
+    assert.equal(searchRequests, 0);
+    await page.locator("#search [role=combobox]").fill("Khách mẫu");
     await page.waitForFunction(() => document.querySelectorAll("#search [role=option]").length === 20);
     assert.equal(await page.locator("#search input").count(), 1);
     await open(page, "cong ty nguyen");
@@ -32,6 +37,11 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert(await page.locator("#search input").evaluate((n2) => parseFloat(getComputedStyle(n2).fontSize) >= 16));
     scenarios.push("single accessible picker, accentless name/partial phone/address, 20 cap and 390px no overflow");
+    const requestsBeforeCache = searchRequests;
+    await page.locator("#search input").fill("cong ty nguyen");
+    await page.locator("#search [role=option]").first().waitFor();
+    assert.equal(searchRequests, requestsBeforeCache);
+    scenarios.push("empty focus makes no request and repeated query reuses session cache");
     let release, finished;
     const hold = new Promise((r) => release = r), done = new Promise((r) => finished = r);
     await page.route(base + "/api", async (route) => {
@@ -48,6 +58,7 @@ const { chromium } = require("../../erp-prototype/node_modules/playwright"), { c
     const slowRequest = page.waitForRequest((r) => r.url() === base + "/api" && r.postDataJSON()?.payload?.q === "__slow__");
     await page.locator("#search input").fill("__slow__");
     await slowRequest;
+    assert.equal(await page.locator("#search [role=status]").innerText(), "Đang tìm…");
     await page.locator("#search input").fill("nguyen binh");
     await page.locator("#search [role=option]").filter({ hasText: "Nguyễn Bình" }).waitFor();
     release();

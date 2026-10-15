@@ -13,6 +13,11 @@ function cdLock_(fn) {
     l.releaseLock();
   }
 }
+function cdTryReadLock_(fn) {
+  var l = LockService.getScriptLock();
+  if (!l.tryLock(0)) return null;
+  try { return fn(); } finally { l.releaseLock(); }
+}
 function cdHash_(s) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function(b) {
     return ("0" + ((b + 256) % 256).toString(16)).slice(-2);
@@ -106,7 +111,7 @@ function cdProperties_() {
 }
 function cdRepository_(config) {
   var s = config.s;
-  return new DirectoryBundle.Repository(new DirectoryBundle.SheetsDriver({ workbook: SpreadsheetApp.openById(s.CD_WORKBOOK_ID), workbookId: s.CD_WORKBOOK_ID, scriptId: s.CD_SCRIPT_ID, marker: s.CD_MARKER, properties: config.p, lock: cdLock_, writeRows: cdWriteRows_, flush: function() {
+  return new DirectoryBundle.Repository(new DirectoryBundle.SheetsDriver({ workbook: SpreadsheetApp.openById(s.CD_WORKBOOK_ID), workbookId: s.CD_WORKBOOK_ID, scriptId: s.CD_SCRIPT_ID, marker: s.CD_MARKER, properties: config.p, lock: cdLock_, tryReadLock: cdTryReadLock_, writeRows: cdWriteRows_, flush: function() {
     SpreadsheetApp.flush();
   }, hash: cdHash_, id: Utilities.getUuid }), { hash: cdHash_, id: Utilities.getUuid });
 }
@@ -315,4 +320,19 @@ function runCustomerDirectoryCopyUat() {
   } finally {
     config.p.deleteProperty(prefix);
   }
+}
+
+// Owner-only, read-only Google timing; no customer names, phone numbers or queries logged.
+function benchmarkCustomerDirectorySearch() {
+  cdOwner_();
+  var c=cdProperties_(), actor=cdActor_(c), rows=[];
+  ["", "KTD-000001"].forEach(function(q) {
+    for(var i=0;i<3;i++) {
+      var started=Date.now(), repo=cdRepository_(c);
+      var result=repo.read("search",{q:q},actor);
+      rows.push({case:q ? "single_code" : "first_twenty",sample:i+1,elapsed_ms:Date.now()-started,results:result.customers.length});
+    }
+  });
+  Logger.log(JSON.stringify({environment:"Google_COPY",samples:rows,target_ms:1500}));
+  return rows;
 }

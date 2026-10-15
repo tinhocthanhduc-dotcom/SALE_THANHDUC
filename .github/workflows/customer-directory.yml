@@ -138,6 +138,13 @@ jobs:
             timeout 240s clasp --json run runCustomerDirectoryCopyUat > "$RUNNER_TEMP/customer-uat-private.json" 2> "$RUNNER_TEMP/customer-uat-private.err" || true
             node "$GITHUB_WORKSPACE/customer-directory/execution-status.cjs" uat "$RUNNER_TEMP/customer-uat-private.json" "$RUNNER_TEMP/customer-registry/uat-status.json"
           fi
+      - name: Try read-only Google search timing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/customer-directory-gas"
+          timeout 45s clasp --json run benchmarkCustomerDirectorySearch > "$RUNNER_TEMP/customer-search-private.json" 2> "$RUNNER_TEMP/customer-search-private.err" || true
+          node "$GITHUB_WORKSPACE/customer-directory/search-timing-status.cjs" "$RUNNER_TEMP/customer-search-private.json" "$RUNNER_TEMP/customer-registry/search-timing.json"
       - name: Persist directory links only, never source rows or keys
         if: always()
         uses: actions/upload-artifact@v4

@@ -8,7 +8,10 @@
     $("#notice").textContent = text;
     $("#notice").className = bad ? "error" : "success";
   }
+  const searchCache = new Map();
+  let searchGeneration = 0;
   async function api(request) {
+    const started = Date.now();
     request = JSON.parse(JSON.stringify(request));
     let response;
     if (window.google?.script?.run) response = await new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(() => reject(Error("NETWORK_ERROR"))).directoryUi(request));
@@ -21,6 +24,8 @@
       err.details = response.details;
       throw err;
     }
+    if (["command", "create", "update", "merge", "add_contact", "scan_copies", "finalize_import"].includes(request.action)) { searchCache.clear(); searchGeneration++; }
+    if (request.action === "search") console.info("directory.search", { elapsed_ms: Date.now() - started, results: response.data.customers.length });
     return response.data;
   }
   function message(err) {
@@ -52,7 +57,7 @@
         onChoose?.(null);
         this.clear.hidden = !this.input.value;
         clearTimeout(this.timer);
-        this.timer = setTimeout(() => this.load(), 160);
+        this.timer = setTimeout(() => this.load(), 300);
       });
       this.input.addEventListener("focus", () => {
         this.load();
@@ -66,7 +71,7 @@
         }
         if (["ArrowDown", "ArrowUp"].includes(ev.key)) {
           ev.preventDefault();
-          if (this.popup.hidden) this.load();
+          if (this.popup.hidden) this.load(true);
           else {
             this.index = (this.index + (ev.key === "ArrowDown" ? 1 : -1) + this.rows.length) % Math.max(1, this.rows.length);
             this.draw();
@@ -103,10 +108,20 @@
         if (!root.contains(ev.relatedTarget)) this.close();
       });
     }
-    async load() {
+    async load(allowEmpty = false) {
       const seq = ++this.seq;
+      const q = this.choice ? "" : this.input.value.trim();
+      const status = this.root.querySelector("[role=status]");
+      if (!q && !allowEmpty) { this.close(); this.input.removeAttribute("aria-busy"); status.textContent = ""; return; }
+      status.textContent = "Đang tìm…";
+      this.input.setAttribute("aria-busy", "true");
       try {
-        const result = await api({ action: "search", payload: { q: this.choice ? "" : this.input.value } });
+        const cacheKey = q.toLowerCase(), cached = searchCache.get(cacheKey), generation = searchGeneration;
+        const result = cached && Date.now() - cached.at < 30000 ? cached.result : await api({ action: "search", payload: { q } });
+        if (generation === searchGeneration && (!cached || cached.result !== result)) {
+          if (searchCache.size >= 50) searchCache.delete(searchCache.keys().next().value);
+          searchCache.set(cacheKey, { at: Date.now(), result });
+        }
         if (seq !== this.seq || !this.root.isConnected || !this.root.contains(document.activeElement)) return;
         this.rows = result.customers;
         this.index = 0;
@@ -116,9 +131,10 @@
       } catch (err) {
         if (seq === this.seq) {
           this.close();
+          status.textContent = "Không tìm được. Hãy thử lại.";
           notify(message(err), true);
         }
-      }
+      } finally { if (seq === this.seq) this.input.removeAttribute("aria-busy"); }
     }
     draw() {
       this.list.innerHTML = this.rows.map((c, i) => '<div role="option" id="' + this.list.id + "-" + i + '" aria-selected="' + (i === this.index) + '" data-result="' + i + '"><strong>' + e(c.MA_KHACH) + " · " + e(c.TEN) + "</strong><small>" + e(c.DIEN_THOAI.join(" · ")) + (c.MST ? " · MST " + e(c.MST) : "") + "</small></div>").join("");

@@ -7,6 +7,10 @@ class Sheet {
     this.name = name;
     this.rows = [];
   }
+  getDataRange() {
+    const n = Math.max(1, this.rows.length), width = Math.max(1, ...this.rows.map(r => r.length));
+    return { getDisplayValues: () => Array.from({length:n}, (_,i) => Array.from({length:width}, (_,j) => String(this.rows[i]?.[j] ?? ""))) };
+  }
   getLastRow() {
     let i = this.rows.length;
     while (i && !this.rows[i - 1]?.some((x) => x !== "" && x != null)) i--;
@@ -37,7 +41,11 @@ function sheetDriver(fault = () => {
   for (const [name, header] of Object.entries(SCHEMA)) writeRows(sheets[name], 1, [header]);
   writeRows(sheets.CD_META, 2, [["ENV", "COPY"], ["SCRIPT_ID", "directory-script"], ["TOKEN", "private-fixture"], ["COUNTER", "0"], ["REVISION", "0"]]);
   let locked = false;
-  const options = { workbook: wb, workbookId: "directory-copy", scriptId: "directory-script", marker: "private-fixture", properties, lock(fn) {
+  const options = { workbook: wb, workbookId: "directory-copy", scriptId: "directory-script", marker: "private-fixture", properties, tryReadLock(fn) {
+    if (locked) return null;
+    locked = true;
+    try { return fn(); } finally { locked = false; }
+  }, lock(fn) {
     if (locked) throw Error("LOCK_BUSY");
     locked = true;
     try {

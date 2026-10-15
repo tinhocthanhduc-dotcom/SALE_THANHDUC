@@ -31,7 +31,7 @@ class Repository {
     if (!command || typeof command.idempotency_key !== "string" || !command.idempotency_key.trim() || command.idempotency_key.length > 180) C.fail("IDEMPOTENCY_REQUIRED");
     if (command.expected_version !== void 0 && (!Number.isSafeInteger(command.expected_version) || command.expected_version < 0)) C.fail("INVALID_VERSION");
     const requestHash = this.hash(stable({ command, actor: actor.id }));
-    return this.driver.lock(() => {
+    try { return this.driver.lock(() => {
       this.driver.recover();
       const old = this.driver.receipt(command.idempotency_key);
       if (old) {
@@ -43,17 +43,20 @@ class Repository {
       this.driver.apply(transaction);
       this.driver.commit(transaction);
       return C.clone(result);
-    });
+    }); } finally { this.driver.endRequest?.(); }
   }
   read(action, payload, actor) {
     C.access(actor);
     if (["import_view", "review_detail", "mappings", "report"].includes(action)) C.access(actor, ["finance", "director"]);
+    try {
+    if (["search", "get", "history"].includes(action) && this.driver.readConsistent) return this.driver.readConsistent(action, payload);
     return this.driver.lock(() => {
       this.driver.recover();
       if (this.driver.query) return this.driver.query(action, payload);
       const s = this.driver.read();
       return query(s, action, payload, this.hash);
     });
+    } finally { this.driver.endRequest?.(); }
   }
 }
 function query(s, action, p = {}, hash) {

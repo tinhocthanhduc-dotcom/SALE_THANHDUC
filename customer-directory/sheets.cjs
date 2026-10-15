@@ -19,10 +19,10 @@ function rowsFor(d) {
   }) };
 }
 class SheetsDriver {
-  constructor({ workbook, workbookId, scriptId, marker, properties, lock, writeRows, flush, hash, id, fault = () => {
+  constructor({ workbook, workbookId, scriptId, marker, properties, lock, tryReadLock, writeRows, flush, hash, id, fault = () => {
   } }) {
     if (!workbookId || workbookId !== workbook.getId() || ORIGINAL_IDS.includes(workbookId)) C.fail("COPY_TARGET_REQUIRED");
-    Object.assign(this, { wb: workbook, scriptId, marker, props: properties, lock, writeRows, flush, hash, id, fault });
+    Object.assign(this, { wb: workbook, scriptId, marker, props: properties, lock, tryReadLock, writeRows, flush, hash, id, fault });
     this.validate();
   }
   table(name) {
@@ -31,8 +31,9 @@ class SheetsDriver {
     return s;
   }
   rows(name) {
-    const s = this.table(name), n = s.getLastRow();
-    return n < 2 ? [] : s.getRange(2, 1, n - 1, SCHEMA[name].length).getDisplayValues().filter((r) => r.some((v) => v !== ""));
+    const values = this.table(name).getDataRange().getDisplayValues();
+    if (stable(values[0]?.slice(0, SCHEMA[name].length)) !== stable(SCHEMA[name])) C.fail("SCHEMA_MISMATCH");
+    return values.slice(1).map(row => SCHEMA[name].map((_, i) => row[i] ?? "")).filter(row => row.some(v => v !== ""));
   }
   meta(key) {
     const r = this.rows("CD_META").find((r2) => r2[0] === key);
@@ -43,10 +44,41 @@ class SheetsDriver {
     this.writeRows(this.table("CD_META"), i < 0 ? all.length + 2 : i + 2, [[key, String(value)]]);
   }
   validate() {
-    const revision = this.meta("REVISION");
-    if (revision === null || !/^\d+$/.test(revision) || !Number.isSafeInteger(Number(revision))) C.fail("META_CORRUPT");
-    if (!this.marker || this.meta("ENV") !== "COPY" || this.meta("SCRIPT_ID") !== this.scriptId || this.meta("TOKEN") !== this.marker) C.fail("COPY_MARKER_MISMATCH");
-    for (const [name, headers] of Object.entries(SCHEMA)) if (stable(this.table(name).getRange(1, 1, 1, headers.length).getDisplayValues()[0]) !== stable(headers)) C.fail("SCHEMA_MISMATCH");
+    if (this.validated) return;
+    const meta = Object.fromEntries(this.rows("CD_META")), revision = meta.REVISION;
+    if (revision === undefined || !/^\d+$/.test(revision) || !Number.isSafeInteger(Number(revision))) C.fail("META_CORRUPT");
+    if (!this.marker || meta.ENV !== "COPY" || meta.SCRIPT_ID !== this.scriptId || meta.TOKEN !== this.marker) C.fail("COPY_MARKER_MISMATCH");
+    this.validated = true;
+  }
+  endRequest() { this.validated = false; }
+  journalFence() {
+    const sheet = this.table("CD_JOURNAL"), row = sheet.getLastRow();
+    return { row, committed: row <= 1 || sheet.getRange(row, 2, 1, 1).getDisplayValues()[0][0] === "COMMITTED" };
+  }
+  readConsistent(action, payload) {
+    this.validate();
+    const before = this.journalFence();
+    if (before.committed) {
+      const result = this.query(action, payload);
+      if (this.table("CD_JOURNAL").getLastRow() === before.row) return result;
+    }
+    if (this.tryReadLock) {
+      const recovered = this.tryReadLock(() => { this.recover(); return this.query(action, payload); });
+      if (recovered) return recovered;
+    }
+    // A writer may still hold the lock. Reconstruct only verified COMMITTED
+    // deltas; never expose its partially updated materialized tables.
+    const state = C.initial();
+    for (const {t, committed} of this.transactions()) if (committed) {
+      if (t.base_revision !== state.revision) C.fail("JOURNAL_CORRUPT");
+      for (const field of ["customers", "sources", "reviews", "mappings"]) {
+        for (const key of t.delta[field + "_removed"] || []) delete state[field][key];
+        Object.assign(state[field], t.delta[field]);
+      }
+      state.history.push(...t.delta.history);
+      state.revision = t.delta.revision;
+    }
+    return query(state, action, payload, this.hash);
   }
   allocate() {
     const a = this.props.getProperty("CD_COUNTER"), b = this.meta("COUNTER");
@@ -191,29 +223,28 @@ class SheetsDriver {
       this.commit(x.t);
     }
   }
-  customer(ma) {
-    const sheet = this.table("KHACH"), row = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 1).getDisplayValues().findIndex((r) => r[0] === ma);
-    if (row < 0) C.fail("NOT_FOUND");
-    const values = sheet.getRange(row + 2, 1, 1, SCHEMA.KHACH.length).getDisplayValues()[0], c = Object.fromEntries(SCHEMA.KHACH.map((k, i) => [k, values[i]]));
-    c.DIEN_THOAI = c.DIEN_THOAI ? c.DIEN_THOAI.split(/;\s*/) : [];
-    c.MA_CU = c.MA_CU ? c.MA_CU.split(/;\s*/) : [];
-    c.NGUOI_LIEN_HE = JSON.parse(c.NGUOI_LIEN_HE || "[]");
-    c.VERSION = Number(c.VERSION);
-    c.HAN_MUC_NO = Number(c.HAN_MUC_NO || 0);
-    c.CHO_PHEP_NO = c.CHO_PHEP_NO === "true";
-    return c;
+  customerMap() {
+    return new Map(this.rows("KHACH").map(values => {
+      const c = Object.fromEntries(SCHEMA.KHACH.map((k,i) => [k, values[i]]));
+      for (const k of ["DIEN_THOAI", "MA_CU"]) c[k] = c[k] ? c[k].split(/;\s*/) : [];
+      c.NGUOI_LIEN_HE = JSON.parse(c.NGUOI_LIEN_HE || "[]");
+      c.VERSION = Number(c.VERSION); c.HAN_MUC_NO = Number(c.HAN_MUC_NO || 0);
+      c.CHO_PHEP_NO = c.CHO_PHEP_NO.toLowerCase() === "true";
+      return [c.MA_KHACH, c];
+    }));
   }
-  resolved(ma) {
-    const visited = /* @__PURE__ */ new Set();
-    let c = this.customer(ma);
+  resolved(ma, customers) {
+    const seen = new Set(); let c = customers.get(ma);
+    if (!c) C.fail("NOT_FOUND");
     while (c.TRANG_THAI === "DA_GOP") {
-      if (visited.has(c.MA_KHACH)) C.fail("MERGE_CYCLE");
-      visited.add(c.MA_KHACH);
-      c = this.customer(c.GOP_VAO);
+      if (seen.has(c.MA_KHACH)) C.fail("MERGE_CYCLE");
+      seen.add(c.MA_KHACH); c = customers.get(c.GOP_VAO);
+      if (!c) C.fail("NOT_FOUND");
     }
     return c;
   }
   query(action, p = {}) {
+    const customers = ["search", "get", "history"].includes(action) ? this.customerMap() : null;
     if (action === "overview") return { revision: Number(this.meta("REVISION") || 0), customers: Math.max(0, this.table("KHACH").getLastRow() - 1) };
     if (action === "get") {
       let ma = p.ma;
@@ -222,13 +253,13 @@ class SheetsDriver {
         if (!alias) C.fail("NOT_FOUND");
         ma = alias[4];
       }
-      return { customer: this.resolved(ma) };
+      return { customer: this.resolved(ma, customers) };
     }
     if (action === "search") {
       const q = C.fold(p.q), phone = String(p.q || "").replace(/[ () .-]/g, "").replace(/^\+84/, "0").replace(/^0084/, "0").replace(/\D/g, ""), numeric = phone && !/[a-z]/.test(q), out = [], seen = /* @__PURE__ */ new Set();
       for (const row of this.rows("CHI_MUC")) {
         if (!q && row[1] === "MA" || q && (row[3].includes(q) || numeric && ["SDT", "MST"].includes(row[1]) && row[2].includes(phone))) {
-          const c = this.resolved(row[4]);
+          const c = this.resolved(row[4], customers);
           if (!seen.has(c.MA_KHACH)) {
             out.push(c);
             seen.add(c.MA_KHACH);
@@ -239,7 +270,9 @@ class SheetsDriver {
       return { customers: out };
     }
     if (action === "history") {
-      const c = this.query("get", p).customer;
+      let ma = p.ma;
+      if (!customers.has(ma)) ma = this.rows("CHI_MUC").find(r => r[1] === "MA_CU" && r[2] === ma)?.[4];
+      const c = this.resolved(ma, customers);
       return { events: this.rows("LICH_SU").filter((r) => [c.MA_KHACH, p.ma, ...c.MA_CU.filter((k) => /^KTD-\d{6}$/.test(k))].includes(r[2])).slice(-100).reverse().map((r) => Object.fromEntries(SCHEMA.LICH_SU.map((k, i) => [k, ["TRUOC", "SAU"].includes(k) ? JSON.parse(r[i] || "null") : r[i]]))) };
     }
     return query(this.read(), action, p, this.hash);
