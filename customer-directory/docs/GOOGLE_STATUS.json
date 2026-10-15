@@ -1,0 +1,25 @@
+{
+  "code_commit": "3d1d55ee97ee0aadcd129402154ccdebb2db31b2",
+  "ci_run": 38734359081,
+  "ci_tests": "success",
+  "deployment": {
+    "script_id": "1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW",
+    "deployment_id": "AKfycbzEaRBqhoykUTTYy-JHUTlxFYmVuDr485s7thWWpeCKUUZ4i_HsGFuN7DLFCxgechPx",
+    "version": 1,
+    "web_app_url": "https://script.google.com/macros/s/AKfycbzEaRBqhoykUTTYy-JHUTlxFYmVuDr485s7thWWpeCKUUZ4i_HsGFuN7DLFCxgechPx/exec",
+    "google_login_required": true,
+    "owner_setup_required": true,
+    "existing_apps_modified": false
+  },
+  "setup": {
+    "confirmed": false,
+    "kind": "setup",
+    "owner_run": "setupCustomerDirectory",
+    "reason": "Execution API did not confirm completion. Owner can run the named function in the separate project editor."
+  },
+  "real_customer_migration_executed": false,
+  "source_copy_ids_provided": false,
+  "dispatch_deploy_skipped_run": 38734358972,
+  "consumer_deploy_skipped_run": 38734358982,
+  "other_apps_written": false
+}

@@ -16,6 +16,12 @@
 
 Đây là fixture/local/compiled VM, **không phải kết quả gộp khách thật trên Google**. CI/project Google sẽ có bằng chứng riêng. Chưa có bốn ID COPY do chủ tạo nên chưa đọc/gộp dữ liệu khách thật, chưa có số khách/nhóm thực tế để báo. Link thiết kế Claude chỉ trả khung Artifact, phần nội dung chưa đối chiếu được; thực hiện theo đặc tả chi tiết trong tin nhắn.
 
+## Google / CI đã kiểm chứng
+
+- Commit code `3d1d55e`, CI [38734359081](https://github.com/tinhocthanhduc-dotcom/SALE_THANHDUC/actions/runs/38734359081): Node và browser mới đều thành công; project Danh bạ riêng đã triển khai **v1**, Google login bắt buộc. [Link app/editor](project.copy.json), [bằng chứng](docs/GOOGLE_STATUS.json).
+- Lần gọi setup qua Execution API **chưa xác nhận thành công**; không gọi đó là đã có workbook hoặc UAT Google. Chủ mở app bấm khởi tạo hoặc Run setupCustomerDirectory, sau đó Run runCustomerDirectoryCopyUat. Hàm setup chạy lại an toàn, không reset nếu lần trước đã khởi tạo.
+- Hai job deploy cũ xác nhận skipped: Điều phối 38734358972, consumer 38734358982. Không cập nhật project Google cũ. Chưa có COPY nguồn được cấu hình, chưa đọc/gộp khách thật, chưa có báo cáo số khách thực tế.
+
 ## OWNER_SETUP
 
 1. Mở web app project **Danh bạ riêng**, bấm Khởi tạo bản sao, hoặc Run setupCustomerDirectory nếu CI chưa confirmed setup.
