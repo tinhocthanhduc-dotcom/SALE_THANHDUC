@@ -1,8 +1,8 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 6,
+  "revision": 7,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
-  "scope": "New separate project and workbook for steps 1 and 2 only. Google login required, signed HTTP API, source copies read only. No existing app writes or integration. Owner runs setup and registers privately created copies. Never publish customer source data or HMAC secrets.",
-  "run_source_zero_rescan": true,
-  "update": "Restore source-only leading zeros, audit originals/corrections, flag misplaced phone-as-tax, apply plain-text target columns, preserve KTD/mappings and manual edits. Rescan verified configured COPY sources only; no source or existing app writes."
+  "scope": "Update SAME separate customer-directory COPY project/deployment only. Add owner-only bulk setup helper for DIEUPHOI HMAC client/actors, no customer data writes or changes to existing signed API/auth behavior. No real app or source workbook changes.",
+  "run_source_zero_rescan": false,
+  "update": "Deploy configureDispatchDirectoryClient helper from 2010a35. Keep Google authenticated deployment and existing URL/data/properties/clients/counters. Do not run helper/setup/reset/rescan or create actual clients/secrets; owner performs OWNER_SETUP manually. Companion Dispatch staging deploy is request revision 33. 316 combined Node and browser regressions passed."
 }

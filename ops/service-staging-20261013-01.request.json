@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 32,
-  "update": "Deploy capacity hotfix 9d828cb to SAME existing Dispatch staging project/deployment URL. Automatically expand active Sheets grids within 10000-row limit; retain 20 verified snapshots, archive older COMMITTED journal attempts with crash-safe copy/verify/delete under existing lock; capacity metrics and friendly full-storage message. 219 Node and all 22 browser suites passed; GAS build passed. Preserve users, marker, properties, data, files and mappings. No setup/reset/backfill. Do not deploy Customer Directory, COPY consumers or real Kho/Finance/AI apps. Normalized tables remain pre-pilot work."
+  "revision": 33,
+  "update": "Deploy commit 2010a35 server-only DIEUPHOI HMAC bridge to customer-directory COPY. Shared KTD combobox, snapshot refresh/merge events, remote create/update with cross-app idempotency, explicit legacy KTD linking, Finance outbox KTD metadata. Add UrlFetch OAuth scope and owner setup/check functions. 316 Node, all 23 Dispatch browser suites and 11 Directory browser scenarios passed. SAME Dispatch staging project/deployment URL; preserve all users, properties, data, mappings, Drive and pending financial/stock jobs. Do not run setup/reset, provision actual secret/users, enable connection, or rescan customer sources. OWNER_SETUP must complete before enabling. No real Sales/CARE/Kho/Finance/AI app changes."
 }
