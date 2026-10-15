@@ -119,7 +119,7 @@ Hàm sửa: `board`, `detail` (dùng orderButtons chung), `preparationBoard`, `f
 
 ## Desktop — đợt (o/p) quản trị và đăng nhập
 
-- `syncBoard`: bảng năm cột chứng từ/nơi nhận/trạng thái/lý do-kết quả/thao tác, ba số liệu và dải trạng thái bản sao. Dòng lỗi có vạch đỏ; chứng từ đã ghi không có thao tác ghi lại. Giữ nguyên `data-sync-refresh`, retry/gán TD/duyệt ngoại lệ, entity/version/key và quyền từ projection.
+- `syncBoard`: bảng năm cột chứng từ/nơi nhận/trạng thái/lý do-kết quả/thao tác, ba số liệu chia đều và dải trạng thái bản sao; cần xử lý tô đỏ, lý do dài xuống dòng. Dòng lỗi có vạch đỏ; chứng từ đã ghi không có thao tác ghi lại. Giữ nguyên `data-sync-refresh`, retry/gán TD/duyệt ngoại lệ, entity/version/key và quyền từ projection.
 - `financeMapping`: bốn nhóm, hiện cả nguồn chưa gán để chủ thấy phần thiếu; nút từng dòng mở chính form gán hiện có và chọn nguồn tương ứng. Đích luôn là select danh mục Finance, chưa gán giữ lựa chọn trống; chưa xác minh bản sao thì vô hiệu hóa nút. Chuyển khoản mở cấu hình hình thức/ngân hàng hợp nhất, không thêm nơi gán tài khoản thứ hai. Chứng từ đã ghi giữ mapping snapshot cũ theo domain hiện hành.
 - `paymentMethods`: thẻ hình thức/trạng thái, thông tin tài khoản công ty trong cùng cấu hình Finance hiện có, cùng form sửa/ngừng dùng và cấu hình duyệt giá. Không tạo tài khoản Finance mới, không thêm form tài khoản công ty độc lập.
 - `customers`: danh sách khách bên trái và hồ sơ/máy/lịch sử bên phải, tìm theo tên/điện thoại/địa chỉ/model/serial từ projection. Giữ sửa khách, thêm/sửa/ngừng dùng máy và lịch sử cũ. Tạo đơn từ hồ sơ chỉ chọn khách vào form tiếp nhận gốc; vẫn tự chọn duy nhất máy đang dùng, vẫn giữ nháp khi tạo khách/máy giữa chừng.
