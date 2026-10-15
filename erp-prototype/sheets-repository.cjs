@@ -6,11 +6,12 @@ const LEGACY_IDS=['1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU','1ACsqTWveQR3ks
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 function splitText(raw){const chunks=[];for(let start=0;start<raw.length;){let end=Math.min(start+16000,raw.length);const last=raw.charCodeAt(end-1);if(end<raw.length&&last>=0xD800&&last<=0xDBFF)end--;chunks.push(raw.slice(start,end));start=end;}return chunks;}
 class SheetsRepository {
-  constructor({workbook,stagingId,markerToken,withLock,hash,id,flush=()=>{},fault=()=>{},maxRows=10000,maxChars=1000000,domain=Domain}) {
+  constructor({workbook,stagingId,markerToken,withLock,hash,id,flush=()=>{},fault=()=>{},maxRows=10000,maxChars=1000000,retainSnapshots=20,domain=Domain}) {
     if(!stagingId||LEGACY_IDS.includes(stagingId)||workbook.getId()!==stagingId)fail('STAGING_TARGET_REJECTED');
     if(!markerToken||typeof withLock!=='function'||typeof hash!=='function'||typeof id!=='function')fail('STAGING_CONFIG_REQUIRED');
     if(!Number.isSafeInteger(maxRows)||maxRows<2||!Number.isSafeInteger(maxChars)||maxChars<1)fail('INVALID_LIMIT');
-    Object.assign(this,{workbook,markerToken,withLock,hash,id,flush,fault,maxRows,maxChars,domain});
+    Object.assign(this,{workbook,markerToken,withLock,hash,id,flush,fault,maxRows,maxChars,retainSnapshots,domain});
+    if(!Number.isSafeInteger(retainSnapshots)||retainSnapshots<1)fail('INVALID_LIMIT');
     this.validate();
   }
   validate(){
@@ -24,6 +25,52 @@ class SheetsRepository {
     }
   }
   rows(name){const s=this.workbook.getSheetByName(name),n=s.getLastRow();if(n>this.maxRows)fail('STAGING_CAPACITY_EXCEEDED');return n<2?[]:s.getRange(2,1,n-1,6).getValues().map((cells,i)=>({cells,row:i+2}));}
+  ensureRows(sheet,end,limit=this.maxRows){
+    if(end>limit)fail('STAGING_CAPACITY_EXCEEDED');
+    if(end>sheet.getMaxRows())sheet.insertRowsAfter(sheet.getMaxRows(),end-sheet.getMaxRows());
+  }
+  capacity(snapshot){
+    const tabs=['ERP_STATE','ERP_JOURNAL','ERP_ARCHIVE'].map(name=>{const sheet=this.workbook.getSheetByName(name);return {name,rows:sheet?sheet.getLastRow():0,limit:name==='ERP_ARCHIVE'?null:this.maxRows};});
+    const chars=JSON.stringify(snapshot).length;
+    return {tabs,snapshot_chars:chars,max_chars:this.maxChars,warning:chars>this.maxChars*.7||tabs.some(t=>t.limit&&t.rows>t.limit*.7)};
+  }
+  // Called only under the project lock. Delete complete attempts in one Sheets operation.
+  // Copy + verify before deletion; an interrupted archive copy is invisible until its marker.
+  compactLocked(){
+    const states=this.rows('ERP_STATE'),entries=states.filter(r=>r.cells[1]==='SNAPSHOT').map(m=>({m,value:this.decode(states,m)})).sort((a,b)=>b.value.revision-a.value.revision);
+    if(entries.length<=this.retainSnapshots)return;
+    const cutoff=entries[this.retainSnapshots-1].value.revision;
+    const remove=(name,attempt)=>{
+      const rows=this.rows(name).filter(r=>r.cells[0]===attempt);if(!rows.length)return;
+      if(rows.some((r,i)=>r.row!==rows[0].row+i))fail('RECOVERY_CONFLICT');
+      this.fault('compact_before_delete_'+name);
+      this.workbook.getSheetByName(name).deleteRows(rows[0].row,rows.length);this.flush();
+      this.fault('compact_after_delete_'+name);
+    };
+    const journal=this.rows('ERP_JOURNAL');
+    for(const marker of journal.filter(r=>r.cells[1]==='COMMITTED')){
+      const value=this.decode(journal,marker);if(value.revision>=cutoff)continue;
+      let archive=this.workbook.getSheetByName('ERP_ARCHIVE');
+      if(!archive)archive=this.workbook.insertSheet('ERP_ARCHIVE');
+      if(archive.getLastRow()===0)archive.getRange(1,1,1,6).setValues([HEADERS]);
+      if(JSON.stringify(archive.getRange(1,1,1,6).getDisplayValues()[0])!==JSON.stringify(HEADERS))fail('SCHEMA_MISMATCH');
+      const n=archive.getLastRow(),saved=n<2?[]:archive.getRange(2,1,n-1,6).getValues().map((cells,i)=>({cells,row:i+2}));
+      const existing=saved.find(r=>r.cells[0]===marker.cells[0]&&r.cells[1]==='COMMITTED');
+      if(existing){if(this.hash(JSON.stringify(this.decode(saved,existing)))!==this.hash(JSON.stringify(value)))fail('RECOVERY_CONFLICT');}
+      else{
+        // Remove incomplete copies before retrying. Only this attempt is affected.
+        const partial=saved.filter(r=>r.cells[0]===marker.cells[0]);
+        if(partial.length)archive.deleteRows(partial[0].row,partial.length);
+        const block=journal.filter(r=>r.cells[0]===marker.cells[0]).map(r=>r.cells),start=archive.getLastRow()+1;
+        this.ensureRows(archive,start+block.length-1,Number.MAX_SAFE_INTEGER);
+        archive.getRange(start,1,block.length,6).setValues(block);this.flush();this.fault('compact_after_archive');
+        const copied=archive.getRange(start,1,block.length,6).getValues().map((cells,i)=>({cells,row:start+i}));
+        if(this.hash(JSON.stringify(this.decode(copied,copied[copied.length-1])))!==this.hash(JSON.stringify(value)))fail('RECOVERY_CONFLICT');
+      }
+      remove('ERP_JOURNAL',marker.cells[0]);
+    }
+    for(const entry of entries.filter(x=>x.value.revision<cutoff))remove('ERP_STATE',entry.m.cells[0]);
+  }
   decode(rows,manifest){
     const [attempt,, ,count,checksum]=manifest.cells;
     if(!Number.isSafeInteger(count)||count<1||count>Math.ceil(this.maxChars/15999))fail('RECOVERY_CONFLICT');
@@ -48,7 +95,7 @@ class SheetsRepository {
     const parts=splitText(raw),count=parts.length,checksum=this.hash(raw),attempt=this.id();
     if(this.rows(name).some(r=>r.cells[0]===attempt))fail('DUPLICATE_ATTEMPT_ID');
     const sheet=this.workbook.getSheetByName(name),start=sheet.getLastRow()+1;
-    if(start+count>this.maxRows||start+count>sheet.getMaxRows())fail('STAGING_CAPACITY_EXCEEDED');
+    this.ensureRows(sheet,start+count);
     // DATA can be partially written. A flushed, verified manifest is the visibility boundary.
     const chunks=Array.from({length:count},(_,i)=>[attempt,'DATA',i,count,checksum,parts[i]]);
     sheet.getRange(start,1,count,6).setValues(chunks);this.flush();this.fault(name+'_after_chunks');
@@ -59,6 +106,7 @@ class SheetsRepository {
   }
   recoverLocked(){
     this.validate();
+    this.compactLocked();
     const stateEntry=this.latest('ERP_STATE',['SNAPSHOT']);
     let current=stateEntry?stateEntry.value:{revision:0,state:this.domain.emptyState()};
     const intent=this.latest('ERP_JOURNAL',['PREPARED','COMMITTED']);
@@ -82,12 +130,14 @@ class SheetsRepository {
     const after={revision:before.revision+1,state:output.state};
     // Preflight capacity on both tabs before recording durable intent.
     const raw=JSON.stringify(after);if(raw.length>this.maxChars)fail('STAGING_CAPACITY_EXCEEDED');
+    this.compactLocked();
     const needed=splitText(raw).length+1;
-    for(const n of ['ERP_STATE','ERP_JOURNAL']){const s=this.workbook.getSheetByName(n);if(s.getLastRow()+needed>Math.min(this.maxRows,s.getMaxRows()))fail('STAGING_CAPACITY_EXCEEDED');}
+    for(const n of ['ERP_STATE','ERP_JOURNAL']){const s=this.workbook.getSheetByName(n);this.ensureRows(s,s.getLastRow()+needed);}
     const meta={before_revision:before.revision,before_hash:this.hash(JSON.stringify(before)),after_hash:this.hash(raw)};
     const journal=this.append('ERP_JOURNAL',after,'PREPARED',meta);this.fault('after_prepare');
     this.append('ERP_STATE',after,'SNAPSHOT');this.fault('after_state');
     this.workbook.getSheetByName('ERP_JOURNAL').getRange(journal.row,2,1,1).setValues([['COMMITTED']]);this.flush();this.fault('after_commit');
+    this.compactLocked();
     if(context.onCommitted)context.onCommitted(after);return output.result;
   });}
 }

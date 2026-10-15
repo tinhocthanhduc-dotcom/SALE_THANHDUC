@@ -1,0 +1,22 @@
+{
+  "node": {
+    "passed": 219,
+    "failed": 0
+  },
+  "browser_suites": {
+    "passed": 22,
+    "failed": 0
+  },
+  "gas_build": "passed",
+  "google_business_smoke": "not run; requires authenticated owner/technician",
+  "coverage": [
+    "grid expansion",
+    "hard rows/chars caps",
+    "archive partial copy",
+    "five compaction interruption points",
+    "pending intent recovery with pruning",
+    "archived command replay",
+    "20-snapshot retention",
+    "70 percent warning"
+  ]
+}

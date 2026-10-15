@@ -1,5 +1,11 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — vá dung lượng staging
+
+- Tự mở rộng lưới trong maxRows; giữ 20 snapshot, lưu journal COMMITTED cũ vào ERP_ARCHIVE có kiểm checksum trước khi xóa dưới ScriptLock. Không reset dữ liệu/người dùng/cấu hình. Màn Đồng bộ hiện dung lượng và cảnh báo 70%; lỗi đầy bộ nhớ bằng tiếng Việt.
+- Trước pilot vẫn phải chuyển bảng chuẩn hóa; archive tab vẫn tính quota workbook và snapshot vẫn giới hạn 1 triệu ký tự. [Cơ chế phục hồi, khôi phục và ước tính 30 đơn/ngày](docs/storage-capacity/README.md).
+- Local đạt 219/219 Node và 22/22 bộ trình duyệt, build GAS đạt. Chưa xác nhận giao dịch Google; [kiểm chứng](docs/storage-capacity/VERIFICATION.json).
+
 ## 15/10/2026 — ô tìm/chọn hợp nhất
 
 - Một thành phần `ChoiceUI` thay hai ô tìm + select bằng một ô cho khách, máy nhiều lựa chọn, mã TD, gán Finance/tài khoản và select dài khác. Tìm không dấu/hoa thường, tên/điện thoại/địa chỉ, model/serial, mã/tên; tối đa 20 kết quả. Hàng hiện mã/tên/đơn vị/kho/tồn; ID vẫn từ option gốc, chữ gõ chưa chọn không lưu được. × bỏ chọn, trạng thái không tìm thấy, tạo khách điền sẵn và giữ nháp. Máy tự cập nhật theo khách; hàng ngoài danh mục phải là lựa chọn rõ ràng theo luồng cũ.
