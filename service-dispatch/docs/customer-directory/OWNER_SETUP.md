@@ -1,10 +1,10 @@
 # Nối Điều phối staging → Danh bạ COPY
 
-Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
+Bản đã triển khai: Điều phối staging v59, Danh bạ COPY v8. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
 
 ## 1. Lấy danh sách người dùng Điều phối
 
-Mở [project Điều phối staging](https://script.google.com/d/1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH/edit). Chạy **listDispatchDirectoryUsers** bằng tài khoản chủ. Sau Run, mở Project Settings → Script Properties và sao chép giá trị **DISPATCH_CD_USER_EXPORT**. Đây là mảng id/name/roles/active của nhân viên, không có mật khẩu. Giữ nguyên ID; Apps Script editor không tự hiển thị giá trị return nên dùng thuộc tính này để copy.
+Mở [project Điều phối staging](https://script.google.com/d/1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH/edit). Chạy **listDispatchDirectoryUsers** bằng tài khoản chủ. Sau Run, mở Project Settings → Script Properties và sao chép giá trị **DISPATCH_CD_USER_EXPORT**. Nếu chưa thấy thuộc tính mới, tải lại trang Project Settings. Đây là mảng id/name/roles/active của nhân viên, không có mật khẩu. Giữ nguyên ID; Apps Script editor không tự hiển thị giá trị return nên dùng thuộc tính này để copy.
 
 ## 2. Tạo actor và client bên Danh bạ
 
