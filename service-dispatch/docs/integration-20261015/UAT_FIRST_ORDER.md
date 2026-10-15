@@ -6,8 +6,9 @@ Chỉ dùng dữ liệu và số tiền mẫu trên staging/các bản sao đã 
 
 1. Hai consumer: setupCopyConsumer đã báo marker đúng; enableCopyConsumer thành công. Cần xác minh kết quả Run/trigger thực, không chỉ suy từ việc push code.
 2. Điều phối Script Properties: DISPATCH_BRIDGE_ACTOR_ID = admin (admin hoạt động, director); Run installDispatchOutboxPump.
-3. Giám đốc → Gán Finance: cash → Tiền nhân viên đang giữ; cash_fund → Quỹ tiền mặt; acb/tcb → đúng tài khoản bank hiện hữu; goods → Thu bán hàng; service → Thu dịch vụ; thợ thử → ID nhân viên Finance tương ứng. Chọn ID từ dropdown; thiếu người/tài khoản thì dừng để quản lý xử lý, không chọn người/tài khoản khác cho qua. Khách credit gán ID_KH trước test credit riêng.
-4. Lưu số dư ban đầu của ba tài khoản trên copy và tồn SKU thử ở kho 58; bật Đồng bộ ở Điều phối cho copies.
+3. Giám đốc → Gán Finance: cash → Tiền nhân viên đang giữ; cash_fund → Quỹ tiền mặt; goods → Thu bán hàng; service → Thu dịch vụ; thợ thử → ID nhân viên Finance tương ứng. Chọn ID từ dropdown; thiếu người/tài khoản thì dừng để quản lý xử lý, không chọn người/tài khoản khác cho qua. Khách credit gán ID_KH trước test credit riêng.
+4. Trong Thanh toán / cấu hình, sửa ACB/TCB để chọn tài khoản Finance hiện hữu + số/chủ tài khoản, Lưu một lần. Hình thức tự gắn tài khoản, thợ không chọn riêng. Thử API TCB + account ACB phải bị PAYMENT_ACCOUNT_MISMATCH; cấu hình xong nhưng đổi lại trước khi xác nhận thì PT cũ vẫn giữ đúng tài khoản đã chốt.
+5. Lưu số dư ban đầu của ba tài khoản trên copy và tồn SKU thử ở kho 58; bật Đồng bộ ở Điều phối cho copies.
 
 ## Đơn mẫu và kết quả phải thấy
 

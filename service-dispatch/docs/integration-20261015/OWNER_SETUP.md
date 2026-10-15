@@ -16,7 +16,7 @@ Hai project mới đã tạo/push mã qua GitHub Actions, chưa deploy web app, 
 
 ## Điều phối và UAT
 
-- Giữ Đồng bộ tắt đến khi cả hai consumer kiểm xong marker/quyền. Giám đốc chọn các ID Finance hiện hữu trong Gán Finance; không tạo tài khoản mới.
+- Giữ Đồng bộ tắt đến khi cả hai consumer kiểm xong marker/quyền. Giám đốc chọn các ID Finance hiện hữu; không tạo tài khoản mới. Trong **Thanh toán / cấu hình**, sửa từng hình thức ACB/TCB: chọn tài khoản Finance, điền số và chủ tài khoản để khách nhìn thấy, Lưu một lần cho cả tài khoản nhận và gán Finance. Không gán chuyển khoản ở màn thứ hai. Trong **Gán Finance** chọn cash → Tiền nhân viên đang giữ, quỹ → Quỹ tiền mặt, hàng → Thu bán hàng, công → Thu dịch vụ, thợ thử → mã NV Finance; khách công nợ gán một lần khi cần. Cấu hình cũ chỉ có mapping chưa đủ: phải bổ sung thông tin ngân hàng tại màn chung.
 - Trong Điều phối Script Properties, đặt **DISPATCH_BRIDGE_ACTOR_ID = admin** nếu tài khoản admin hiện có vẫn hoạt động và có director. `installDispatchOutboxPump` kiểm lại directory; không tạo tài khoản hoặc vai trò giả. Run hàm này để gửi/nhận kết quả mỗi 5 phút. Nếu admin đã thay/ngừng dùng, chọn ID director đang hoạt động đúng directory, không đoán tên.
 - Bật Đồng bộ chỉ cho các bản sao; tạo đơn thử mới để kiểm actual pickup → OUT, trả kho → IN, PT cash/ACB/TCB, NQ thực nhận/thiếu, công nợ và replay. Không backfill đơn cũ hoặc dùng tiền khách thật.
 - Bấm Nhận từ Điều phối ở từng consumer (Run receiveFromDispatch), rồi Điều phối → Đồng bộ → Nhận kết quả. Đối chiếu sổ native/số phiếu/số dư trong các bản sao; kiểm lỗi thiếu mapping/tồn âm/ngày chốt/quyền và đóng hồ sơ. Không coi việc tạo project/push code hay kết quả 0 jobs là UAT thành công.

@@ -1,5 +1,16 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — cố định tài khoản chuyển khoản, gộp cấu hình ngân hàng
+
+- Người dùng báo kiểm bản 89666cc: 108 Node, 10 integration-browser và đơn mẫu OUT/IN/cash/ACB/NQ/replay ở **mức domain** đúng. Đây chưa phải đối chiếu sổ Google copies.
+- Giám đốc chỉ cần **Thanh toán / cấu hình → sửa ACB/TCB**: chọn tài khoản ngân hàng Finance đã có, nhập số/chủ tài khoản; một command lưu hình thức, tài khoản nhận nội bộ và mapping Finance. Không tạo tài khoản Finance, không đoán theo tên. Bỏ chọn chuyển khoản tại Gán Finance và bỏ màn tạo tài khoản công ty riêng khỏi UI. API cũ không được sửa tài khoản đang gắn hoặc đổi mapping chuyển khoản lệch binding.
+- Thợ chọn hình thức thì tự hiện thông tin nhận tiền, không chọn tài khoản riêng. Server tự điền tài khoản đã gắn nếu account_id vắng; account_id khác bị PAYMENT_ACCOUNT_MISMATCH. Chưa cấu hình đầy đủ thì chặn thu chuyển khoản. Snapshot tài khoản + Finance ID lưu ngay tại PT; kế toán xác nhận sau khi đổi cấu hình vẫn ghi vào tài khoản cũ đúng nơi khách đã chuyển. Mã giao dịch ngoài dedupe theo Finance account ổn định, không bị né bằng việc sửa số/chủ tài khoản.
+- Di trú: giữ mọi chứng từ đã ghi. ACB/TCB chỉ gán theo cách cũ cần bổ sung số/chủ tài khoản ở màn chung. Khoản chuyển khoản cũ đang chờ, chưa có snapshot Finance, bị BANK_RECEIPT_UNBOUND khi xác nhận; cần đối chiếu, từ chối có lý do rồi báo lại đúng cấu hình, không tự suy đoán tài khoản cũ. Từ chối không tạo THU.
+- **Tiền mặt báo nhầm: chưa có chức năng điều chỉnh có duyệt.** Không sửa/xóa PT hay dùng NQ thiếu để bù; đề xuất phiếu ĐC bất biến/duyệt khác người/adapter Finance riêng/dedupe/khóa ngày và xử lý NQ liên quan: [CASH_CORRECTIONS_PROPOSAL.md](docs/integration-20261015/CASH_CORRECTIONS_PROPOSAL.md). Đây là hạng mục phải làm trước pilot, chưa được đánh dấu hoàn thành.
+- **Finance thật chốt sổ: mục duyệt riêng**, không deploy trong phần nối. Source isDateClosed_ vẫn trả false; guard trên copy không bảo vệ app thật. Phạm vi, chính sách và kiểm thử đề nghị: [FINANCE_CLOSE_DAY_PROPOSAL.md](docs/integration-20261015/FINANCE_CLOSE_DAY_PROPOSAL.md).
+- Kiểm chứng local: **113/113 Node**, **money-browser 12/12** (gồm HTTP API TCB + account ACB bị từ chối không tạo PT), **integration-browser 10/10**, **GAS iframe-browser 9/9**; build Apps Script ra ngoài checkout đạt. Có test cấu hình atomic/replay/quyền/ID, tài khoản tự điền, snapshot qua đổi cấu hình, chống đổi mapping qua API và receipt cũ không được xác nhận nhầm. Không thay consumer native Kho/Finance hoặc source AI; Google UAT và số dư/tồn trước/sau vẫn theo [OWNER_SETUP.md](docs/integration-20261015/OWNER_SETUP.md), [UAT_FIRST_ORDER.md](docs/integration-20261015/UAT_FIRST_ORDER.md).
+
+
 ## 15/10/2026 — người dùng báo đã hoàn tất cài hai consumer
 
 - Người dùng xác nhận đã làm setupCopyConsumer/chuyển khóa/enableCopyConsumer. Đây là xác nhận từ người dùng; chưa có kết quả ghi sổ UAT được đối chiếu.
