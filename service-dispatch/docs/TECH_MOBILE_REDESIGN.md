@@ -35,6 +35,16 @@ Hàm sửa: `board` (nhánh mobile mine), `renderTechShell` (CTA). Thêm `techOp
 
 Hàm app.js sửa: `detail`, `openForm` (gọi skin sau khi điền form), `submitForm` (cập nhật lại trạng thái nút sau lỗi). Thêm `techDetail`, `techDeliverySummary`, `techProgress`, `detailRecords`, `enhanceTechSchedule`, `updateTechSchedule` và listener chip/backdrop giao diện. CSS chỉ trong `body.is-tech` + media ≤750px. Bộ test trình duyệt mới `technician-detail-browser.cjs`; test nghiệp vụ cũ đổi selector/chọn chip thay select ẩn, không bỏ kiểm chứng nghiệp vụ.
 
+## Bước (d) — Lấy hàng giao kèm
+
+- `updatePickupFields` giữ nhánh cũ nguyên vẹn cho desktop; riêng thợ ≤750px dùng `techPickupRows`. `enhanceTechPickup` bố trí chính form `pickup_delivery` thành màn đầy đủ: thanh quay lại/tiêu đề, vùng nội dung cuộn, CTA 62px cố định trong form. Không clone nút submit/đóng, không thêm command. Dialog vẫn bảo vệ form khỏi polling; dải cập nhật nền có vùng riêng, không đẩy CTA khỏi màn hình.
+- Đầu phiếu lấy số PX, kho 58/145, thời gian soạn, mã đơn và khách từ projection thật. Chỉ một PX thì ẩn select nhưng vẫn gửi issue_id gốc; nhiều PX giữ chọn phiếu. Kho chưa báo soạn hiện đúng trạng thái, không tự suy ra đã soạn. Mã TD/unit chưa có không tự bịa, ghi Chưa gán mã TD/đơn vị.
+- Nút Đã lấy đủ tất cả đặt trên danh sách; mỗi món có checkbox 36px, tên 18px, mã 16px, stepper 48px và số 21px. Ban đầu riêng mobile chưa tích/qty 0 để thợ chủ động đánh dấu; desktop giữ mặc định cũ. All chỉ điền số, không tự xác nhận đã kiểm hàng. Đổi số, chọn/bỏ món, đổi PX hoặc sửa serial thì yêu cầu đánh dấu lại pickup_confirmation.
+- Serial máy giữ gõ/chọn datalist, thêm nút xác nhận đã kiểm đúng serial trên PX để điền nhanh có chủ đích; không tự điền/đoán lúc mở form. Server vẫn chặn serial sai. Dòng lấy đủ từ trước khóa ở qty 0 của lần lấy này, gửi đủ request_id theo API hiện tại; chỉ phần còn thiếu được lấy thêm.
+- Khác điểm mẫu cần giữ nghiệp vụ: **vẫn cho ghi nhận lấy một phần**, không khóa đến khi mọi món đều tích. Có qty >0 hợp lệ và checkbox xác nhận thì cho gửi; phần chưa lấy vẫn pending và chưa bắt đầu được. CTA nói rõ lấy một phần; cảnh báo chỉ nói phần thiếu còn chờ lấy, không hứa gửi thông báo kho chưa có. Không đổi serialize `pickups`, expected_version, key, API/domain/auth/tồn kho.
+
+Hàm sửa: `openForm` (reset modal skin và gọi bố cục), `updatePickupFields` (nhánh mobile), `submitForm` (cập nhật trạng thái nút sau lỗi). Thêm `techPickupRows`, `enhanceTechPickup`, `updateTechPickup` và listener stepper/serial/giao diện. CSS chỉ body.is-tech ≤750px. `technician-pickup-browser.cjs` kiểm lấy đủ/thiếu, giới hạn qty, consent/serial, nhiều PX, mất phản hồi sau commit/replay đúng một lần, polling giữ form, 320px và desktop 751px. Test delivery cũ chỉ thêm đánh dấu lại sau khi đổi số/serial, giữ kiểm serial sai/lấy thiếu/lấy đủ và start.
+
 ## Phần desktop mới — kế hoạch theo README_DESKTOP
 
 Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
@@ -48,9 +58,7 @@ Hàm app.js sửa: `detail`, `openForm` (gọi skin sau khi điền form), `subm
 - (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
 - (p) HTML đăng nhập, giữ xác thực hiện có.
 
-## Các bước mobile còn lại — (d) đến (h)
-
-(d) `updatePickupFields`, phần pickup của `openForm`: lấy hàng, stepper; giữ quy tắc lấy đủ mới được bắt đầu.
+## Các bước mobile còn lại — (e) đến (h)
 
 (e) phần complete của `openForm`, `chargeEditor`, `patchPhotos`: bố cục nghiệm thu; giữ đầy đủ consent và ảnh hiện có.
 

@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (d)
+
+- Màn lấy hàng riêng cho thợ ≤750px: đầu PX/kho/thời điểm soạn/khách dùng dữ liệu thật, nút Đã lấy đủ tất cả ở trên, mỗi món checkbox 36px + mã/tên/số lượng và stepper; một nút gửi gốc 62px cố định ở đáy. Một PX ẩn chọn phiếu, nhiều PX chọn được. Không đổi form/lệnh/API/payload/role/version/idempotency, desktop và vai trò khác dùng giao diện cũ.
+- Ban đầu mobile chưa tích; all không tự đánh dấu đã kiểm hàng. Đổi số/món/PX/serial cần xác nhận lại. Máy cho gõ/chọn hoặc chủ động bấm đã kiểm đúng serial PX; server vẫn chặn serial sai. Dòng lấy đủ từ trước chỉ gửi qty 0, lần sau chỉ lấy phần còn thiếu.
+- Giữ nghiệp vụ lấy một phần: có cảnh báo và CTA rõ, phần thiếu chờ lấy và không được bắt đầu. Không áp điều kiện mẫu khóa đến khi tích mọi món, không hứa thông báo kho tự động chưa có. Polling giữ nội dung; thử lại sau mất phản hồi dùng cùng key và không ghi trùng. Màn 320px không tràn ngang, mở ở 751px dùng form cũ.
+- Kiểm local: 113/113 Node, 8/8 pickup-browser mới, 48/48 UI nghiệp vụ, 9/9 delivery, 9/9 detail, 10/10 shell, 8/8 board, 10/10 hồ sơ máy, 12/12 money, 10/10 integration, 9/9 GAS iframe, 9/9 live và photo queue (3 ảnh/200 đơn/replay/thumbnail, full query 0). Build GAS đạt, Code.gs byte-identical bước (c). Có ảnh trước/sau 390px. Các bước còn lại (e) nghiệm thu, (f) thu tiền, (g) tiền giữ, (h) trống/mất mạng và desktop i–p tiếp tục sau. Không suy ra Google UAT từ test local; không sửa app Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (c)
 
 - Chi tiết đơn thành các thẻ đầu đơn/liên hệ/thông tin/PX/tiến trình/thao tác phụ, tên khách 23px, nút Gọi và Chỉ đường 118×56px. Giữ ghi chú giao lại, hàng/vật tư, tiền, đồng bộ, ảnh và lịch sử hai dòng mới nhất. Một CTA gốc 62px ở đáy, hành động phụ đóng mặc định; không thêm command mới.

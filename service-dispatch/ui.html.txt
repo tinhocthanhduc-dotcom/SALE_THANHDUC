@@ -194,6 +194,50 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
  body.is-tech .tech-schedule-sheet .actions .primary{height:62px;font-size:19px;font-weight:800}
 }
 
+/* Step (d): native pickup command form, mobile technician presentation. */
+@media(max-width:750px){
+ body.is-tech #dialog.tech-pickup-screen{inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:var(--tech-bg);color:var(--tech-text);overflow:hidden}
+ body.is-tech #dialog.tech-pickup-screen[open]{display:flex;flex-direction:column}
+ body.is-tech .tech-pickup-screen #command-form{flex:1;display:flex;flex-direction:column;min-height:0}
+ body.is-tech .tech-pickup-screen>.live-dialog-notice{flex:none;margin:0;border-radius:0}
+ body.is-tech .tech-pickup-header{display:flex;align-items:center;gap:12px;background:var(--tech-navy);color:#fff;padding:12px;flex:none}
+ body.is-tech .tech-pickup-header h2{font-size:22px;font-weight:800;line-height:1.4;margin:0}
+ body.is-tech .tech-pickup-header button{min-width:48px;min-height:48px;padding:0;background:transparent;border:0;color:#fff;font-size:24px}
+ body.is-tech .tech-pickup-content{overflow:auto;min-height:0;flex:1;padding:12px;overscroll-behavior:contain}
+ body.is-tech .tech-pickup-summary{padding:14px;border:1.5px solid var(--tech-border);border-radius:14px;background:#fff;margin-bottom:12px}
+ body.is-tech .tech-pickup-summary h3{font-size:19px;font-weight:800;margin:0 0 8px;overflow-wrap:anywhere}
+ body.is-tech .tech-pickup-summary p{font-size:16px;color:var(--tech-secondary);margin:6px 0 0;overflow-wrap:anywhere}
+ body.is-tech .tech-pickup-content>[data-pickup-all]{width:100%;height:56px;margin:0 0 12px;border:1.5px solid var(--tech-secondary-ink);background:var(--tech-secondary-bg);color:var(--tech-secondary-ink);font-size:17px;font-weight:800}
+ body.is-tech .tech-pickup-item{margin:0 0 12px;padding:14px;border:2px solid var(--tech-border);border-radius:14px;background:#fff;min-width:0}
+ body.is-tech .tech-pickup-item.is-picked{border-color:var(--tech-primary)}
+ body.is-tech .tech-pickup-item.is-complete{background:#f3faf5}
+ body.is-tech .tech-pickup-select{display:flex;align-items:center;gap:12px;margin:0;cursor:pointer;min-height:52px}
+ body.is-tech .tech-pickup-select>input{flex:0 0 36px;width:36px;height:36px;min-height:36px;margin:0;padding:0;accent-color:var(--tech-primary)}
+ body.is-tech .tech-pickup-select>span{min-width:0;display:flex;flex-direction:column;gap:5px;font-size:16px;font-weight:500;line-height:1.4;color:var(--tech-secondary);overflow-wrap:anywhere}
+ body.is-tech .tech-pickup-select strong{color:var(--tech-text);font-size:18px;font-weight:700}
+ body.is-tech .tech-pickup-code{font-size:16px;font-weight:800;color:var(--tech-primary)}
+ body.is-tech .tech-picked-before{color:var(--tech-success)}
+ body.is-tech .tech-pickup-quantity{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--tech-divider);margin-top:14px;padding-top:14px}
+ body.is-tech .tech-pickup-quantity>div:first-child{min-width:0;flex:1}
+ body.is-tech .tech-pickup-quantity strong{font-size:16px;font-weight:700}
+ body.is-tech .tech-pickup-quantity p{font-size:16px;margin:5px 0 0;color:var(--tech-success);overflow-wrap:anywhere}
+ body.is-tech .tech-pickup-quantity p.error{color:var(--tech-danger)}
+ body.is-tech .tech-stepper{display:grid;grid-template-columns:48px minmax(40px,60px) 48px;align-items:center;flex:none;border:1.5px solid var(--tech-input);border-radius:12px;overflow:hidden}
+ body.is-tech .tech-stepper button{border:0;border-radius:0;background:#edf5fb;min-height:52px;width:48px;font-size:24px;font-weight:800;padding:0;color:var(--tech-primary)}
+ body.is-tech .tech-stepper input{border:0;border-radius:0;width:100%;min-width:0;height:52px;padding:0 2px;text-align:center;font-size:21px;font-weight:800;appearance:textfield;-moz-appearance:textfield}
+ body.is-tech .tech-stepper input::-webkit-inner-spin-button,body.is-tech .tech-stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+ body.is-tech .tech-pickup-serial{font-weight:700;font-size:16px;margin-top:14px}
+ body.is-tech .tech-pickup-serial span{display:block;color:var(--tech-secondary);font-weight:500;margin:5px 0}
+ body.is-tech .tech-pickup-serial input{margin-top:6px;min-height:56px}
+ body.is-tech .tech-use-serial{width:100%;min-height:52px;margin-top:8px;background:var(--tech-secondary-bg);color:var(--tech-secondary-ink);border:1.5px solid var(--tech-secondary-ink);font-weight:700;text-align:left}
+ body.is-tech .tech-pickup-screen .check{gap:12px;align-items:center;margin:16px 0;font-size:16px}
+ body.is-tech .tech-pickup-screen .check input{width:36px;height:36px;flex:0 0 36px;min-height:36px}
+ body.is-tech .tech-pickup-warning{background:var(--tech-danger-bg);border:1.5px solid var(--tech-danger);border-radius:12px;padding:12px;color:var(--tech-danger-ink);font-size:16px;font-weight:600;margin:12px 0 0}
+ body.is-tech .tech-pickup-screen #command-form>.actions{display:flex;flex-direction:column;gap:8px;flex:none;border-top:1px solid var(--tech-border);margin:0;padding:10px 12px max(12px,env(safe-area-inset-bottom));background:#fff}
+ body.is-tech .tech-pickup-hint{font-size:16px;font-weight:700;line-height:1.4;text-align:center;margin:0}
+ body.is-tech .tech-pickup-screen .actions .primary{height:62px;min-height:62px;width:100%;font-size:19px;font-weight:800;padding:6px;line-height:1.3}
+}
+
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});
