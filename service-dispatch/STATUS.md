@@ -363,3 +363,12 @@ CI bắt được race đóng form trước refresh: có khoảng trống giao d
 5. Chốt hạn nộp quỹ/giờ cắt và ngoại lệ, ma trận giá; chống lạm dụng login/quota ANYONE_ANONYMOUS/PBKDF2, cùng UAT Google/điện thoại và đối chiếu sao kê/quỹ thực tế. Cảnh báo >24h hiện tại không tự đặt hạn thu giữ hoặc cho phép ngoại lệ giữ tiền để đóng.
 
 API payment_status cũng lấy từ sổ thu hiện tại, cùng nguồn với nhãn trên UI, thay cho placeholder unpaid cũ; không viết lại trạng thái tiền lịch sử bằng suy đoán. Kho không nhận payment_status/financial_scope qua projection.
+
+
+## Ô tiền dùng chung (VND)
+
+Mọi ô tiền (đơn giá giao kèm/giá hàng, dòng công/vật tư, khoản báo thu/ghi nợ/trả nợ, phí kiểm tra, thực nhận NQ, ngưỡng giá, điều chỉnh tiền mặt) dùng type=text/inputmode=numeric, định dạng dấu chấm trong lúc nhập và giữ con trỏ theo số chữ số. Dán 50.000, 50,000đ, 50000đ, 50 000 được chuẩn hóa. Có dòng đọc tiền bằng chữ, custom validity/aria-describedby cho trống bắt buộc, số âm, trên 10 tỷ; đúng 10 tỷ được chấp nhận. Số âm giữ dấu để người dùng thấy và sửa, không âm thầm đổi thành khoản dương. Thao tác xóa ở dấu phân cách không mắc kẹt.
+
+MoneyInput là thành phần duy nhất cho desktop/mobile và các dòng động; helper cũ của thợ gọi lại adapter này. Money payload/đơn giá đọc số nguyên qua value(), không Number() trực tiếp trên chuỗi có dấu chấm. Ô số lượng và nút tăng/giảm giữ nguyên, không đổi API/quyền/nghiệp vụ server. Cache/nhật ký/idempotency các khoản thu không đổi.
+
+Kiểm tra: 138/138 Node Điều phối, 71/71 Node ERP nền; toàn bộ 22 suite browser đạt (gồm mới money-input-browser, 6 nhóm ca: gõ/server số nguyên, sửa giữa và con trỏ, clipboard thật, giới hạn/lỗi/đọc chữ, xóa dấu phân cách, giá cũ và đơn giá). Kiểm tra GAS build đạt. Xem money-input-verification.json. Hai test cũ cập nhật kỳ vọng desktop amount type=text và dữ liệu lỗi theo quy tắc lọc ký tự mới. Chưa deploy Google; DEPLOY_REQUEST giữ nguyên.

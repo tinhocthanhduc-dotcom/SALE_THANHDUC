@@ -1,0 +1,147 @@
+{
+  "service_dispatch_node": {
+    "pass": 138,
+    "fail": 0
+  },
+  "erp_prototype_node": {
+    "pass": 71,
+    "fail": 0
+  },
+  "browser_suites": [
+    {
+      "suite": "browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 33.3
+    },
+    {
+      "suite": "cash-corrections-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.9
+    },
+    {
+      "suite": "choice-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.6
+    },
+    {
+      "suite": "customer-machines-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.5
+    },
+    {
+      "suite": "delivery-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 10.7
+    },
+    {
+      "suite": "desktop-administration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 24.0
+    },
+    {
+      "suite": "desktop-dispatch-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 13.4
+    },
+    {
+      "suite": "desktop-operations-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 21.1
+    },
+    {
+      "suite": "gas-ui-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.0
+    },
+    {
+      "suite": "integration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.6
+    },
+    {
+      "suite": "live-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 88.0
+    },
+    {
+      "suite": "money-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 10.4
+    },
+    {
+      "suite": "money-input-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.6
+    },
+    {
+      "suite": "photo-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 25.5
+    },
+    {
+      "suite": "technician-board-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.2
+    },
+    {
+      "suite": "technician-cash-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.5
+    },
+    {
+      "suite": "technician-complete-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.7
+    },
+    {
+      "suite": "technician-detail-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.9
+    },
+    {
+      "suite": "technician-payment-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.6
+    },
+    {
+      "suite": "technician-pickup-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.7
+    },
+    {
+      "suite": "technician-shell-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.1
+    },
+    {
+      "suite": "terms-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.4
+    }
+  ],
+  "new_money_input_scenarios": 6,
+  "gas_build": "passed",
+  "google_deployed": false
+}
