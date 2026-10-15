@@ -181,7 +181,20 @@
     "Google Safari iPhone": "NOT_TESTED"
   },
   "test_environment": "Chromium sandbox iframe; mocked Google callback/history/url APIs; real auth and repository",
-  "deployment": "pending same staging deployment; no setup/reset",
+  "deployment": {
+    "version": 64,
+    "workflow": 38781776345,
+    "same_staging_deployment_id": "AKfycbwLOGN1y4sLmzQdNg_kKc9uW_1VmGSf5AZguIjWbA4v38cOcMXq2dwpRWSD8hVpcEhi",
+    "native_public_shell": {
+      "http_status": 200,
+      "served_client_matches_local_build": true,
+      "verification": "fresh external GET; decode HtmlService hex/JSON escaping without executing content",
+      "client_payload_sha256": "e3c62ec0804e5ae38023b81b32e4cf2bca40d69167d7244f5bb8fb3d9fb7cf12",
+      "functional_native_login_tested": false
+    },
+    "owner_setup_required": false,
+    "data_or_user_reset": false
+  },
   "limitations": [
     "Fallback URL code expires after at most 10m; backgrounded/closed app with blocked storage may need login.",
     "If storage and Google history/url APIs are unavailable, show warning and require login after reload.",
