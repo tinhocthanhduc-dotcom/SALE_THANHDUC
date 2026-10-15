@@ -33,7 +33,7 @@ Secret chỉ copy giữa hai trang Script Properties. Không gửi vào chat, kh
 
 Bên Điều phối Run **checkDispatchDirectoryConnection**, cấp quyền UrlFetch khi Google yêu cầu. Hàm chỉ gọi bootstrap có chữ ký, kiểm actor/role từng người, không tạo khách. Sau Run, xem Script Property **DISPATCH_CD_CHECK**: phải có `ok: true` và thời điểm mới. Nếu hàm lỗi thì Google hiển thị lỗi và thuộc tính giữ ok=false, không dùng kết quả cũ. Sau đó Run **enableDispatchCustomerDirectory** (kiểm lại rồi mới đặt DISPATCH_CD_ENABLED=true). Tải lại app Điều phối.
 
-Lỗi DIRECTORY_ACTOR_UNMAPPED: kiểm ID/mapping và vai trò; không tự gán tất cả người dùng thành director. Sai chữ ký: copy lại đúng secret DIEUPHOI, không tạo secret mới ở một phía. DIRECTORY_UNAVAILABLE hoặc Google trả trang đăng nhập: kiểm URL deployment COPY và quyền chạy của tài khoản chủ. API riêng cho phép HTTP từ server đến doPost, rồi bắt buộc HMAC; không gửi OAuth bearer. Giao diện Danh bạ vẫn yêu cầu đăng nhập Google. Không bỏ HMAC. Nếu đã cài URL giao diện v8 được ghim trong project.copy.json thì bản Điều phối mới tự chuyển sang API riêng, không cần sửa secret hoặc ánh xạ. Chưa kiểm thành công trên Google thì chưa bật. Hàm check cố ý không in response/secret.
+Lỗi DIRECTORY_ACTOR_UNMAPPED: kiểm ID/mapping và vai trò; không tự gán tất cả người dùng thành director. Sai chữ ký: copy lại đúng secret DIEUPHOI, không tạo secret mới ở một phía. DIRECTORY_UNAVAILABLE hoặc Google trả trang đăng nhập: kiểm URL deployment COPY và quyền chạy của tài khoản chủ. API riêng cho phép HTTP từ server đến doPost, rồi bắt buộc HMAC; không gửi OAuth bearer. Giao diện Danh bạ vẫn yêu cầu đăng nhập Google. Không bỏ HMAC. Trong chế độ COPY, server luôn dùng API riêng đã duyệt trong api.copy.json, kể cả thuộc tính URL còn giữ đường dẫn giao diện cũ; không cần sửa secret hoặc ánh xạ. Chưa kiểm thành công trên Google thì chưa bật. Hàm check cố ý không in response/secret.
 
 **Giới hạn GAS:** UrlFetchApp không có tham số timeout 8 giây. Giao diện dừng chờ sau 8 giây và hiện Thử lại; request server có thể hoàn tất muộn. Bấm Thử lại trong cùng form giữ nguyên idempotency_key. Nếu cần ngắt HTTP thực sự sau 8 giây thì cần một proxy/backend khác; chưa thêm trong bản này.
 
@@ -56,3 +56,7 @@ Giữ bản sao workbook và Script Properties trước thử nghiệm. Muốn d
 ## Lưu ý khi thử lại thao tác ghi
 
 Giữ nguyên form và nút Thử lại để tái sử dụng khóa cũ. Đóng form rồi tạo lại là một ý định mới; nếu lần trước đã tạo bên Danh bạ thì kiểm tra/chọn khách có sẵn trước. Nếu sửa form sau một lần chờ quá hạn mà giữ khóa cũ, server trả lỗi idempotency thay vì âm thầm tạo/sửa lần hai. Gán KTD được ghi ngay khi chọn kết quả; đóng form không đảo liên kết vừa ghi, lịch sử vẫn giữ.
+
+## Chẩn đoán kết nối COPY (16/10/2026)
+
+`DISPATCH_CD_TRANSPORT_CHECK` chỉ lưu đích API công khai, mã HTTP, loại phản hồi, mã lỗi và thời gian; không chứa secret, chữ ký, nội dung phản hồi hay dữ liệu khách. `DIRECTORY_HTTP_401/403` là lỗi quyền HTTP, `DIRECTORY_GOOGLE_LOGIN` là trang đăng nhập, `DIRECTORY_NON_JSON` là phản hồi không phải JSON, `DIRECTORY_NETWORK_ERROR` là lỗi UrlFetch. Google ContentService redirect chỉ được theo tới script.googleusercontent.com/macros/echo bằng GET và không mang theo envelope HMAC. Không chạy lại setup hoặc tạo lại actor/secret khi gặp lỗi đường truyền.

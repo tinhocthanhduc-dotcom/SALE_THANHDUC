@@ -1,16 +1,29 @@
 /** COPY-only directory client. All credentials remain in Script Properties. */
 function dispatchDirectoryClient_(props) {
  return DispatchBundle.CustomerDirectory.createClient({
-  config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');var url=p.DISPATCH_CD_URL;if(typeof DispatchDirectoryCopyEndpoint!=='undefined'&&url==='https://script.google.com/macros/s/'+DispatchDirectoryCopyEndpoint.private_ui_deployment_id+'/exec')url=DispatchDirectoryCopyEndpoint.web_app_url;return {url:url,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
+  config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');var url=typeof DispatchDirectoryCopyEndpoint!=='undefined'?DispatchDirectoryCopyEndpoint.web_app_url:p.DISPATCH_CD_URL;return {url:url,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
   id:function(){return Utilities.getUuid();},
   hmac:function(raw,key){return Utilities.computeHmacSha256Signature(raw,key,Utilities.Charset.UTF_8).map(function(b){return ('0'+((b+256)%256).toString(16)).slice(-2);}).join('');},
   send:function(url,envelope){
    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url))throw new Error('DIRECTORY_NOT_CONFIGURED');
    // GAS has no configurable HTTP timeout. The browser enforces its 8s wait budget;
    // retries reuse the original command key even if this fetch completes later.
-   var response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true,followRedirects:true});
-   if(response.getResponseCode()!==200)throw new Error('DIRECTORY_UNAVAILABLE');
-   var raw=response.getContentText();if(raw.length>1500000)throw new Error('DIRECTORY_UNAVAILABLE');return JSON.parse(raw);
+   var started=Date.now(),diagnostic={checked_at:new Date().toISOString(),target:'APPROVED_COPY_API',deployment_id:typeof DispatchDirectoryCopyEndpoint!=='undefined'?DispatchDirectoryCopyEndpoint.deployment_id:null},response,raw;
+   function stop(code){diagnostic.error=code;diagnostic.elapsed_ms=Date.now()-started;props.setProperty('DISPATCH_CD_TRANSPORT_CHECK',JSON.stringify(diagnostic));throw new Error(code);}
+   try{response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true,followRedirects:false});
+    if(response.getResponseCode()===302||response.getResponseCode()===303){
+     var headers=response.getAllHeaders(),location=headers.Location||headers.location||'';
+     if(/^https:\/\/accounts\.google\.com\//.test(location))stop('DIRECTORY_GOOGLE_LOGIN');
+     if(!/^https:\/\/script\.googleusercontent\.com\/macros\/echo\?/.test(location))stop('DIRECTORY_REDIRECT_REJECTED');
+     // ContentService redirects to a read-once JSON response. Never forward POST/HMAC to the redirect.
+     response=UrlFetchApp.fetch(location,{method:'get',muteHttpExceptions:true,followRedirects:false});
+    }
+   }catch(e){if(/^DIRECTORY_[A-Z_]+$/.test(e.message))throw e;stop('DIRECTORY_NETWORK_ERROR');}
+   diagnostic.http_status=response.getResponseCode();
+   if(diagnostic.http_status!==200)stop('DIRECTORY_HTTP_'+diagnostic.http_status);
+   raw=response.getContentText();if(raw.length>1500000)stop('DIRECTORY_RESPONSE_TOO_LARGE');
+   var result;try{result=JSON.parse(raw);}catch(e){diagnostic.response_kind=/accounts\.google\.com|ServiceLogin/i.test(raw)?'GOOGLE_LOGIN':'NON_JSON';stop(diagnostic.response_kind==='GOOGLE_LOGIN'?'DIRECTORY_GOOGLE_LOGIN':'DIRECTORY_NON_JSON');}
+   diagnostic.response_kind='JSON';diagnostic.elapsed_ms=Date.now()-started;diagnostic.ok=result&&result.ok===true;if(!diagnostic.ok)diagnostic.error='DIRECTORY_'+String(result&&result.error||'UNAVAILABLE').replace(/[^A-Z0-9_]/g,'').slice(0,80);props.setProperty('DISPATCH_CD_TRANSPORT_CHECK',JSON.stringify(diagnostic));return result;
   }
  });
 }

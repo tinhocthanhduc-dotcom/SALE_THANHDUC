@@ -11,7 +11,7 @@ function createClient({config,send,hmac,now=()=>Date.now(),id}){
   if(!mapping||mapping.role!==role||!mapping.actor_id)fail('DIRECTORY_ACTOR_UNMAPPED');
   const envelope={client_id:'DIEUPHOI',actor_id:mapping.actor_id,timestamp:now(),nonce:id(),action,payload,...command};
   envelope.signature=hmac(stable(envelope),c.secret);
-  let response;try{response=send(c.url,envelope);}catch(e){if(e.code==='DIRECTORY_NOT_CONFIGURED'||e.message==='DIRECTORY_NOT_CONFIGURED')fail('DIRECTORY_NOT_CONFIGURED');fail('DIRECTORY_UNAVAILABLE');}
+  let response;try{response=send(c.url,envelope);}catch(e){const code=e.code||e.message;if(/^(DIRECTORY_NOT_CONFIGURED|DIRECTORY_NETWORK_ERROR|DIRECTORY_HTTP_[0-9]{3}|DIRECTORY_GOOGLE_LOGIN|DIRECTORY_NON_JSON|DIRECTORY_RESPONSE_TOO_LARGE|DIRECTORY_REDIRECT_REJECTED)$/.test(code))fail(code);fail('DIRECTORY_UNAVAILABLE');}
   if(!response||typeof response.ok!=='boolean')fail('DIRECTORY_UNAVAILABLE');
   if(!response.ok)fail('DIRECTORY_'+(response.error||'UNAVAILABLE'),response.details);if(!response.data||typeof response.data!=='object')fail('DIRECTORY_UNAVAILABLE');
   return response.data;
