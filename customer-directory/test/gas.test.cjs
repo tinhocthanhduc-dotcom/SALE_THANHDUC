@@ -137,3 +137,20 @@ test('owner provisions DIEUPHOI actors in bulk without customer writes or exposi
  p.CD_DISPATCH_USERS=JSON.stringify([{...rows[1],roles:['director']}]);assert.throws(()=>f.ctx.configureDispatchDirectoryClient(),/DIRECTORY_ROLE_REVIEW_REQUIRED/);assert.equal(p.CD_DISPATCH_USERS,undefined);
  const forbidden=runtime(actors.finance.id);assert.throws(()=>forbidden.ctx.configureDispatchDirectoryClient(),/OWNER_REQUIRED/);
 });
+
+test('API-only preview serves no UI and blocks browser/setup bypass before Sheets',()=>{
+ const f=runtime(actors.director.id);f.ctx.CD_API_ONLY_=true;
+ assert.equal(JSON.parse(f.ctx.doGet().text).error,'HMAC_REQUIRED');
+ assert.equal(f.ctx.directoryUi({action:'setup'}).error,'HMAC_REQUIRED');
+ assert.throws(()=>f.ctx.configureDispatchDirectoryClient(),/HMAC_REQUIRED/);
+ assert.equal(JSON.parse(f.ctx.doPost({postData:{contents:JSON.stringify({client_id:'DIEUPHOI',action:'create'})}}).text).error,'HMAC_REQUIRED');
+ assert.equal(f.opens(),0);
+});
+test('API-only accepts signed DIEUPHOI search/create with replay; refuses other clients and import/merge',()=>{
+ const f=runtime();f.ctx.CD_API_ONLY_=true;const p=f.raw.properties.values,clients=JSON.parse(p.CD_CLIENTS);clients.DIEUPHOI={secret:'fixture-api-only',actors:[actors.finance.id]};p.CD_CLIENTS=JSON.stringify(clients);
+ const send=(action,payload={},key='api-key',client_id='DIEUPHOI',secret='fixture-api-only')=>{const unsigned={client_id,actor_id:actors.finance.id,timestamp:Date.now(),action,payload,idempotency_key:key},body={...unsigned,signature:crypto.createHmac('sha256',secret).update(stable(unsigned)).digest('hex')};return JSON.parse(f.ctx.doPost({postData:{contents:JSON.stringify(body)}}).text);};
+ const created=send('create',{customer:{TEN:'API fixture',DIEN_THOAI:'0901234567'}});assert(created.ok);assert(send('create',{customer:{TEN:'API fixture',DIEN_THOAI:'0901234567'}}).data.replayed);assert.equal(send('search',{q:'API fixture'}).data.customers.length,1);
+ assert.equal(send('search',{q:'API'},'other','fixture','private-fixture-hmac').error,'FORBIDDEN');
+ for(const action of ['merge','scan_copies','finalize_import','command'])assert.equal(send(action).error,'FORBIDDEN');
+ const before=f.opens();assert.equal(send('get',{},'bad','DIEUPHOI','wrong').error,'BAD_SIGNATURE');assert.equal(f.opens(),before);
+});

@@ -1,5 +1,6 @@
 var CD_BLOCKED_SCRIPTS_ = ["1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql", "1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu", "1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6", "16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N", "1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN", "1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH"];
 function cdOwner_() {
+  if (typeof CD_API_ONLY_ !== "undefined" && CD_API_ONLY_) throw new Error("HMAC_REQUIRED");
   var a = Session.getActiveUser().getEmail().toLowerCase(), e = Session.getEffectiveUser().getEmail().toLowerCase();
   if (!a || a !== e) throw new Error("OWNER_REQUIRED");
   return a;
@@ -239,6 +240,7 @@ function cdApplyReviewChoices_(config, actor, repository) {
 }
 function directoryUi(request) {
   return DirectoryBundle.Service.response(function() {
+    if (typeof CD_API_ONLY_ !== "undefined" && CD_API_ONLY_) DirectoryBundle.Core.fail("HMAC_REQUIRED");
     if (request.action === "setup") return setupCustomerDirectory();
     var c = cdProperties_(), actor = cdActor_(c), repo = cdRepository_(c);
     if (request.action === "scan_copies") cdEnsureTextFormats_(c, actor);
@@ -256,6 +258,7 @@ function doPost(e) {
   var result = DirectoryBundle.Service.response(function() {
     if (!e || !e.postData || e.postData.contents.length > 18e5) DirectoryBundle.Core.fail("INVALID_REQUEST");
     var envelope = JSON.parse(e.postData.contents), c = cdProperties_(), actor = DirectoryBundle.Auth.authenticate(envelope, { clients: JSON.parse(c.s.CD_CLIENTS), users: JSON.parse(c.s.CD_USERS), hmac: cdHmac_ });
+    if (typeof CD_API_ONLY_ !== "undefined" && CD_API_ONLY_ && (envelope.client_id !== "DIEUPHOI" || ["bootstrap", "search", "get", "create", "update"].indexOf(envelope.action) < 0)) DirectoryBundle.Core.fail("FORBIDDEN");
     if (envelope.action === "scan_copies") cdEnsureTextFormats_(c, actor);
     return DirectoryBundle.Service.handle(envelope, actor, cdRepository_(c), function() {
       return cdReadCopies_(c);
@@ -264,6 +267,7 @@ function doPost(e) {
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 function doGet() {
+  if (typeof CD_API_ONLY_ !== "undefined" && CD_API_ONLY_) return ContentService.createTextOutput(JSON.stringify({ok:false,error:"HMAC_REQUIRED"})).setMimeType(ContentService.MimeType.JSON);
   return HtmlService.createHtmlOutputFromFile("Index").setTitle("Thành Đức · Danh bạ khách").addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 function checkCustomerDirectory() {
