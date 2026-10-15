@@ -4646,6 +4646,11 @@ function buildWarehouseIssueHtml_(data, previewMode) {
   const toolbar = previewMode
     ? [
         '<div class="preview-toolbar">',
+        '<label class="issue-date-control" for="issueDatePicker">Ngày xuất kho',
+        '<input id="issueDatePicker" type="date" value="',
+        Utilities.formatDate(issueDate, APP.TZ, 'yyyy-MM-dd'),
+        '" onchange="updateIssuePrintDate(this.value)">',
+        '</label>',
         '<button onclick="window.print()">In / Lưu PDF</button>',
         '<button class="secondary" onclick="window.close()">Đóng</button>',
         '</div>'
@@ -4668,6 +4673,8 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     '.preview-toolbar{position:sticky;top:0;z-index:10;display:flex;gap:8px;padding:10px 14px;background:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);}',
     '.preview-toolbar button{border:0;border-radius:6px;padding:9px 16px;background:#0f766e;color:#fff;font:700 14px Arial,sans-serif;cursor:pointer;}',
     '.preview-toolbar .secondary{background:#fff;color:#17324d;}',
+    '.issue-date-control{display:flex;align-items:center;gap:8px;color:#fff;font:600 13px Arial,sans-serif;}',
+    '.issue-date-control input{font:600 13px Arial,sans-serif;border:1px solid #ccd7e2;border-radius:5px;padding:7px 9px;color:#111;background:#fff;}',
     '.sheet{width:194mm;min-height:277mm;margin:8mm auto;background:#fff;padding:1.5mm 6mm 5mm;box-shadow:0 2px 16px rgba(15,23,42,.18);}',
     '.company{width:100%;border-collapse:collapse;margin:0 0 .5mm;}',
     '.company td{vertical-align:top;}',
@@ -4751,7 +4758,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     '</tr></table>',
     '<section class="title">',
     '<h1>PHIẾU XUẤT KHO BÁN HÀNG</h1>',
-    '<p>', escapeHtmlServer_(formatVietnameseLongDate_(issueDate)), '</p>',
+    '<p id="issueDateHeading">', escapeHtmlServer_(formatVietnameseLongDate_(issueDate)), '</p>',
     '</section>',
     '<div class="document-meta">',
     '<span><b>Số phiếu:</b> ', escapeHtmlServer_(slipNo), '</span>',
@@ -4784,7 +4791,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
       ? escapeHtmlServer_(quote.GhiChu)
       : '&nbsp;',
     '</div>',
-    '<div class="sign-date">', escapeHtmlServer_(formatVietnameseLongDate_(issueDate)), '</div>',
+    '<div class="sign-date" id="issueDateSignature">', escapeHtmlServer_(formatVietnameseLongDate_(issueDate)), '</div>',
     '<table class="signatures"><tr>',
     '<td><strong>Nhân viên bán hàng</strong><em>(Ký, họ tên)</em></td>',
     '<td><strong>Thủ kho</strong><em>(Ký, họ tên)</em></td>',
@@ -4792,6 +4799,18 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     '<td><strong>Khách hàng ký nhận</strong><em>(Ký, họ tên)</em></td>',
     '</tr></table>',
     '</main>',
+    '<script>',
+    'function updateIssuePrintDate(value){',
+    'if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return;',
+    'var p=value.split("-");',
+    'var d=Number(p[2]),m=Number(p[1]),y=Number(p[0]);',
+    'var chk=new Date(y,m-1,d);',
+    'if(chk.getFullYear()!==y||chk.getMonth()!==m-1||chk.getDate()!==d)return;',
+    'var label="Ngày "+String(d).padStart(2,"0")+" tháng "+String(m).padStart(2,"0")+" năm "+y;',
+    'document.getElementById("issueDateHeading").textContent=label;',
+    'document.getElementById("issueDateSignature").textContent=label;',
+    '}',
+    '<\\/script>',
     '</body>',
     '</html>'
   ].join('');
