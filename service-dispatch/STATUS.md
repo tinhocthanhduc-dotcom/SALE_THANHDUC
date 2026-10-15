@@ -1,5 +1,12 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — gộp bước (g/h), hoàn tất giao diện mobile (a–h)
+
+- Tiền tôi đang giữ: tổng 32px, số PT chưa nộp hết, cảnh báo quá 24 giờ, thẻ chọn từng khoản/tất cả, CTA gốc 62px. Khoản trong NQ chờ bị khóa nhưng vẫn tính tiền giữ; chọn không mất qua query. Màn xác nhận liệt kê PT/TD/tổng và giữ checkbox cash_handed bắt buộc, không đánh dấu sẵn. Lịch sử NQ giữ chi tiết thực nhận/thiếu/thừa; thiếu còn ở thợ để nộp tiếp.
+- Mất mạng/lỗi kết nối có dải đỏ ở trang và form, giờ dữ liệu gần nhất, số ảnh chưa lưu, nút thử kết nối giữ nguyên nội dung/key. Không tự gửi command sau reconnect hoặc hứa lưu offline. API transport, polling/backoff, queue ảnh và nghiệp vụ nguyên vẹn; thay wrapper chỉ phản ánh kết nối. Trống tiền giữ vẫn hiện lịch sử; tiền CK không cộng vào tiền mặt. Desktop/vai trò khác giữ giao diện cũ.
+- Đạt local: 113 Node, 11 cash-browser mới (mất phản hồi sau commit rồi replay không trùng NQ, nộp thiếu, không lộ tiền giữa thợ, viewport 320/751px), 11 payment, 12 money, 48 UI nghiệp vụ, 10 complete, 8 pickup, 9 detail, 10 shell, 8 board, 10 hồ sơ máy, 9 delivery, 10 integration, photo queue (3 ảnh/200 đơn/replay/thumbnail/full query 0), 9 GAS iframe và 9 live. Live local: giao đơn 20,0s, bắt đầu 20,4s, nghiệm thu 19,4s; backoff 20/40/80/120s và giữ form đạt. Build GAS đạt, Code.gs byte-identical bước (f); ảnh 390px trước/sau, xác nhận nộp và mất mạng dùng dữ liệu mẫu. Mobile a–h hoàn tất; cần UAT tổng thể trên Google, desktop i–p chưa triển khai. Không sửa/deploy Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (f)
 
 - Thu tiền toàn màn hình cho thợ ≤750px: tổng tiền navy, lịch sử thu gọn, ô tiền 56px định dạng Việt Nam, hình thức chọn thẻ 60px, CTA gốc 62px. Số tiền ban đầu trống, Thu đủ phải bấm; payload vẫn số nguyên. Chuyển khoản hiện đúng tài khoản cố định và mã TD, có sao chép; không chọn tài khoản riêng, không thêm QR. Thiếu cấu hình thì khóa gửi. Desktop/vai trò khác giữ giao diện cũ.

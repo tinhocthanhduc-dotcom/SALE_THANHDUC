@@ -366,6 +366,70 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
  body.is-tech .tech-payment-screen .actions .primary{height:62px;min-height:62px;width:100%;font-size:19px;font-weight:800;padding:6px;line-height:1.3}
 }
 
+
+/* Steps (g/h): cash and connection states, technician mobile only. */
+@media(max-width:750px){
+ body.is-tech .tech-cash-screen{display:flex;flex-direction:column;gap:12px}
+ body.is-tech .tech-cash-screen h2{font-size:19px;font-weight:800;margin:0}
+ body.is-tech .tech-cash-balance{background:var(--tech-navy);color:#fff;padding:18px 14px;border-radius:14px;overflow-wrap:anywhere}
+ body.is-tech .tech-cash-balance p{color:var(--tech-on-navy);font-size:16px;line-height:1.4;margin:0 0 10px}
+ body.is-tech .tech-cash-balance p:last-child{margin:10px 0 0}
+ body.is-tech .tech-cash-balance>strong{font-size:32px;font-weight:800;line-height:1.3}
+ body.is-tech .tech-cash-overdue{padding:14px;border-radius:14px;background:var(--tech-danger);color:white}
+ body.is-tech .tech-cash-overdue strong{font-size:18px;line-height:1.4}
+ body.is-tech .tech-cash-overdue p{margin:8px 0 0;color:white}
+ body.is-tech .tech-cash-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+ body.is-tech .tech-cash-heading button{min-height:52px;padding:8px 12px;font-size:16px;flex:none}
+ body.is-tech .tech-cash-list{display:flex;flex-direction:column;gap:12px}
+ body.is-tech .tech-cash-receipt{margin:0;display:grid;grid-template-columns:36px minmax(0,1fr);align-items:start;gap:12px;padding:14px;background:#fff;border:1.5px solid var(--tech-border);border-radius:14px;font-size:16px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}
+ body.is-tech .tech-cash-receipt>input{width:36px;height:36px;min-height:36px;margin:0;accent-color:var(--tech-success)}
+ body.is-tech .tech-cash-receipt>span{display:flex;flex-direction:column;gap:6px;min-width:0}
+ body.is-tech .tech-cash-codes{font-size:16px;font-weight:800;color:var(--tech-primary);letter-spacing:.02em}
+ body.is-tech .tech-cash-amount{font-size:19px;font-weight:800}
+ body.is-tech .tech-cash-customer{font-size:17px;font-weight:700}
+ body.is-tech .tech-cash-age{color:var(--tech-secondary)}
+ body.is-tech .tech-cash-receipt:has(input:checked){border:2px solid var(--tech-primary);background:var(--tech-secondary-bg);padding:13.5px}
+ body.is-tech .tech-cash-late{border:2px solid var(--tech-danger);background:#fff5f5;padding:13.5px}
+ body.is-tech .tech-cash-late .tech-cash-age{color:var(--tech-danger);font-weight:700}
+ body.is-tech .tech-cash-reserved{opacity:.75;cursor:default}
+ body.is-tech .tech-cash-pending{color:#7a3f06;font-weight:600}
+ body.is-tech .tech-deposit-history{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+ body.is-tech .tech-empty-deposits{margin:0;color:var(--tech-secondary)}
+ body.is-tech .tech-deposit-card{padding:14px;border:1.5px solid var(--tech-border);border-radius:14px;background:#fff;overflow-wrap:anywhere}
+ body.is-tech .tech-deposit-card>div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+ body.is-tech .tech-deposit-card>div strong{font-size:19px;font-weight:800}
+ body.is-tech .tech-deposit-card p{margin:8px 0;color:var(--tech-secondary);font-size:16px}
+ body.is-tech .tech-deposit-state{display:inline-block;padding:6px 8px;border-radius:8px;background:#fff0d4;color:#7a3f06;font-weight:700}
+ body.is-tech .tech-deposit-state.settled{background:#d6f2df;color:#155b2d}
+ body.is-tech .tech-deposit-state.mismatch{background:#ffe0e0;color:#7d1515}
+ body.is-tech .tech-deposit-card summary{min-height:48px;display:flex;align-items:center;cursor:pointer;color:var(--tech-primary);font-weight:700}
+ body.is-tech #dialog.tech-deposit-screen{width:100%;max-width:none;height:100dvh;max-height:100dvh;margin:0;padding:0;border:0;border-radius:0;background:var(--tech-bg);overflow:hidden}
+ body.is-tech .tech-deposit-screen #command-form{height:100%;display:flex;flex-direction:column;min-height:0;padding:0}
+ body.is-tech .tech-deposit-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--tech-border);flex:none}
+ body.is-tech .tech-deposit-header h2{font-size:21px;font-weight:800;line-height:1.4;margin:0}
+ body.is-tech .tech-deposit-header button{width:48px;min-width:48px;height:48px;min-height:48px;padding:0;font-size:26px;flex:none}
+ body.is-tech .tech-deposit-content{flex:1;min-height:0;overflow-y:auto;padding:12px;display:block}
+ body.is-tech .tech-deposit-selection{margin:12px 0;padding:14px;background:#fff;border:1.5px solid var(--tech-border);border-radius:14px}
+ body.is-tech .tech-deposit-selection p{display:flex;flex-direction:column;gap:6px;margin:0;padding:12px 0;border-bottom:1px solid var(--tech-border);overflow-wrap:anywhere}
+ body.is-tech .tech-deposit-selection p:last-child{border:0}
+ body.is-tech .tech-deposit-selection strong{font-size:19px}
+ body.is-tech .tech-deposit-content .check{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;padding:14px;background:#fff;border:2px solid var(--tech-input);border-radius:14px;font-size:17px;font-weight:700;line-height:1.5}
+ body.is-tech .tech-deposit-content .check input{width:36px;height:36px;min-height:36px;margin:0;accent-color:var(--tech-success)}
+ body.is-tech .tech-deposit-content .check:has(input:checked){border-color:var(--tech-success);background:#e6f5e7}
+ body.is-tech .tech-deposit-screen #command-form>.actions{display:flex;flex-direction:column;gap:8px;flex:none;border-top:1px solid var(--tech-border);margin:0;padding:10px 12px max(12px,env(safe-area-inset-bottom));background:#fff}
+ body.is-tech #deposit-submit-hint{font-size:16px;line-height:1.4;text-align:center;margin:0;font-weight:600;overflow-wrap:anywhere}
+ body.is-tech .tech-deposit-screen .actions .primary{height:62px;min-height:62px;width:100%;font-size:19px;font-weight:800;padding:6px;line-height:1.3}
+ body.is-tech .tech-connection{display:block;padding:14px;margin:0 0 12px;background:var(--tech-danger);border-radius:14px;color:#fff;overflow-wrap:anywhere}
+ body.is-tech .tech-connection h2{font-size:18px;font-weight:800;margin:0;color:#fff}
+ body.is-tech .tech-connection p{font-size:16px;line-height:1.5;margin:8px 0;color:#fff}
+ body.is-tech .tech-connection button{min-height:52px;width:100%;background:transparent;color:#fff;border:1.5px solid #fff;font-size:17px;font-weight:700;margin:4px 0 0}
+ body.is-tech #dialog:has(#tech-dialog-connection:not([hidden])){display:flex;flex-direction:column}
+ body.is-tech #tech-dialog-connection{flex:none;margin:8px 12px 0;padding:10px 12px}
+ body.is-tech #tech-dialog-connection p{margin:6px 0}
+ body.is-tech #dialog:has(#tech-dialog-connection:not([hidden])) #command-form{flex:1;min-height:0}
+ body.is-tech .tech-connection[hidden]{display:none!important}
+}
+
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});

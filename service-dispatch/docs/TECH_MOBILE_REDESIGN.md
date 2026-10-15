@@ -67,6 +67,16 @@ Hàm sửa: `openForm` (reset skin/call), `moneyPayload` (đọc giá qua adapte
 
 Hàm sửa: `paymentList`, `bankDetails`, `openForm`, `moneyPayload`, `submitForm`, phần tiền trong `techDetail`. Thêm `techPaymentHistory`, `techPaymentOverview`, `techPaymentDone`, `enhanceTechPayment`, `updateTechPayment` và listener radio/bàn phím/ô tiền/sao chép. CSS nằm trong body.is-tech + media ≤750px. `technician-payment-browser.cjs` có 11 nhóm kịch bản; money-browser cũ cập nhật selector/định dạng, giữ kiểm thu vượt trực tiếp qua API. Code.gs backend byte-identical bước (e).
 
+## Bước (g/h) — Tiền tôi đang giữ và trạng thái kết nối
+
+- Gộp hai bước theo yêu cầu tăng tiến độ. `myCash` chỉ chuyển nhánh thợ ≤750px sang `techCash`: tổng tiền mặt 32px trên navy, số PT chưa nộp hết, cảnh báo khoản giữ quá 24 giờ, từng PT/TD/khách/ngày/tiền còn giữ và số được nộp. Checkbox 36px; chọn từng khoản hoặc tất cả. Khoản trong NQ chờ nhận vẫn nằm trong tổng giữ, bị khóa và hiện đúng số NQ. Dùng available/held/held_overdue từ projection, không tính lại sổ ở UI.
+- `techCashSelection` là lựa chọn giao diện theo phiên, được giữ qua query/polling và lọc lại theo quyền/available mới nhất. Logout xóa lựa chọn. CTA gốc 62px lấy tổng available của khoản đã chọn; không tạo phiếu chỉ vì chọn hoặc hủy.
+- `enhanceTechDeposit` bố trí chính form `create_deposit` thành màn xác nhận với PT/TD và tổng đã chọn; checkbox gốc `cash_handed` ban đầu trống. Chỉ đánh dấu sau khi đã giao tiền. Giữ moneyPayload, payment_ids, idempotency key và điều kiện server; không tự giảm tiền giữ hoặc xác nhận quỹ. NQ thiếu/thừa/đã đối soát và mọi allocation/thực nhận/ghi chú vẫn đọc được trong lịch sử. Thiếu được phép chọn nộp tiếp theo projection native.
+- `updateTechConnection` hiện dải đỏ ở trang và form đang mở, gồm giờ query thành công gần nhất, số ảnh chưa lưu thực tế và nút thử kết nối. Kết hợp navigator.onLine với lỗi transport (không dùng lỗi nghiệp vụ làm mất mạng). Wrapper hiển thị quanh apiTransport giữ nguyên google.script.run/fetch, request/response và throw; không đổi API, retry, polling 20s/backoff, hay tự gửi command. Thử kết nối trong form chỉ dùng changes theo cơ chế cũ, bảo toàn checkbox/nội dung/key; ngoài form dùng refresh gốc.
+- Trống Việc của tôi giữ dữ liệu/chu kỳ 20 giây; trống tiền mặt giải thích chuyển khoản không tính tiền giữ, vẫn hiện lịch sử NQ. Không hứa lưu offline bền vững, không bịa số thao tác/% ảnh. Thao tác chưa được xác nhận hiển thị chưa lưu; ảnh lỗi theo queue/thử lại hiện có. Thành công/lỗi giữ toast hiện tại. Ảnh và ID ngân hàng không xuất console.
+
+Hàm sửa: `myCash`, `updateTechHeader`, `updateTechCashAction`, `renderTechShell`, `openForm`, `submitForm` (finally), `resetLogin`, `patchPhotos`, wrapper `api` và listener chọn tất cả/kết nối. Thêm `techCashRows`, `techCash`, `enhanceTechDeposit`, `updateTechDeposit`, `setTechConnection`, `updateTechConnection`. Không đổi business/domain/server/auth/API hoặc giao diện desktop/vai trò khác. `technician-cash-browser.cjs` kiểm 11 nhóm kịch bản: tổng/chọn/giữ lựa chọn, pending, consent, lost response/replay, nộp thiếu, offline giữ form không tự gửi, trống/lịch sử, quyền và 320/751px. Code.gs byte-identical bước (f). Test shell chỉ đợi đăng xuất hoàn tất trước khi tải trang/đổi tài khoản để tránh tranh chấp query khởi động; giữ mọi assertion bốn vai trò.
+
 ## Phần desktop mới — kế hoạch theo README_DESKTOP
 
 Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
@@ -80,11 +90,9 @@ Hàm sửa: `paymentList`, `bankDetails`, `openForm`, `moneyPayload`, `submitFor
 - (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
 - (p) HTML đăng nhập, giữ xác thực hiện có.
 
-## Các bước mobile còn lại — (g) đến (h)
+## Tiến độ mobile
 
-(g) `myCash`, `depositCards`: thẻ tiền giữ và phiếu NQ; giữ nguyên xác nhận số thực nhận.
-
-(h) các màn trống/mất mạng: chỉ mô tả đúng khả năng app hiện có.
+Đã hoàn tất (a)–(h). Cần UAT tổng thể trên Google với tài khoản thợ trước pilot. Phần desktop (i)–(p) tiếp tục riêng theo thiết kế mới.
 
 ## Điểm mẫu khác nghiệp vụ — giữ hành vi app
 
