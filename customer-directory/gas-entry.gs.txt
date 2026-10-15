@@ -386,8 +386,8 @@ function configureDispatchDirectoryClient() {
    var client=clients.DIEUPHOI||{secret:(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,''),actors:[],active:true};
    // A provisioning rerun never rotates the secret or grants unrelated actors.
    client.actors=ids;client.active=true;clients.DIEUPHOI=client;
-   c.p.setProperties({CD_USERS:JSON.stringify(users),CD_CLIENTS:JSON.stringify(clients)},false);
-   return {configured:true,client_id:'DIEUPHOI',dispatch_actor_map:mapping,secret_location:'CD_CLIENTS.DIEUPHOI.secret in Script Properties only',customer_writes:0};
+   c.p.setProperties({CD_USERS:JSON.stringify(users),CD_CLIENTS:JSON.stringify(clients),CD_DISPATCH_ACTOR_MAP:JSON.stringify(mapping)},false);
+   return {configured:true,client_id:'DIEUPHOI',actor_map_location:'CD_DISPATCH_ACTOR_MAP in Script Properties',dispatch_actor_map:mapping,secret_location:'CD_CLIENTS.DIEUPHOI.secret in Script Properties only',customer_writes:0};
   });
  }finally{c.p.deleteProperty('CD_DISPATCH_USERS');}
 }

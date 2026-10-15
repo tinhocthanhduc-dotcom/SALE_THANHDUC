@@ -4,15 +4,15 @@ Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/g�
 
 ## 1. Lấy danh sách người dùng Điều phối
 
-Mở [project Điều phối staging](https://script.google.com/d/1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH/edit). Chạy **listDispatchDirectoryUsers** bằng tài khoản chủ. Kết quả chỉ gồm id/name/roles/active của nhân viên, không có mật khẩu. Sao chép mảng này; giữ nguyên ID.
+Mở [project Điều phối staging](https://script.google.com/d/1k2pMSKKG1DF_r7p479O_VSZP3hOciVjCluZgoqM1pN7TOU0ArHeEgGZH/edit). Chạy **listDispatchDirectoryUsers** bằng tài khoản chủ. Sau Run, mở Project Settings → Script Properties và sao chép giá trị **DISPATCH_CD_USER_EXPORT**. Đây là mảng id/name/roles/active của nhân viên, không có mật khẩu. Giữ nguyên ID; Apps Script editor không tự hiển thị giá trị return nên dùng thuộc tính này để copy.
 
 ## 2. Tạo actor và client bên Danh bạ
 
-Mở project Danh bạ COPY đang phục vụ [app Danh bạ](https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec). Project Settings → Script Properties: thêm **CD_DISPATCH_USERS**, giá trị là mảng ở bước 1. Run **configureDispatchDirectoryClient**.
+Mở [project Danh bạ COPY](https://script.google.com/d/1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW/edit) đang phục vụ [app Danh bạ](https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec). Project Settings → Script Properties: thêm **CD_DISPATCH_USERS**, giá trị là mảng ở bước 1. Run **configureDispatchDirectoryClient**.
 
 Hàm tạo actor `dieuphoi:<id>` có tên đúng nhân viên: director → director; người khác → dispatcher. Actor này chỉ dùng qua HMAC, không tạo tài khoản Gmail. Hàm tạo client **DIEUPHOI**, chỉ cho phép các actor vừa cấu hình; không ghi dữ liệu khách. Chạy lại không đổi secret; đổi vai trò đã có bị chặn để chủ kiểm tra riêng. Tài khoản nghỉ việc phải tắt bên Điều phối và chạy lại danh sách/cấu hình để thu hồi actor khỏi client.
 
-Kết quả có **dispatch_actor_map**. Sao chép object này để dùng bước 3. `CD_DISPATCH_USERS` tự xóa sau khi chạy. Nếu chưa thấy hàm mới, project chưa có bản cấu hình mới; không dán thay toàn bộ code bằng tay.
+Sau Run, mở Script Properties bên Danh bạ, sao chép giá trị **CD_DISPATCH_ACTOR_MAP** để dùng bước 3 (cũng có trong return dispatch_actor_map). `CD_DISPATCH_USERS` tự xóa sau khi chạy. Nếu chưa thấy hàm mới, project chưa có bản cấu hình mới; không dán thay toàn bộ code bằng tay.
 
 ## 3. Cài bốn thuộc tính bên Điều phối
 
@@ -20,14 +20,14 @@ Kết quả có **dispatch_actor_map**. Sao chép object này để dùng bướ
 |---|---|
 | DISPATCH_CD_URL | URL /exec của Danh bạ COPY ở trên, không có query string |
 | DISPATCH_CD_SECRET | Secret của `DIEUPHOI` trong JSON Script Property **CD_CLIENTS** bên Danh bạ |
-| DISPATCH_CD_ACTORS | Object **dispatch_actor_map** từ bước 2 |
+| DISPATCH_CD_ACTORS | Giá trị **CD_DISPATCH_ACTOR_MAP** từ bước 2 |
 | DISPATCH_CD_COPY_ACK | `CUSTOMER_DIRECTORY_COPY` |
 
 Secret chỉ copy giữa hai trang Script Properties. Không gửi vào chat, không dán vào Sheet, không đưa vào GitHub/log. Không dùng DISPATCH_BRIDGE_HMAC của bộ nối Kho/Finance thay secret Danh bạ.
 
 ## 4. Kiểm tra rồi bật
 
-Bên Điều phối Run **checkDispatchDirectoryConnection**, cấp quyền UrlFetch khi Google yêu cầu. Hàm chỉ gọi bootstrap có chữ ký, kiểm actor/role từng người, không tạo khách. Phải có `ok: true`. Sau đó Run **enableDispatchCustomerDirectory** (kiểm lại rồi mới đặt DISPATCH_CD_ENABLED=true). Tải lại app Điều phối.
+Bên Điều phối Run **checkDispatchDirectoryConnection**, cấp quyền UrlFetch khi Google yêu cầu. Hàm chỉ gọi bootstrap có chữ ký, kiểm actor/role từng người, không tạo khách. Sau Run, xem Script Property **DISPATCH_CD_CHECK**: phải có `ok: true` và thời điểm mới. Nếu hàm lỗi thì Google hiển thị lỗi và thuộc tính giữ ok=false, không dùng kết quả cũ. Sau đó Run **enableDispatchCustomerDirectory** (kiểm lại rồi mới đặt DISPATCH_CD_ENABLED=true). Tải lại app Điều phối.
 
 Lỗi DIRECTORY_ACTOR_UNMAPPED: kiểm ID/mapping và vai trò; không tự gán tất cả người dùng thành director. Sai chữ ký: copy lại đúng secret DIEUPHOI, không tạo secret mới ở một phía. DIRECTORY_UNAVAILABLE hoặc Google trả trang đăng nhập: kiểm URL deployment COPY và quyền chạy của tài khoản chủ. Client gửi OAuth bearer của chủ qua UrlFetch bên cạnh HMAC; không đổi sang anonymous hoặc bỏ kiểm HMAC để vượt lỗi. Chưa kiểm thành công trên Google thì chưa bật. Hàm check cố ý không in response/secret.
 

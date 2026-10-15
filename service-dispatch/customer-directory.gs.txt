@@ -14,10 +14,10 @@ function dispatchDirectoryClient_(props) {
   }
  });
 }
-function listDispatchDirectoryUsers(){dispatchBridgeOwner_();return Object.values(dispatchAuth_(PropertiesService.getScriptProperties()).directory()).map(function(u){return {id:u.id,name:u.name,roles:u.roles,active:u.active!==false};});}
+function listDispatchDirectoryUsers(){dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties(),rows=Object.values(dispatchAuth_(p).directory()).map(function(u){return {id:u.id,name:u.name,roles:u.roles,active:u.active!==false};});p.setProperty('DISPATCH_CD_USER_EXPORT',JSON.stringify(rows));return {ready:true,copy_from_property:'DISPATCH_CD_USER_EXPORT',users:rows.length};}
 function checkDispatchDirectoryConnection(){
- dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties(),users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}'),client=dispatchDirectoryClient_(p),checked=[];
+ dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties();p.setProperty('DISPATCH_CD_CHECK',JSON.stringify({ok:false,checked_at:new Date().toISOString()}));var users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}'),client=dispatchDirectoryClient_(p),checked=[];
  Object.keys(mapping).forEach(function(id){var user=users[id];if(!user||user.active===false)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var identity=client.call(user,'bootstrap',{}).actor,role=user.roles.indexOf('director')>=0?'director':'dispatcher';if(identity.id!==mapping[id].actor_id||identity.roles.indexOf(role)<0||role==='dispatcher'&&identity.roles.some(function(r){return r!=='dispatcher';}))throw new Error('DIRECTORY_ACTOR_UNMAPPED');checked.push(id);});
- if(!checked.length)throw new Error('DIRECTORY_ACTOR_UNMAPPED');return {ok:true,checked_user_ids:checked,client_id:'DIEUPHOI',target:'COPY',secrets_exposed:false};
+ if(!checked.length)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var result={ok:true,checked_at:new Date().toISOString(),checked_user_ids:checked,client_id:'DIEUPHOI',target:'COPY',secrets_exposed:false};p.setProperty('DISPATCH_CD_CHECK',JSON.stringify(result));return result;
 }
 function enableDispatchCustomerDirectory(){dispatchBridgeOwner_();var result=checkDispatchDirectoryConnection();dispatchLock_(function(){PropertiesService.getScriptProperties().setProperty('DISPATCH_CD_ENABLED','true');});return result;}
