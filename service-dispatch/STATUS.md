@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — desktop đợt 1, hoàn tất (i/j/k)
+
+- Khung chung ≥1000px cho điều phối/kho/kế toán/giám đốc: sidebar 240px theo quyền, dải thử, topbar 68px/tìm kiếm/tải lại/tiếp nhận, font cơ sở 15px. Di chuyển nút/nav gốc, không tạo lệnh trùng; thu nhỏ/đăng xuất trả layout cũ. Thợ và màn hình ≤999px giữ giao diện hiện tại.
+- Điều phối: 5 số liệu bấm lọc, khối quá hạn SLA, chip trạng thái, bảng 6 cột/tìm không dấu, đơn quá hạn lên đầu. Chi tiết sticky 470px, một hành động chính đúng điều kiện cũ, mọi việc phụ vẫn trong Thao tác khác. Đã kết thúc/Đã đóng thành bảng có chip và count đúng phạm vi. Không hiện đóng hồ sơ nếu còn nghĩa vụ; không bịa số điện thoại thợ khi projection chưa có.
+- Giao thợ 620px giữ picker theo khu vực/tải việc và ghi chú tùy chọn; drawer tiếp nhận 560px dùng chip trên trường gốc, giữ ngày/giờ tùy chỉnh, máy và nhiều dòng PX. Tạo khách/máy giữa chừng vẫn giữ đơn/key/hàng; polling bảo vệ form, tìm kiếm và đơn đang mở. Không đổi API, command, auth, quyền, nghiệp vụ hoặc backend; Code.gs byte-identical với bước mobile (g/h).
+- Đạt local: 113 Node, 13 desktop-browser mới, 48 UI nghiệp vụ, 10 complete, 8 pickup, 9 detail, 10 shell, 8 board, 11 cash, 11 payment, 12 money, 10 hồ sơ máy, 9 delivery, 10 integration, photo queue (3 ảnh/200 đơn/replay/thumbnail/full query 0), 9 GAS iframe và 9 live; build GAS đạt. có ảnh trước/sau 1440px và prototype. Còn desktop (l/m/n) Kho/Quỹ/Báo cáo và (o/p) quản trị/đăng nhập; nội dung các trang này chưa dựng lại, mới dùng shell chung. Cần Google UAT; không sửa Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — gộp bước (g/h), hoàn tất giao diện mobile (a–h)
 
 - Tiền tôi đang giữ: tổng 32px, số PT chưa nộp hết, cảnh báo quá 24 giờ, thẻ chọn từng khoản/tất cả, CTA gốc 62px. Khoản trong NQ chờ bị khóa nhưng vẫn tính tiền giữ; chọn không mất qua query. Màn xác nhận liệt kê PT/TD/tổng và giữ checkbox cash_handed bắt buộc, không đánh dấu sẵn. Lịch sử NQ giữ chi tiết thực nhận/thiếu/thừa; thiếu còn ở thợ để nộp tiếp.

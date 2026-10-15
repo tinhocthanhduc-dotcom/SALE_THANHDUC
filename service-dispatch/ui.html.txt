@@ -430,6 +430,125 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
  body.is-tech .tech-connection[hidden]{display:none!important}
 }
 
+/* Desktop i-k: isolated from technician/tablet layouts. */
+@media(min-width:1000px){
+ body.is-desktop{--desk-bg:#eef2f6;--desk-navy:#16354d;--desk-primary:#185b89;--desk-border:#c9d6df;--desk-ink:#0f2233;--desk-secondary:#3e5566;--desk-strip:0px;display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:var(--desk-strip) 68px minmax(0,1fr);height:100dvh;overflow:hidden;background:var(--desk-bg);color:var(--desk-ink);font:15px/1.45 'Be Vietnam Pro',system-ui,sans-serif}
+ body.is-desktop:has(#desktop-environment){--desk-strip:28px}
+ body.is-desktop #desktop-environment{grid-column:1/-1;grid-row:1;background:#fff0c9;color:#583a00;padding:4px 20px;font-size:14px;font-weight:700;overflow:hidden}
+ body.is-desktop>header{grid-column:2;grid-row:2;display:block;background:#fff;color:var(--desk-ink);padding:0 20px;border-bottom:1px solid var(--desk-border);min-width:0}
+ body.is-desktop>header>div:not(#desktop-header),body.is-desktop>header>#user{display:none}
+ body.is-desktop #desktop-header{height:68px;display:flex;align-items:center;gap:12px;min-width:0}
+ body.is-desktop #desktop-header h1{font-size:22px;font-weight:800;max-width:220px;overflow:hidden;text-overflow:ellipsis;flex:none}
+ body.is-desktop #desktop-search{flex:1;min-width:80px;width:240px;font-size:14px;height:44px;min-height:44px}
+ body.is-desktop .desktop-refresh{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:265px;min-width:48px;height:44px;min-height:44px;background:#fff;color:#1d7a3e;padding:8px 10px}
+ body.is-desktop .desktop-create-button{white-space:nowrap;height:44px;min-height:44px;padding:8px 14px;font-weight:800;font-size:15px;flex:none}
+ body.is-desktop #desktop-sidebar{grid-row:2/4;grid-column:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;background:var(--desk-navy);padding:18px 12px 14px;color:#fff}
+ body.is-desktop .desktop-brand{display:flex;flex-direction:column;gap:2px;padding:2px 10px 18px}
+ body.is-desktop .desktop-brand strong{font-size:18px;font-weight:800}
+ body.is-desktop .desktop-brand span{font-size:14px;color:#dbe7f0}
+ body.is-desktop #nav{display:flex;flex-direction:column;gap:14px;flex:1;margin:0;padding:0}
+ body.is-desktop .desktop-nav-group h2{font-size:13px;font-weight:700;color:#b9cddb;margin:0 10px 6px;text-transform:uppercase;letter-spacing:.04em}
+ body.is-desktop .desktop-nav-group{display:flex;flex-direction:column;gap:4px}
+ body.is-desktop #nav button{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;border:0;border-radius:10px;background:transparent;color:#dbe7f0;font-size:14px;font-weight:600;min-height:44px;padding:10px 12px;line-height:1.35;width:100%}
+ body.is-desktop #nav button.active{background:#fff;color:var(--desk-navy);font-weight:800}
+ body.is-desktop .desktop-nav-count{border-radius:20px;padding:2px 7px;font-size:13px;min-width:24px;text-align:center;background:#dbe7f0;color:var(--desk-navy);flex:none}
+ body.is-desktop .desktop-nav-count.needs-attention{background:#e04848;color:#fff}
+ body.is-desktop .desktop-user{margin-top:20px;padding:14px 10px 0;border-top:1px solid #4f6d84;display:flex;flex-direction:column;gap:6px;overflow-wrap:anywhere}
+ body.is-desktop .desktop-user strong{font-size:15px;font-weight:800}
+ body.is-desktop .desktop-user span{font-size:13px;color:#dbe7f0}
+ body.is-desktop .desktop-user button{margin-top:8px;color:#fff;background:transparent;border-color:#8aa1b3;min-height:42px;font-size:14px}
+ body.is-desktop>main{grid-row:3;grid-column:2;max-width:none;min-width:0;min-height:0;width:100%;margin:0;padding:20px;overflow:auto}
+ body.is-desktop main>.notice{display:none}
+ body.is-desktop #workspace-layout{display:block;min-width:0}
+ body.is-desktop.has-detail #workspace-layout{display:grid;grid-template-columns:minmax(0,1fr) 470px;gap:20px;align-items:start}
+ body.is-desktop #view{min-width:0}
+ body.is-desktop #detail:empty{display:none}
+ body.is-desktop.has-detail #detail{position:sticky;top:0;max-height:calc(100dvh - var(--desk-strip) - 108px);overflow-y:auto;min-width:0;border:1.5px solid var(--desk-border);border-radius:14px;background:#fff}
+ body.is-desktop #message{top:108px;font-size:15px;line-height:1.5;max-width:calc(100vw - 300px);z-index:150}
+ body.is-desktop button,body.is-desktop input,body.is-desktop select,body.is-desktop textarea{font-size:15px;border-radius:10px}
+ body.is-desktop button{min-height:42px}
+ body.is-desktop .pill{font-size:13px;font-weight:700;border-radius:8px;padding:4px 7px}
+ body.is-desktop small{font-size:13px}
+ body.is-desktop .desktop-board{min-width:0;display:flex;flex-direction:column;gap:16px}
+ body.is-desktop .desktop-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+ body.is-desktop .desktop-stats button{background:#fff;border:1.5px solid var(--desk-border);padding:12px;text-align:left;display:flex;flex-direction:column;gap:8px;min-width:0}
+ body.is-desktop .desktop-stats span{font-size:13px;font-weight:600;color:var(--desk-secondary)}
+ body.is-desktop .desktop-stats strong{font-size:26px;font-weight:800;color:var(--desk-navy)}
+ body.is-desktop .desktop-stats .desktop-stat-alert{border-color:#a12222;background:#fff5f5}
+ body.is-desktop .desktop-stat-alert strong,body.is-desktop .desktop-stat-alert span{color:#a12222}
+ body.is-desktop .desktop-stats button[aria-pressed=true]{box-shadow:inset 0 0 0 1px var(--desk-primary);border-color:var(--desk-primary)}
+ body.is-desktop .desktop-overdue{border:1.5px solid #a12222;background:#fff5f5;border-radius:14px;padding:14px}
+ body.is-desktop .desktop-overdue h2{font-size:17px;font-weight:800;margin:0 0 10px;color:#7d1515}
+ body.is-desktop .desktop-overdue h2 span{font-size:14px;margin-left:6px}
+ body.is-desktop .desktop-overdue>div{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:8px}
+ body.is-desktop .desktop-overdue button{background:#a12222;color:#fff;border:0;font-size:13px;font-weight:800;padding:6px 10px;min-height:36px}
+ body.is-desktop .desktop-overdue span,body.is-desktop .desktop-overdue strong{font-size:13px}
+ body.is-desktop .desktop-overdue p{font-size:14px;margin:0;color:var(--desk-secondary)}
+ body.is-desktop .desktop-filter-chips{display:flex;gap:8px;flex-wrap:wrap}
+ body.is-desktop .desktop-filter-chips button{padding:8px 10px;min-height:40px;font-size:13px;font-weight:700}
+ body.is-desktop .desktop-filter-chips button[aria-pressed=true]{background:var(--desk-navy);color:#fff;border-color:var(--desk-navy)}
+ body.is-desktop .desktop-filter-chips span{margin-left:4px;opacity:.8}
+ body.is-desktop .desktop-table-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+ body.is-desktop .desktop-table-title h2{font-size:18px;font-weight:800;margin:0}
+ body.is-desktop .desktop-table-title>span{font-size:13px;color:var(--desk-secondary)}
+ body.is-desktop .desktop-table-scroll{border:1.5px solid var(--desk-border);border-radius:14px;background:#fff;overflow:auto;min-width:0}
+ body.is-desktop .desktop-order-table{min-width:770px;width:100%;font-size:14px}
+ body.is-desktop .desktop-order-table th{font-size:13px;font-weight:800;background:#f4f7fa;padding:12px;text-align:left;white-space:nowrap}
+ body.is-desktop .desktop-order-table td{padding:12px;font-size:14px;vertical-align:top;border-color:#dbe4ea}
+ body.is-desktop .desktop-order-table td:first-child{max-width:340px;min-width:230px}
+ body.is-desktop .desktop-order-table td:nth-child(4){min-width:150px}
+ body.is-desktop .desktop-order-link{padding:0;border:0;min-height:32px;background:transparent;color:var(--desk-primary);font-size:14px;font-weight:800;text-align:left}
+ body.is-desktop .desktop-priority{display:inline-block;padding:2px 6px;border-radius:6px;background:#ffe0e0;color:#a12222;font-size:13px;font-weight:700}
+ body.is-desktop .desktop-delivery{display:inline-block;padding:2px 6px;margin:3px;border:1px solid #154e76;border-radius:6px;font-size:13px;color:#154e76}
+ body.is-desktop .desktop-customer{display:block;font-size:15px;margin:6px 0 0}
+ body.is-desktop .desktop-request{max-width:300px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;color:var(--desk-secondary);font-size:13px}
+ body.is-desktop .desktop-order-table tr.desktop-late{background:#fff8f8;box-shadow:inset 5px 0 #a12222}
+ body.is-desktop .desktop-order-table tr.desktop-selected{background:#edf5fb;box-shadow:inset 5px 0 var(--desk-primary)}
+ body.is-desktop .desktop-attention,body.is-desktop .desktop-unassigned{color:#a12222;font-weight:700}
+ body.is-desktop .desktop-no-time{color:#7a3f06}
+ body.is-desktop .desktop-no-orders{padding:30px;text-align:center;color:var(--desk-secondary)}
+ body.is-desktop .desktop-detail-head{position:sticky;top:0;z-index:2;background:#fff;padding:16px;border-bottom:1px solid var(--desk-border)}
+ body.is-desktop .desktop-detail-code{display:flex;align-items:center;justify-content:space-between;gap:8px}
+ body.is-desktop .desktop-detail-code h2{font-size:19px;font-weight:800;margin:0;color:var(--desk-primary);overflow-wrap:anywhere}
+ body.is-desktop .desktop-detail-code button{height:36px;min-height:36px;width:36px;font-size:24px;padding:0;flex:none}
+ body.is-desktop .desktop-detail-head h3{font-size:19px;font-weight:800;margin:8px 0 12px;overflow-wrap:anywhere}
+ body.is-desktop .desktop-detail-warning{background:#a12222;color:#fff;padding:10px;border-radius:8px;font-size:13px;font-weight:700}
+ body.is-desktop .desktop-detail-primary>button{width:100%;min-height:46px;font-size:15px;font-weight:800}
+ body.is-desktop .desktop-detail-more{margin-top:10px}
+ body.is-desktop .desktop-detail-more summary{font-size:14px;font-weight:700;cursor:pointer;min-height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--desk-border);border-radius:10px}
+ body.is-desktop .desktop-detail-more .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:0}
+ body.is-desktop .desktop-detail-more button{font-size:13px;padding:8px;min-width:0}
+ body.is-desktop .desktop-detail-body{padding:16px;overflow-wrap:anywhere}
+ body.is-desktop .desktop-facts{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;margin:0 0 16px;font-size:14px}
+ body.is-desktop .desktop-facts dt{color:var(--desk-secondary)}
+ body.is-desktop .desktop-facts dd{margin:0;min-width:0}
+ body.is-desktop .desktop-facts a{color:var(--desk-primary);font-weight:600}
+ body.is-desktop .desktop-detail-body h3{font-size:17px;margin-top:18px}
+ body.is-desktop .desktop-detail-body .card{padding:12px;margin-bottom:10px}
+ body.is-desktop .desktop-detail-body .timeline p{font-size:13px}
+ body.is-desktop #dialog.desktop-assign{width:620px;max-width:calc(100vw - 40px);border-radius:14px;padding:24px}
+ body.is-desktop .desktop-assign h2{font-size:21px;font-weight:800}
+ body.is-desktop .desktop-assign .technician-picker button{padding:14px;border:1.5px solid #8aa1b3;border-radius:12px;background:#fff}
+ body.is-desktop .desktop-assign .technician-picker strong{font-size:16px}
+ body.is-desktop .desktop-assign .technician-picker span{font-size:14px;color:var(--desk-secondary)}
+ body.is-desktop .desktop-assign .technician-picker [aria-checked=true]{border:2px solid var(--desk-primary);background:#edf5fb}
+ body.is-desktop .desktop-assign .actions{justify-content:flex-end}
+ body.is-desktop #dialog.desktop-create{position:fixed;inset:0 0 0 auto;width:560px;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;padding:0;border-radius:0;background:#eef2f6;overflow:hidden}
+ body.is-desktop .desktop-create #command-form{display:flex;flex-direction:column;height:100%;min-height:0;padding:0}
+ body.is-desktop .desktop-drawer-head{flex:none;background:#fff;padding:20px 24px;border-bottom:1px solid var(--desk-border)}
+ body.is-desktop .desktop-drawer-head h2{font-size:22px;font-weight:800;margin:0}
+ body.is-desktop .desktop-drawer-content{flex:1;min-height:0;overflow:auto;padding:20px 24px}
+ body.is-desktop .desktop-drawer-content>label{font-size:14px;margin-top:16px}
+ body.is-desktop .desktop-create #command-form>.actions{display:flex;justify-content:flex-end;flex:none;background:#fff;border-top:1px solid var(--desk-border);padding:14px 24px;margin:0;gap:10px}
+ body.is-desktop .desktop-create #form-error{width:100%;margin:0}
+ body.is-desktop .desktop-create .actions>button{min-width:100px}
+ body.is-desktop .desktop-form-choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+ body.is-desktop .desktop-form-choices button{font-size:13px;min-height:40px;font-weight:700;padding:8px 12px}
+ body.is-desktop .desktop-form-choices [aria-pressed=true]{background:var(--desk-navy);color:#fff;border-color:var(--desk-navy)}
+ body.is-desktop .desktop-create #dialog-live-update{flex:none;margin:8px 24px 0}
+ @media(max-width:1279px){body.is-desktop.has-detail .desktop-stats{grid-template-columns:repeat(2,minmax(0,1fr))}body.is-desktop #desktop-header{gap:8px}body.is-desktop #desktop-header h1{max-width:160px;font-size:18px}body.is-desktop .desktop-refresh{max-width:170px}body.is-desktop .desktop-create-button{font-size:13px;padding:8px 10px}body.is-desktop .desktop-stats{gap:6px}body.is-desktop .desktop-stats button{padding:8px}}
+}
+
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});

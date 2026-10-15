@@ -77,18 +77,22 @@ Hàm sửa: `paymentList`, `bankDetails`, `openForm`, `moneyPayload`, `submitFor
 
 Hàm sửa: `myCash`, `updateTechHeader`, `updateTechCashAction`, `renderTechShell`, `openForm`, `submitForm` (finally), `resetLogin`, `patchPhotos`, wrapper `api` và listener chọn tất cả/kết nối. Thêm `techCashRows`, `techCash`, `enhanceTechDeposit`, `updateTechDeposit`, `setTechConnection`, `updateTechConnection`. Không đổi business/domain/server/auth/API hoặc giao diện desktop/vai trò khác. `technician-cash-browser.cjs` kiểm 11 nhóm kịch bản: tổng/chọn/giữ lựa chọn, pending, consent, lost response/replay, nộp thiếu, offline giữ form không tự gửi, trống/lịch sử, quyền và 320/751px. Code.gs byte-identical bước (f). Test shell chỉ đợi đăng xuất hoàn tất trước khi tải trang/đổi tài khoản để tránh tranh chấp query khởi động; giữ mọi assertion bốn vai trò.
 
-## Phần desktop mới — kế hoạch theo README_DESKTOP
+## Desktop — đợt (i/j/k) đã hoàn tất
 
-Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
+Áp dụng ≥1000px, mọi vai trò không thuộc body.is-tech; 751–999px và mobile giữ bố cục cũ. Đã mở prototype Desktop App qua static server và bấm tiếp nhận; tài nguyên React/Babel chỉ dùng xem mẫu từ scratch, không đưa vào app.
 
-- (i) `render` và khung HTML/CSS: menu trái 240px, thanh trên 68px, chỉ hiện mục theo quyền thực, không thêm bộ chọn vai trò của prototype vào app.
-- (j) `board`, `coordinatorTable`, `detail`, `technicianPicker`, `openForm`: bảng điều phối, panel 470px, giao thợ và drawer nhận đơn.
-- (k) `board`: bảng kết thúc/đóng và bộ lọc.
-- (l) `preparationBoard`, `materialPanel`, các bảng kho: soạn/bàn giao theo điều kiện lệnh hiện có.
-- (m) `funds`, `depositCards`: quỹ và đối soát.
-- (n) `reports`, `moneyReports`: các bảng báo cáo.
-- (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
-- (p) HTML đăng nhập, giữ xác thực hiện có.
+- `renderDesktopShell`: dải thử 28px, sidebar navy 240px theo nhóm quyền, tên/vai trò/đăng xuất ở cuối, topbar trắng 68px với tiêu đề 22px, tìm kiếm, giờ query thành công và tiếp nhận đơn. Di chuyển chính nav/nút gốc, không clone lệnh; khi thu nhỏ/đăng xuất trả nav về app và tháo shell. Chỉ menu có quyền mới xuất hiện, badge đọc projection đã cấp quyền. Chữ cơ sở 15px, nhãn bảng ≥13px, font/màu theo handoff.
+- `desktopBoard`/`coordinatorTable`: 5 thẻ bấm lọc, khối SLA quá hạn, chip trạng thái và bảng sáu cột đơn/khách, khu vực, trạng thái/cờ, hẹn, thợ, tiền. Quá hạn gồm SLA thực và trễ hẹn, xếp đầu rồi theo giờ; đỏ quá hạn, xanh đơn đang mở. Tìm mã TD/tên/điện thoại và nội dung trong projection, không dấu/không phân biệt hoa thường. Đã kết thúc và Đã đóng có chip/count đúng phạm vi hồ sơ; bộ lọc là giao diện, không đổi trạng thái đơn. Filter riêng desktop được bỏ khi trở về tablet để tránh bảng trống do giá trị không có trong select cũ.
+- `desktopDetail`: panel sticky 470px, giữ danh sách bên cạnh và tô dòng đã chọn. Một hành động chính lấy từ chính `buttons` sau kiểm quyền/điều kiện cũ: chuyển thợ ưu tiên duyệt, giao lại/giao mới, đóng chỉ khi đủ điều kiện, hoặc thao tác kho tương ứng. Các hành động còn lại nằm trong Thao tác khác; giữ nguyên lệnh, form và mọi thông tin vật tư, tiền, đồng bộ, ảnh, lịch sử từ detailRecords. Không tạo nút đóng cho đơn chưa đủ tiền/tài sản. Projection chưa có số điện thoại thợ, nên không bịa liên hệ cho nút Gọi thợ; khi không có command chính phù hợp dùng nút sao chép link Zalo cũ.
+- `enhanceDesktopForm`: Giao thợ 620px dùng picker gốc (cùng khu vực/số việc/gợi ý), ghi chú tùy chọn, CTA theo tên đã chọn. Tiếp nhận thành drawer 560px: nguồn/ưu tiên/ngày/khung giờ là chip cập nhật select gốc bằng change, giữ đầy đủ ngày tùy chọn/giờ tùy chỉnh, hồ sơ máy và PX nhiều dòng/đơn giá/serial/kho. Tạo khách hoặc máy giữa chừng vẫn giữ draft, key và hàng giao kèm; không đổi serialize/API. Không thay bằng dữ liệu mẫu hoặc tạo role switch từ prototype.
+- Polling giữ bảo vệ form/key/version, dải báo cập nhật và đơn đang mở; search giữ giá trị/con trỏ khi query nền. 1000px không tràn viewport (bảng cuộn ngang trong vùng riêng); 999px về giao diện cũ, thợ desktop và thợ mobile không thuộc thiết kế này. Login vẫn dùng bố cục cũ ở mốc này, chưa làm bước (p).
+
+Hàm sửa: `board`, `coordinatorTable`, `detail`, `render`, `openForm`, `submitForm` (finally), `resetLogin`; thêm các helper desktop và listener chip/search. API/business/auth/roles/command/payload/version/idempotency không đổi. Browser nghiệp vụ cũ chỉ cập nhật selector refresh, chip lọc/ngày và mở Thao tác khác; không bỏ assertion. `desktop-dispatch-browser.cjs` gồm 13 nhóm kịch bản, fixture native đầy đủ và ảnh 1440px trước/sau. Code.gs backend giữ nguyên.
+
+## Desktop còn lại — (l) đến (p)
+
+- Đợt tiếp theo (l/m/n): bảng Cần soạn hàng/Kho bàn giao, Quỹ/đối soát và Báo cáo theo README_DESKTOP. Mốc hiện tại mới áp khung chung cho các trang này; phần nội dung vẫn dùng renderer cũ.
+- Đợt cuối (o/p): Đồng bộ, Gán Finance, Thanh toán/cấu hình, Khách/máy và đăng nhập. Giữ cấu hình ngân hàng gộp và các native guards; không quay về hai nơi cài tài khoản theo dữ liệu mẫu.
 
 ## Tiến độ mobile
 
