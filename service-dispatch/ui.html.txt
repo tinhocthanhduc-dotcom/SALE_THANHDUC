@@ -7,7 +7,86 @@
 input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 12px;border:1px solid #c9d6df;border-radius:8px;background:white;color:#19354b}
 #live-update{position:sticky;top:0;z-index:90;width:100%;background:#fff0c9;border:1px solid #d49b30;color:#583a00;margin-bottom:10px;font-weight:700}.live-changed{outline:3px solid #1d86bb!important;outline-offset:-3px;background:#ecf8ff!important}
 .live-dialog-notice{background:#fff0c9;padding:12px;border-radius:8px;color:#583a00}
-.photo-grid{display:flex;flex-wrap:wrap;gap:8px}.photo-job{width:140px;display:flex;flex-direction:column;padding:8px;border:1px solid #cbd5e1;border-radius:8px}.photo-job img,#evidence-gallery img{width:120px;height:90px;object-fit:cover;border-radius:6px}#evidence-gallery button{display:flex;flex-direction:column;align-items:center;gap:6px}.catalogue-warning{background:#fff3cc;color:#775100;padding:8px;border-radius:8px}</style></head><body data-entry-order=""><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><dialog id="dialog"></dialog><script>
+.photo-grid{display:flex;flex-wrap:wrap;gap:8px}.photo-job{width:140px;display:flex;flex-direction:column;padding:8px;border:1px solid #cbd5e1;border-radius:8px}.photo-job img,#evidence-gallery img{width:120px;height:90px;object-fit:cover;border-radius:6px}#evidence-gallery button{display:flex;flex-direction:column;align-items:center;gap:6px}.catalogue-warning{background:#fff3cc;color:#775100;padding:8px;border-radius:8px}
+/* Technician mobile handoff — step (a). No tokens leak into other roles or desktop. */
+.tech-only{display:none}
+@media(max-width:750px){
+ body.is-tech{
+  --tech-bg:#eef2f6;--tech-surface:#fff;--tech-text:#0f2233;--tech-secondary:#3e5566;--tech-muted:#5a6f80;
+  --tech-navy:#16354d;--tech-on-navy:#dbe7f0;--tech-primary:#185b89;--tech-border:#c9d6df;--tech-input:#8aa1b3;--tech-divider:#dbe4ea;
+  --tech-secondary-bg:#edf5fb;--tech-secondary-ink:#154e76;--tech-disabled:#dbe4ea;--tech-disabled-ink:#2e3f4c;
+  --tech-success:#1d7a3e;--tech-toast:#164d39;--tech-danger:#a12222;--tech-danger-bg:#ffe0e0;--tech-danger-soft:#fff5f5;--tech-danger-ink:#7d1515;
+  --tech-warning:#fff0c9;--tech-warning-ink:#583a00;--tech-warning-border:#d49b30;--tech-online:#5fd38a;--tech-offline:#ff6b6b;
+  --tech-radius:14px;--tech-control-radius:12px;--tech-gap:12px;--tech-card-padding:14px;--tech-cta-height:62px;--tech-tabs-height:64px;
+  --tech-footer-space:110px;--tech-tab-space:0px;
+  height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--tech-bg);color:var(--tech-text);font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:16px;line-height:1.4;
+ }
+ body.is-tech.tech-root{--tech-tab-space:calc(var(--tech-tabs-height) + env(safe-area-inset-bottom,0px))}
+ body.is-tech header{flex:none;display:block;padding:0 16px 10px;background:var(--tech-navy);color:#fff}
+ body.is-tech header>div:not(#tech-header),body.is-tech header>#user{display:none}
+ body.is-tech #tech-header{display:block;min-width:0}
+ body.is-tech .tech-title-row{display:flex;align-items:center;min-height:48px;gap:8px}
+ body.is-tech .tech-title-row h1{min-width:0;flex:1;font-size:22px;line-height:1.4;font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ body.is-tech #tech-header button{border:0;border-radius:8px;background:transparent;color:#fff;padding:0;min-height:48px;font-weight:600;font-size:16px}
+ body.is-tech #tech-header .tech-back{width:48px;flex:0 0 48px;font-size:26px}
+ body.is-tech #tech-header .tech-account{padding:0 4px}
+ body.is-tech .tech-sync-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+ body.is-tech #tech-header .tech-sync{display:flex;align-items:center;gap:8px;min-width:0;text-align:left;color:var(--tech-on-navy);font-size:16px;font-weight:500;min-height:44px}
+ body.is-tech .tech-sync-dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:var(--tech-online)}
+ body.is-tech .tech-sync-dot.offline{background:var(--tech-offline)}
+ body.is-tech #tech-header .tech-upload{background:var(--tech-warning);color:var(--tech-warning-ink);border:1px solid var(--tech-warning-border);border-radius:8px;font-size:16px;font-weight:700;line-height:1.4;padding:5px 8px;flex:none}
+ body.is-tech #tech-header button.tech-upload{min-height:44px}
+ body.is-tech[data-environment=staging] #tech-environment{display:block;flex:none;background:var(--tech-warning);color:var(--tech-warning-ink);font-size:16px;font-weight:700;padding:5px 16px}
+ body.is-tech main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;scroll-padding-top:12px;width:100%;max-width:none;margin:0;padding:12px 12px calc(var(--tech-footer-space) + var(--tech-tab-space));}
+ body.is-tech.has-detail main{padding-bottom:calc(var(--tech-footer-space) + var(--tech-tab-space))}
+ body.is-tech #detail>.panel,body.is-tech .grid .card .panel{padding:var(--tech-card-padding)}
+ body.is-tech #app:not([hidden]){display:flex;flex-direction:column;min-height:100%;min-width:0}
+ body.is-tech main>.notice,body.is-tech #nav{display:none}
+ body.is-tech #view,body.is-tech #detail{min-width:0}
+ body.is-tech .panel,body.is-tech .card{border:1.5px solid var(--tech-border);border-radius:var(--tech-radius);padding:var(--tech-card-padding);background:var(--tech-surface)}
+ body.is-tech .panel{margin-bottom:12px}
+ body.is-tech .grid{gap:var(--tech-gap)}
+ body.is-tech p{font-size:16px;line-height:1.5}
+ body.is-tech small,body.is-tech .muted{font-size:16px;color:var(--tech-secondary)}
+ body.is-tech h2,body.is-tech h3,body.is-tech legend{font-size:19px;font-weight:800}
+ body.is-tech button,body.is-tech input,body.is-tech select,body.is-tech textarea{color:var(--tech-text);font-family:inherit;font-size:16px;line-height:1.4;border-radius:var(--tech-control-radius);border-color:var(--tech-input);min-height:52px}
+ body.is-tech label{font-size:16px;color:var(--tech-secondary);font-weight:400}
+ body.is-tech input,body.is-tech select,body.is-tech textarea{color:var(--tech-text);background:#fff}
+ body.is-tech .check{min-height:52px;align-items:center}
+ body.is-tech .check input[type=checkbox]{width:36px;height:36px;min-height:36px;flex-basis:36px;accent-color:var(--tech-success)}
+ body.is-tech button:disabled{opacity:1;background:var(--tech-disabled);color:var(--tech-disabled-ink);border-color:var(--tech-border)}
+ body.is-tech .pill{border-radius:8px;font-size:16px;font-weight:700}
+ body.is-tech .status-new,body.is-tech .status-accepted{background:#e3e8ec;color:#2e3f4c}
+ body.is-tech .status-assigned{background:#dcecff;color:#164f88}
+ body.is-tech .status-scheduled{background:#e0f2e2;color:#1f5528}
+ body.is-tech .status-working{background:#fff0d4;color:#7a3f06}
+ body.is-tech .status-waiting_parts{background:#efe4fa;color:#5c2279}
+ body.is-tech .status-accepted_work{background:#d6f2df;color:#155b2d}
+ body.is-tech .status-late{background:var(--tech-danger);color:#fff}
+ body.is-tech .contact-button{min-height:56px;border:1.5px solid var(--tech-secondary-ink);border-radius:12px;background:var(--tech-secondary-bg);color:var(--tech-secondary-ink);font-size:16px}
+ body.is-tech .card-next,body.is-tech .more-actions button.primary{background:var(--tech-secondary-bg);color:var(--tech-secondary-ink);border-color:var(--tech-secondary-ink)}
+ body.is-tech .error{color:var(--tech-danger)}
+ body.is-tech #tech-primary{display:block;position:fixed;bottom:var(--tech-tab-space);left:0;right:0;z-index:65;padding:10px 12px 12px;border-top:1px solid var(--tech-border);background:#fff;box-shadow:0 -4px 14px rgba(22,53,77,.08)}
+ body.is-tech:not(.tech-root) #tech-primary{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+ body.is-tech #tech-primary .detail-cta{position:static;margin:0;padding:0;box-shadow:none;border-radius:0;background:transparent}
+ body.is-tech #tech-primary button{display:block;width:100%;height:var(--tech-cta-height);min-height:var(--tech-cta-height);font-size:19px;font-weight:800;border-radius:12px;background:var(--tech-primary);border-color:var(--tech-primary);color:#fff;padding:8px 12px;line-height:1.4}
+ body.is-tech #tech-primary button:disabled{background:var(--tech-disabled);color:var(--tech-disabled-ink);border-color:var(--tech-disabled)}
+ body.is-tech .tech-primary-hint{font-size:16px;font-weight:600;line-height:1.4;text-align:center;color:var(--tech-secondary);margin:0 0 8px}
+ body.is-tech #tech-tabs{position:fixed;bottom:0;left:0;right:0;z-index:66;display:none;grid-template-columns:1fr 1fr;padding-bottom:env(safe-area-inset-bottom,0px);background:#fff;border-top:0}
+ body.is-tech.tech-root #tech-tabs{display:grid}
+ body.is-tech #tech-tabs button{height:64px;min-height:64px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;margin:0;padding:0 8px 4px;border:0;border-top:4px solid transparent;border-radius:0;background:#fff;color:var(--tech-secondary);font-size:16px;font-weight:600}
+ body.is-tech #tech-tabs button[aria-current=page]{color:var(--tech-navy);border-top-color:var(--tech-navy);font-weight:800}
+ body.is-tech #tech-tabs span{font-size:16px;font-weight:500}
+ body.is-tech #message{top:150px;left:16px;right:16px;width:auto;max-width:none;transform:none;padding:14px 16px;font-size:16px;font-weight:700;border-radius:12px;background:var(--tech-toast);color:#fff;box-shadow:0 6px 20px rgba(22,53,77,.3)}
+ body.is-tech #message.error{background:var(--tech-danger);color:#fff}
+ body.is-tech #detail [data-back],body.is-tech #view [data-cash-submit]{display:none}
+ body.is-tech .tech-account-links{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}
+ body.is-tech .tech-account-links button{flex:1}
+ body.is-tech.tech-form-open #tech-primary{visibility:hidden}
+}
+
+</style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});
 </script><script src="/app.js"></script></body></html>

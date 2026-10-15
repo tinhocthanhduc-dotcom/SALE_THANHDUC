@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — thiết kế điện thoại cho thợ, bước (a)
+
+- Theo README/design người dùng gửi: đã làm riêng token và khung chung cho body.is-tech ≤750px. Thanh trên 22px + thời gian query gần nhất/chấm mạng/chip queue ảnh, dải dữ liệu thử, nội dung cuộn riêng, hai tab gốc 64px và một CTA đáy 62px. Font Be Vietnam Pro, tối thiểu 16px; màu/viền/padding theo handoff. Desktop >750px và điều phối/kho/finance/director dùng khung cũ. Đã kết thúc/Đã đóng vẫn vào được qua Tài khoản.
+- Di chuyển nút lệnh gốc vào footer rồi trả về khi về desktop, không clone nút; giữ nextAction, quyền, payload, kiểm ảnh, idempotency, polling và upload queue. Bổ sung chỉ thời điểm hiển thị và giữ cuộn trong main. Thành công 2,4 giây riêng thợ mobile; lỗi vẫn giữ lại. Không thêm queue offline hoặc bịa phần trăm upload.
+- Mới hoàn tất **(a)**. Danh sách/chi tiết/form bên trong vẫn là bản hiện tại; (b)–(h) chưa dựng lại. Các hàm và khác biệt nghiệp vụ trong mẫu được ghi tại [TECH_MOBILE_REDESIGN.md](docs/TECH_MOBILE_REDESIGN.md). Không thay server/domain/API hoặc consumer Kho/Finance/AI.
+- Đã mở prototype qua static server và bấm CTA; thư viện CDN chỉ tải tạm để xem mẫu, không đưa vào app. Có ảnh trước/sau 390px dùng cùng fixture, không dữ liệu khách thật. **Đạt local:** 113/113 Node, 10/10 technician-shell, 48/48 UI nghiệp vụ, 12/12 money, 9/9 GAS iframe, photo queue (200 đơn giả, 3 ảnh/lỗi mạng/replay/thumbnail/không query toàn bộ) và 9/9 live browser. Browser test chỉ cập nhật đường đi menu/selector theo bố cục mới, không bỏ assertion nghiệp vụ. Build GAS đạt; chưa khẳng định đã UAT UI mới trên Google khi chưa thử trực tiếp.
+
+
 ## 15/10/2026 — cố định tài khoản chuyển khoản, gộp cấu hình ngân hàng
 
 - Người dùng báo kiểm bản 89666cc: 108 Node, 10 integration-browser và đơn mẫu OUT/IN/cash/ACB/NQ/replay ở **mức domain** đúng. Đây chưa phải đối chiếu sổ Google copies.
