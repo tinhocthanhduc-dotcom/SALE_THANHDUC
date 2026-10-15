@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 38,
-  "update": "COPY-only connection diagnosis: owner check requests external_request scope via ScriptApp.requireScopes when supported; runs unsigned approved-API GET before HMAC with original Google platform exceptions visible. Add public owner-only checkDispatchDirectoryTransport, no secret/token/customer payload. No setup, data, secret, actors, enabled flag changes. Same staging project/deployment only."
+  "revision": 39,
+  "update": "COPY-only transport: native unsigned probe reports HTTP404 although external approved API returns HMAC_REQUIRED. Share explicit ContentService redirect handling for GET probe and signed POST; set escaping=false to retain Google encoded redirect URL. Save initial_http_status, phase, redirect host and redirect_http_status only; never Location query/body/secrets. Original scope/platform errors stay visible on unsigned probe. Same staging only, preserve data/properties/secret/actors/enabled flag."
 }

@@ -1,3 +1,15 @@
+/** Shared ContentService transport. Record statuses only, never redirect query tokens or bodies. */
+function dispatchDirectoryFetch_(url,options,diagnostic,props,property){
+ options.followRedirects=false;options.escaping=false;
+ var response=UrlFetchApp.fetch(url,options),status=response.getResponseCode();diagnostic.initial_http_status=status;diagnostic.phase='API_ENDPOINT';props.setProperty(property,JSON.stringify(diagnostic));
+ if(status!==302&&status!==303)return response;
+ var headers=response.getAllHeaders(),location=String(headers.Location||headers.location||'');
+ if(/^https:\/\/accounts\.google\.com\//.test(location))throw new Error('DIRECTORY_GOOGLE_LOGIN');
+ if(!/^https:\/\/script\.googleusercontent\.com\/macros\/echo\?/.test(location))throw new Error('DIRECTORY_REDIRECT_REJECTED');
+ diagnostic.phase='CONTENT_SERVICE_RESPONSE';diagnostic.redirect_host='script.googleusercontent.com';props.setProperty(property,JSON.stringify(diagnostic));
+ // Google signs this already-encoded URL. Do not re-escape it or forward POST/HMAC.
+ response=UrlFetchApp.fetch(location,{method:'get',escaping:false,muteHttpExceptions:true,followRedirects:false});diagnostic.redirect_http_status=response.getResponseCode();props.setProperty(property,JSON.stringify(diagnostic));return response;
+}
 /** COPY-only directory client. All credentials remain in Script Properties. */
 function dispatchDirectoryClient_(props) {
  return DispatchBundle.CustomerDirectory.createClient({
@@ -10,15 +22,8 @@ function dispatchDirectoryClient_(props) {
    // retries reuse the original command key even if this fetch completes later.
    var started=Date.now(),diagnostic={checked_at:new Date().toISOString(),target:'APPROVED_COPY_API',deployment_id:typeof DispatchDirectoryCopyEndpoint!=='undefined'?DispatchDirectoryCopyEndpoint.deployment_id:null},response,raw;
    function stop(code){diagnostic.error=code;diagnostic.elapsed_ms=Date.now()-started;props.setProperty('DISPATCH_CD_TRANSPORT_CHECK',JSON.stringify(diagnostic));throw new Error(code);}
-   try{response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true,followRedirects:false});
-    if(response.getResponseCode()===302||response.getResponseCode()===303){
-     var headers=response.getAllHeaders(),location=headers.Location||headers.location||'';
-     if(/^https:\/\/accounts\.google\.com\//.test(location))stop('DIRECTORY_GOOGLE_LOGIN');
-     if(!/^https:\/\/script\.googleusercontent\.com\/macros\/echo\?/.test(location))stop('DIRECTORY_REDIRECT_REJECTED');
-     // ContentService redirects to a read-once JSON response. Never forward POST/HMAC to the redirect.
-     response=UrlFetchApp.fetch(location,{method:'get',muteHttpExceptions:true,followRedirects:false});
-    }
-   }catch(e){if(/^DIRECTORY_[A-Z_]+$/.test(e.message))throw e;stop('DIRECTORY_NETWORK_ERROR');}
+   try{response=dispatchDirectoryFetch_(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true},diagnostic,props,'DISPATCH_CD_TRANSPORT_CHECK');
+   }catch(e){if(/^DIRECTORY_[A-Z_]+$/.test(e.message))stop(e.message);stop('DIRECTORY_NETWORK_ERROR');}
    diagnostic.http_status=response.getResponseCode();
    if(diagnostic.http_status!==200)stop('DIRECTORY_HTTP_'+diagnostic.http_status);
    raw=response.getContentText();if(raw.length>1500000)stop('DIRECTORY_RESPONSE_TOO_LARGE');
@@ -34,7 +39,7 @@ function checkDispatchDirectoryTransport(){
  var p=PropertiesService.getScriptProperties(),endpoint=DispatchDirectoryCopyEndpoint.web_app_url,started=Date.now();
  p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify({ok:false,phase:'UNSIGNED_GET',checked_at:new Date().toISOString()}));
  // No catch: a permission/context/URL Fetch quota exception must retain Google's original explanation.
- var response=UrlFetchApp.fetch(endpoint,{method:'get',muteHttpExceptions:true,followRedirects:true}),status=response.getResponseCode(),result={ok:false,phase:'UNSIGNED_GET',http_status:status,elapsed_ms:Date.now()-started,checked_at:new Date().toISOString()};
+ var result={ok:false,phase:'UNSIGNED_GET',checked_at:new Date().toISOString()},response=dispatchDirectoryFetch_(endpoint,{method:'get',muteHttpExceptions:true},result,p,'DISPATCH_CD_TRANSPORT_PROBE'),status=response.getResponseCode();result.http_status=status;result.elapsed_ms=Date.now()-started;
  if(status!==200){p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));throw new Error('DIRECTORY_PROBE_HTTP_'+status);}
  var body;try{body=JSON.parse(response.getContentText());}catch(e){p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));throw new Error('DIRECTORY_PROBE_NON_JSON');}
  result.ok=body.ok===false&&body.error==='HMAC_REQUIRED';p.setProperty('DISPATCH_CD_TRANSPORT_PROBE',JSON.stringify(result));if(!result.ok)throw new Error('DIRECTORY_PROBE_UNEXPECTED_RESPONSE');return result;
