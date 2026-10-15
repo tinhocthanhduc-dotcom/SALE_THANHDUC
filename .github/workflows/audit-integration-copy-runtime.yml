@@ -1,0 +1,35 @@
+name: Read-only integration copy runtime audit
+on:
+  pull_request:
+    paths:
+      - 'ops/audit-integration-copy-runtime.cjs'
+      - '.github/workflows/audit-integration-copy-runtime.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-audit:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Inspect execution metadata using existing Google authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLASPRC_JSON"
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          npm install --prefix "$RUNNER_TEMP/clasp-tools" @google/clasp@3.4.1 --no-audit --no-fund
+          node ops/audit-integration-copy-runtime.cjs "$RUNNER_TEMP/clasp-tools" "$RUNNER_TEMP/integration-copy-runtime.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: INTEGRATION_COPY_RUNTIME_METADATA
+          path: ${{ runner.temp }}/integration-copy-runtime.json
+          if-no-files-found: error
+          retention-days: 14
