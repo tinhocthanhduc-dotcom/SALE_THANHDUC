@@ -74,7 +74,7 @@ function dispatchSetupStaging_(){
 }
 function dispatchLock_(fn){var lock=LockService.getScriptLock();lock.waitLock(10000);try{return fn();}finally{lock.releaseLock();}}
 function dispatchAuth_(props){
- var store={lock:dispatchLock_,read:function(){var all=props.getProperties(),state={users:{},sessions:{}};Object.keys(all).forEach(function(key){if(key.indexOf('DISPATCH_USER_')===0)state.users[key.slice(14)]=JSON.parse(all[key]);if(key.indexOf('DISPATCH_SESSION_')===0)state.sessions[key.slice(17)]=JSON.parse(all[key]);});return state;},write:function(state){var all=props.getProperties(),desired={};Object.keys(state.users).forEach(function(k){desired['DISPATCH_USER_'+k]=JSON.stringify(state.users[k]);});Object.keys(state.sessions).forEach(function(k){desired['DISPATCH_SESSION_'+k]=JSON.stringify(state.sessions[k]);});Object.keys(all).forEach(function(k){if((k.indexOf('DISPATCH_USER_')===0||k.indexOf('DISPATCH_SESSION_')===0)&&!Object.prototype.hasOwnProperty.call(desired,k))props.deleteProperty(k);});if(Object.keys(desired).length)props.setProperties(desired,false);}};
+ var store={lock:dispatchLock_,read:function(){var all=props.getProperties(),state={users:{},sessions:{}};Object.keys(all).forEach(function(key){if(key.indexOf('DISPATCH_USER_')===0)state.users[key.slice(14)]=JSON.parse(all[key]);if(key.indexOf('DISPATCH_SESSION_')===0)state.sessions[key.slice(17)]=JSON.parse(all[key]);});return state;},write:function(state){var all=props.getProperties(),desired={};Object.keys(state.users).forEach(function(k){desired['DISPATCH_USER_'+k]=JSON.stringify(state.users[k]);});Object.keys(state.sessions).forEach(function(k){desired['DISPATCH_SESSION_'+k]=JSON.stringify(state.sessions[k]);});Object.keys(all).forEach(function(k){if((k.indexOf('DISPATCH_USER_')===0||k.indexOf('DISPATCH_SESSION_')===0)&&!Object.prototype.hasOwnProperty.call(desired,k))props.deleteProperty(k);});var changed={};Object.keys(desired).forEach(function(k){if(all[k]!==desired[k])changed[k]=desired[k];});if(Object.keys(changed).length)props.setProperties(changed,false);}};
  return new DispatchBundle.Auth({store:store,random:function(){return Utilities.getUuid().replace(/-/g,'');},now:function(){return Date.now();}});
 }
 /** Editor-only provisioning. Never call from the browser or keep passwords in source. */
@@ -107,6 +107,8 @@ function dispatchApi(input){
   dispatchRuntime_();if(!input||typeof input!=='object')throw new Error('INVALID_REQUEST');
   // Login must not open Sheets or Drive. Tokens are returned only to the caller, never logged.
   if(input.action==='login')return dispatchAuth_(PropertiesService.getScriptProperties()).login(input.username,input.password);
+  if(input.action==='resume')return dispatchAuth_(PropertiesService.getScriptProperties()).resume(input.resume_code);
+  if(input.action==='resume_ticket')return dispatchAuth_(PropertiesService.getScriptProperties()).resumeTicket(input.token);
   if(input.action==='logout'){dispatchAuth_(PropertiesService.getScriptProperties()).logout(input.token);return {ok:true};}
   var auth=dispatchAuth_(PropertiesService.getScriptProperties()),verified=auth.context(input.token);
   // Reuse this request's single auth read; never cache across requests/login writes.

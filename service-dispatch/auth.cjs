@@ -27,14 +27,34 @@ class Auth {
    user.failed=0;user.locked_until=0;state.sessions=state.sessions||{};
    for(const [key,session] of Object.entries(state.sessions))if(session.expires_at<=at)delete state.sessions[key];
    if(Object.keys(state.sessions).length>=100)fail('SESSION_CAPACITY');
-   const token=this.random()+this.random();state.sessions[digest(token)]={user_id:user.id,user_version:user.version,expires_at:at+this.sessionMs};this.store.write(state);
-   return {token,actor:{id:user.id,name:user.name,roles:user.roles,active:true},expires_at:at+this.sessionMs};
+   const token=this.random()+this.random();state.sessions[digest(token)]={user_id:user.id,user_version:user.version,expires_at:at+this.sessionMs};
+   return this.result_(state,token,user,at);
+  });
+ }
+ session_(state,token){
+  if(typeof token!=='string'||!/^[a-f0-9]{64,128}$/.test(token))fail('AUTH_REQUIRED');
+  const session=state.sessions?.[digest(token)],user=session&&state.users[session.user_id];
+  if(!session||session.expires_at<=this.now()||!user||user.active===false||user.version!==session.user_version)fail('AUTH_REQUIRED');
+  return {session,user};
+ }
+ result_(state,token,user,at){
+  const session=state.sessions[digest(token)],code=this.random()+this.random();
+  session.resume_hash=digest(code);session.resume_expires_at=Math.min(at+10*60000,session.expires_at);this.store.write(state);
+  return {token,actor:{id:user.id,name:user.name,roles:user.roles,active:true},expires_at:session.expires_at,resume_code:code,resume_expires_at:session.resume_expires_at};
+ }
+ resumeTicket(token){return this.store.lock(()=>{const state=this.store.read(),{user}=this.session_(state,token);return this.result_(state,token,user,this.now());});}
+ resume(code){
+  if(typeof code!=='string'||!/^[a-f0-9]{64,128}$/.test(code))fail('AUTH_REQUIRED');
+  return this.store.lock(()=>{
+   const state=this.store.read(),at=this.now(),hash=digest(code),entry=Object.entries(state.sessions||{}).find(([,s])=>s.resume_hash===hash);
+   if(!entry)fail('AUTH_REQUIRED');const [oldKey,session]=entry,user=state.users[session.user_id];
+   if(session.resume_expires_at<=at||session.expires_at<=at||!user||user.active===false||session.user_version!==user.version)fail('AUTH_REQUIRED');
+   const token=this.random()+this.random();delete state.sessions[oldKey];state.sessions[digest(token)]={user_id:user.id,user_version:user.version,expires_at:session.expires_at};
+   return this.result_(state,token,user,at);
   });
  }
  context(token){
-  if(typeof token!=='string'||!/^[a-f0-9]{64,128}$/.test(token))fail('AUTH_REQUIRED');
-  const state=this.store.read(),session=state.sessions?.[digest(token)],user=session&&state.users[session.user_id];
-  if(!session||session.expires_at<=this.now()||!user||user.active===false||user.version!==session.user_version)fail('AUTH_REQUIRED');
+  const state=this.store.read(),{user}=this.session_(state,token);
   return {actor:{id:user.id,name:user.name,roles:user.roles,active:true},directory:Object.fromEntries(Object.values(state.users).map(u=>[u.id,{id:u.id,name:u.name,roles:u.roles,active:u.active,area:u.area||''}]))};
  }
  actor(token){return this.context(token).actor;}

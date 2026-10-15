@@ -2,7 +2,7 @@
 const {chromium}=require('../../erp-prototype/node_modules/playwright'),{createApp}=require('../server.cjs');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),assert=require('node:assert/strict');
 (async()=>{
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'tech-detail-')),app=createApp(root),directory=app.auth.directory();let seq=0;const fixed='2026-10-15T09:00:00+07:00';
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'tech-detail-')),app=createApp(root,{now:()=>fixed}),directory=app.auth.directory();let seq=0;const fixed='2026-10-15T09:00:00+07:00';
  const query=app.service.query.bind(app.service);app.service.query=(...args)=>({...query(...args),server_time:fixed});
  const run=(type,payload,actor='dispatch')=>app.business.submit({type,payload,idempotency_key:'detail-'+seq++,expected_version:payload.order_id?app.business.snapshot().state.orders[payload.order_id].version:undefined},{actor:directory[actor],directory,now:()=>fixed,id:()=> 'detail-'+seq++}).id;
  const customer=run('create_customer',{name:'Khách <mẫu>',phone:'0900000000',address:'Địa chỉ mẫu'}),machine=run('create_machine',{customer_id:customer,model:'Canon mẫu'});

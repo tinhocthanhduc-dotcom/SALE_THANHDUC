@@ -33,3 +33,10 @@ test('prepared image command recovery retains its owned evidence file',()=>{
  const evidence=app.business.snapshot().state.orders[order].evidence[0];assert.deepEqual(app.service.image(tech,order,evidence.id).data,bytes);
  assert.throws(()=>app.service.upload(tech,{...payload,base64:Buffer.from([...bytes,0]).toString('base64')}),/IDEMPOTENCY_CONFLICT/);
 });
+
+test('HTTP resume rotates to HttpOnly cookie without leaking token and rejects replay',async()=>{
+ const session=app.auth.login('tech1','DemoThanhDuc2026!');
+ assert.equal((await api({action:'resume',resume_code:session.resume_code},'','https://untrusted.example')).status,403);
+ const result=await api({action:'resume',resume_code:session.resume_code});assert.equal(result.status,200);assert(result.cookie);assert.equal(result.value.actor.id,'tech1');assert.equal(result.value.expires_at,session.expires_at);assert.equal(result.value.token,undefined);assert.equal(result.value.resume_code,undefined);assert.throws(()=>app.auth.actor(session.token),/AUTH_REQUIRED/);
+ assert.equal((await api({action:'resume',resume_code:session.resume_code})).status,401);assert.equal((await api({action:'query'},result.cookie)).status,200);await api({action:'logout'},result.cookie);assert.equal((await api({action:'query'},result.cookie)).status,401);
+});
