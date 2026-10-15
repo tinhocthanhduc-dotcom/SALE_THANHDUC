@@ -101,7 +101,7 @@ class SheetsDriver {
       c.NGUOI_LIEN_HE = JSON.parse(c.NGUOI_LIEN_HE || "[]");
       c.VERSION = Number(c.VERSION);
       c.HAN_MUC_NO = Number(c.HAN_MUC_NO || 0);
-      c.CHO_PHEP_NO = c.CHO_PHEP_NO === "true";
+      c.CHO_PHEP_NO = c.CHO_PHEP_NO.toLowerCase() === "true";
       s.customers[c.MA_KHACH] = c;
     }
     for (const r of this.rows("NGUON")) s.sources[r[0]] = JSON.parse(r[3]);

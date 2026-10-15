@@ -118,3 +118,14 @@ test("reader recovers an abandoned prepared write only when the write lock is av
   assert.equal(f.repo.read("search",{q:"Recovered"},actors.sales).customers[0].TEN,"Recovered by reader");
   assert.equal(raw.sheets.CD_JOURNAL.rows.at(-1)[1],"COMMITTED");
 });
+
+test("source zero repair preserves existing Google uppercase TRUE credit flags and unrelated fields", () => {
+  const raw=sheetDriver(),f=fixture(raw.driver),rows=[{app:"SALE",ma_cu:"S",TEN:"Source",MST:""}];
+  f.submit("scan_import",{rows},"finance",0);f.submit("finalize_import",{},"finance",1);
+  const code=raw.driver.read().mappings["SALE:S"];
+  raw.sheets.KHACH.rows[1][8]="TRUE";
+  assert.equal(raw.driver.read().customers[code].CHO_PHEP_NO,true);
+  const source=JSON.parse(raw.sheets.NGUON.rows[1][3]);source.MST_GOC="312345678";source.MST="";raw.sheets.NGUON.rows[1][3]=JSON.stringify(source);
+  f.submit("scan_import",{rows:[{...rows[0],MST:312345678}]},"finance",2);
+  const after=raw.driver.read().customers[code];assert.equal(after.MST,"0312345678");assert.equal(after.CHO_PHEP_NO,true);assert.equal(after.TEN,"Source");
+});
