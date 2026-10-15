@@ -4810,7 +4810,7 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     'document.getElementById("issueDateHeading").textContent=label;',
     'document.getElementById("issueDateSignature").textContent=label;',
     '}',
-    '<\\/script>',
+    '</script>',
     '</body>',
     '</html>'
   ].join('');
