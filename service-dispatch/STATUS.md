@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — tiếp gói thiết kế mới, hoàn tất bước (b)
+
+- Đã đọc README mobile và README_DESKTOP mới; README mobile giữ nguyên. Ghi nhận thiết kế desktop i–p, tiếp tục tuần tự với danh sách thợ (b) trước, không áp desktop trong mốc này.
+- Việc của tôi mobile: nhóm Hôm nay/Sắp tới/Chờ linh kiện, thẻ bấm toàn bộ, mã/ưu tiên/trạng thái/địa chỉ/hẹn/hàng giao/linh kiện chờ, giữ ghi chú giao lại; có tiền đã chốt thì giữ nhãn tiền. Quá hạn có viền 7px + dải đỏ mô tả SLA đúng loại. Việc hẹn ngày mai giữ ngày, việc cũ chưa kết thúc không biến mất.
+- CTA mở việc ưu tiên: quá hạn → mức khẩn/gấp → giờ hẹn; chỉ mở chi tiết, không tự nhận/bắt đầu. Đơn chuyển thợ thì query loại thẻ cũ. Giữ nguyên API/command/role/nextAction/polling/server/domain. Màn trống ghi đúng 20 giây, không hứa queue offline. Chi tiết/form (c–h) và desktop (i–p) còn làm tiếp.
+- Browser riêng có 8 kịch bản nhóm/phân quyền/quá hạn/thứ tự/ghi chú/escaping/không tự gửi command/đổi thợ/751px/trống. **Đạt local:** 113 Node, 8 board-browser, 10 shell-browser, 48 UI nghiệp vụ, 12 money-browser, 9 GAS iframe; build GAS đạt. Code.gs backend có SHA-256 giống hệt gói bước (a), chỉ Index.html đổi; ảnh trước/sau 390px cùng fixture. Bằng chứng local và Google UAT được phân biệt; không sửa/deploy app Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — thiết kế điện thoại cho thợ, bước (a)
 
 - Theo README/design người dùng gửi: đã làm riêng token và khung chung cho body.is-tech ≤750px. Thanh trên 22px + thời gian query gần nhất/chấm mạng/chip queue ảnh, dải dữ liệu thử, nội dung cuộn riêng, hai tab gốc 64px và một CTA đáy 62px. Font Be Vietnam Pro, tối thiểu 16px; màu/viền/padding theo handoff. Desktop >750px và điều phối/kho/finance/director dùng khung cũ. Đã kết thúc/Đã đóng vẫn vào được qua Tài khoản.

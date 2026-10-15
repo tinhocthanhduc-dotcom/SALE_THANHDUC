@@ -37,6 +37,7 @@ jobs:
       - run: node erp-prototype/test/ui-browser.cjs
       - run: node service-dispatch/test/browser.cjs
       - run: node service-dispatch/test/technician-shell-browser.cjs
+      - run: node service-dispatch/test/technician-board-browser.cjs
       - run: node service-dispatch/test/customer-machines-browser.cjs
       - run: node service-dispatch/test/delivery-browser.cjs
       - run: node service-dispatch/test/money-browser.cjs

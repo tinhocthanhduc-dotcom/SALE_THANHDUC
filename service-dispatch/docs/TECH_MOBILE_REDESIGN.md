@@ -14,9 +14,31 @@ Chỉ hiển thị khi `body.is-tech` và viewport ≤750px. Giữ nguyên giao 
 
 Các hàm app.js đã chỉnh: `message`, `refresh` (thời điểm hiển thị/vị trí cuộn), `resetLogin`, `render`, `account`, `patchPhotos` (cập nhật chip). Thêm `techMobile`, `updateTechHeader`, `updateTechCashAction`, `renderTechShell`; listener giao diện cho back, connectivity và viewport/dialog. Không đổi API, server, domain, xác thực, payload hay queue gửi ảnh.
 
-## Các bước tiếp theo — chưa làm trong (a)
+## Bước (b) — Việc của tôi
 
-(b) `board`: nhóm Hôm nay/Sắp tới/Chờ linh kiện, thẻ và CTA việc gấp nhất. Trong (a), root dùng nút Tải lại danh sách; thẻ hiện tại vẫn giữ nguyên nội dung.
+Theo gói `dieu-phoi-desing.zip` mới, README mobile không đổi; gói bổ sung README_DESKTOP và prototype Desktop App. Hoàn tất (b) trước khi chuyển (c), rồi làm desktop theo thứ tự (i)–(p).
+
+- Nhóm Hôm nay (gồm việc cũ chưa kết thúc để không mất đơn), Sắp tới, Chờ linh kiện; mỗi đơn chỉ xuất hiện một nhóm. Ngày hẹn lấy từ appointment hiện có/service_date theo giờ Việt Nam. Đơn của thợ khác và đơn đã kết thúc không xuất hiện trong danh sách này.
+- Thẻ nguyên khối bấm mở chi tiết: mã TD, ưu tiên, trạng thái, tên khách 19px, địa chỉ, giờ/ngày hẹn hoặc linh kiện chờ, nhãn Có giao hàng, ghi chú giao lại mới nhất. Giữ trạng thái tiền khi đã có billing; không thêm nhãn chưa chốt tiền vào thẻ đơn chưa định giá. Viền trái 7px theo trạng thái, quá hạn dùng đỏ và mô tả SLA đúng loại, không gọi mọi SLA là trễ hẹn.
+- CTA 62px mở việc ưu tiên: quá hạn → Khẩn/Gấp/Thường → giờ hẹn. Chỉ mở chi tiết, không tự gửi accept/start. Với mã TD thật dài, nhãn CTA tách hai dòng 19px/16px để vừa 62px. Chuyển giao sang thợ khác thì query tiếp theo bỏ thẻ và cập nhật đích CTA.
+- Trống hiển thị thông báo và đường sang tiền giữ; vẫn ghi polling thực 20 giây, không hứa lưu offline. Desktop >750px và các vai trò khác vẫn dùng board cũ trong mốc này.
+
+Hàm sửa: `board` (nhánh mobile mine), `renderTechShell` (CTA). Thêm `techOpenOrders`, `techOverdue`, `techOrderSort`, `techDelayText`, `techOrderDay`, `techOrderTime`, `techOrderCard`, `techBoard`; click mở ưu tiên đi cùng handler mở đơn hiện có. Không sửa nextAction, API, quyền, deadline domain hoặc dữ liệu. Test UI cũ chỉ đổi thao tác vào thẻ theo thiết kế, vẫn kiểm nhận đơn bằng command gốc ở chi tiết.
+
+## Phần desktop mới — kế hoạch theo README_DESKTOP
+
+Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
+
+- (i) `render` và khung HTML/CSS: menu trái 240px, thanh trên 68px, chỉ hiện mục theo quyền thực, không thêm bộ chọn vai trò của prototype vào app.
+- (j) `board`, `coordinatorTable`, `detail`, `technicianPicker`, `openForm`: bảng điều phối, panel 470px, giao thợ và drawer nhận đơn.
+- (k) `board`: bảng kết thúc/đóng và bộ lọc.
+- (l) `preparationBoard`, `materialPanel`, các bảng kho: soạn/bàn giao theo điều kiện lệnh hiện có.
+- (m) `funds`, `depositCards`: quỹ và đối soát.
+- (n) `reports`, `moneyReports`: các bảng báo cáo.
+- (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
+- (p) HTML đăng nhập, giữ xác thực hiện có.
+
+## Các bước mobile còn lại — (c) đến (h)
 
 (c) `detail`, `openForm`: thẻ chi tiết, timeline và bottom sheet lịch hẹn.
 

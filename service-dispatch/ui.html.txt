@@ -86,6 +86,42 @@ input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 
  body.is-tech.tech-form-open #tech-primary{visibility:hidden}
 }
 
+/* Step (b): only the technician's mobile work list. */
+@media(max-width:750px){
+ body.is-tech .tech-work-groups{display:flex;flex-direction:column;gap:18px}
+ body.is-tech .tech-group-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;color:var(--tech-text)}
+ body.is-tech #view .tech-group-heading h2{font-size:19px;font-weight:800;margin:0!important}
+ body.is-tech .tech-group-heading>span{font-size:16px;font-weight:600;color:var(--tech-secondary)}
+ body.is-tech .tech-order-list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ body.is-tech button.tech-order-card{--tech-order-border:#2e3f4c;display:flex;flex-direction:column;align-items:stretch;gap:6px;width:100%;min-width:0;min-height:0;margin:0;padding:12px 14px 14px;text-align:left;font-weight:600;color:var(--tech-text);background:#fff;border:1.5px solid var(--tech-border);border-left:7px solid var(--tech-order-border);border-radius:14px;overflow-wrap:anywhere}
+ body.is-tech button.tech-border-assigned{--tech-order-border:#164f88}
+ body.is-tech button.tech-border-scheduled{--tech-order-border:#1f5528}
+ body.is-tech button.tech-border-working{--tech-order-border:#7a3f06}
+ body.is-tech button.tech-border-waiting_parts{--tech-order-border:#5c2279}
+ body.is-tech button.tech-order-overdue{--tech-order-border:var(--tech-danger)}
+ body.is-tech .tech-order-top{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0}
+ body.is-tech .tech-order-top>.pill{margin-left:auto}
+ body.is-tech .tech-order-code{font-size:16px;font-weight:800;letter-spacing:.02em;color:var(--tech-primary)}
+ body.is-tech .tech-priority{font-size:16px;font-weight:700;border-radius:6px;background:#e3e8ec;color:#2e3f4c;padding:2px 6px}
+ body.is-tech .tech-priority-high{background:var(--tech-danger-bg);color:var(--tech-danger)}
+ body.is-tech .tech-order-customer{font-size:19px;font-weight:700;line-height:1.4}
+ body.is-tech .tech-order-address{font-size:16px;font-weight:400;color:var(--tech-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ body.is-tech .tech-order-plan{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:17px;font-weight:700;line-height:1.4}
+ body.is-tech .tech-delivery-chip{font-size:16px;font-weight:700;background:#fff;border:1.5px solid var(--tech-secondary-ink);color:var(--tech-secondary-ink);border-radius:6px;padding:2px 6px}
+ body.is-tech .tech-order-money{display:block;font-size:16px;font-weight:500;line-height:1.4}
+ body.is-tech .tech-order-note{display:block;margin-top:2px;padding:8px;border-radius:8px;background:var(--tech-secondary-bg);color:var(--tech-secondary);font-size:16px;font-weight:400}
+ body.is-tech .tech-overdue-strip{display:block;margin-top:2px;background:var(--tech-danger);color:#fff;border-radius:8px;padding:6px 8px;font-size:16px;font-weight:700}
+ body.is-tech #tech-primary [data-priority-open]{line-height:1.2}
+ body.is-tech #tech-primary [data-priority-open]>span{display:block}
+ body.is-tech #tech-primary .tech-cta-code{font-size:16px;line-height:1.25;font-weight:800}
+ body.is-tech .tech-primary-hint.tech-hint-overdue{color:var(--tech-danger)}
+ body.is-tech .tech-empty{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;background:#fff;border:1.5px solid var(--tech-border);border-radius:14px;padding:28px 20px}
+ body.is-tech .tech-empty-check{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:#e6f5e7;color:#235d2d;font-size:36px;font-weight:800}
+ body.is-tech #view .tech-empty h2{margin:0!important;font-size:22px;font-weight:800}
+ body.is-tech .tech-empty p{margin:0;font-weight:400;color:var(--tech-secondary)}
+ body.is-tech .tech-cash-shortcut{display:block;width:100%;text-align:left;min-height:56px;margin-top:12px;background:#fff;border:1.5px solid var(--tech-border);color:var(--tech-primary);font-size:16px;font-weight:700}
+}
+
 </style></head><body data-entry-order="" data-environment="staging"><header><div><h1>Thành Đức · Điều phối</h1></div><span id="user"></span></header><div id="tech-environment" class="tech-only">DỮ LIỆU THỬ · không phải đơn thật</div><main><div class="notice">Bản thử nghiệm · Chưa đồng bộ app Kho / Finance</div><p id="message" role="status">Đang nạp giao diện…</p><section id="login" class="panel login"><h2>Đăng nhập nhân viên</h2><form id="login-form" onsubmit="return false"><label for="username">Tài khoản</label><input id="username" autocomplete="username" required><label for="password">Mật khẩu</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button id="login-button" class="primary" type="button" disabled>Đăng nhập</button></div></form><p class="muted">Mỗi người chỉ thấy các đơn được cấp quyền. Không tự chọn vai trò.</p></section><section id="app" hidden><nav id="nav" class="actions"></nav><div id="workspace-layout"><section id="view"></section><section id="detail"></section></div></section></main><footer id="tech-primary" class="tech-only" aria-label="Bước tiếp theo"></footer><nav id="tech-tabs" class="tech-only" aria-label="Điều hướng thợ"></nav><dialog id="dialog"></dialog><script>
 window.addEventListener('error',function(event){var n=document.getElementById('message');if(n){var kind=event.error&&event.error.name;var known=['SyntaxError','ReferenceError','TypeError','RangeError'].indexOf(kind)>=0?kind:'ScriptError';var detail=known==='SyntaxError'&&event.error&&typeof event.error.message==='string'?': '+event.error.message.slice(0,160):'';var position=Number.isFinite(event.lineno)&&event.lineno>0?' · dòng '+event.lineno+', cột '+(event.colno||0):'';n.className='error';n.textContent='Giao diện gặp lỗi (UI_RUNTIME_ERROR · '+known+detail+position+'). Gửi dòng thông báo này cho quản trị.';}});
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('message');if(n){n.className='error';n.textContent='Giao diện chưa xử lý được yêu cầu (UI_ASYNC_ERROR). Tải lại trang để thử lại.';}});
