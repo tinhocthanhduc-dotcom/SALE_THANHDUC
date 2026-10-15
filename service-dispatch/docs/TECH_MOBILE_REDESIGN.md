@@ -45,6 +45,18 @@ Hàm app.js sửa: `detail`, `openForm` (gọi skin sau khi điền form), `subm
 
 Hàm sửa: `openForm` (reset modal skin và gọi bố cục), `updatePickupFields` (nhánh mobile), `submitForm` (cập nhật trạng thái nút sau lỗi). Thêm `techPickupRows`, `enhanceTechPickup`, `updateTechPickup` và listener stepper/serial/giao diện. CSS chỉ body.is-tech ≤750px; nút primary bật trong dialog thợ dùng chữ trắng để đủ tương phản, nút khóa giữ màu disabled. `technician-pickup-browser.cjs` kiểm lấy đủ/thiếu, giới hạn qty, consent/serial, nhiều PX, mất phản hồi sau commit/replay đúng một lần, polling giữ form, 320px và desktop 751px. Test delivery cũ chỉ thêm đánh dấu lại sau khi đổi số/serial, giữ kiểm serial sai/lấy thiếu/lấy đủ và start.
 
+## Bước (e) — Nghiệm thu
+
+- `enhanceTechComplete` bố trí form `complete` gốc thành màn toàn chiều cao cho thợ ≤750px: header/back, nội dung cuộn, CTA 62px ở đáy; không clone submit/đóng. Hai ảnh ở đầu, chip kết quả nhiều lựa chọn, hàng giao/vật tư, dòng công/vật tư tính tiền, tổng, hai thẻ xác nhận và ghi chú thu gọn. Font ≥16px, preview ảnh 116px, số tiền 21px và tổng 26px.
+- `customer_accepted` (khách nghiệm thu), `customer_agreed` (đồng ý giá), `usage_confirmed` (số lượng) là ba điều kiện riêng. Không gộp theo nhãn sai trong prototype. Mọi checkbox ban đầu giữ trạng thái gốc, không tự đánh dấu. Vẫn hỗ trợ nhiều dòng labor/material, thêm/xóa dòng, khoản 0đ có free=true; không tự đặt giá/tên hay ngầm biến trống thành 0.
+- `techChargeValue`/`formatTechCharge` chỉ là adapter hiển thị cho ô tiền trong form complete mobile: text định dạng Việt Nam 1.250.000, command nhận integer 1250000. Desktop/form khác giữ input number và Number() gốc. Giá trống/chữ/ký hiệu không hợp lệ không có tổng hợp lệ; tổng không vượt safe integer. Preview tiền hàng theo số thực giao và đơn giá PX, mang về không tính; phần đã ghi sử dụng/giao trước vẫn được tính từ dữ liệu đơn. Server vẫn chốt billing/duyệt giá, giao diện không thay thế các kiểm tra này.
+- Stepper dùng chính `[data-usage-id]`/name/max/min gốc, hiển thị Giao khách hoặc Đã dùng và phần Mang về/Trả kho; đổi số bỏ xác nhận cũ. Các nút dùng/trả hết giữ trong Chọn nhanh tất cả; bỏ nút riêng từng món theo mẫu, không bỏ xác nhận kho/PN. Vật tư tiêu hao không tự thành hàng bán hay tự thêm tiền.
+- `patchTechCompletePhotos` lấy ảnh đúng actor/visit, thumbnail từ cache/API riêng tư hiện có. Chụp lại dùng chính `selectPhoto` + queue nén/upload/retry/idempotency cũ, chỉ thêm đầu vào kind từ `data-complete-photo`; không đổi transport/service/API hoặc chia sẻ Drive công khai. Hiển thị tiến trình không xác định khi tải vì google.script.run chưa có % thực; không bịa 64%. Lỗi/thử lại luôn khóa hoàn tất, retry không ghi trùng, expected_version được cập nhật theo projection upload như cũ, không query toàn bộ hay vẽ lại form.
+- Giữ cửa vào nghiệm thu theo `photosReady`: tải ảnh lần đầu từ chi tiết đơn; khi đủ ảnh mới mở form, bên trong có thể chụp lại. Giữ luồng sau thành công: quay về đơn đã nghiệm thu với CTA Thu tiền nếu thu ngay còn phải thu; không tự mở form khác/không tự tạo PT. Khách công nợ và miễn phí không có nút thu sai. Những điểm này theo hành vi app đã thống nhất, không đổi workflow để khớp dữ liệu mẫu.
+- Nút chỉ bật khi đủ ảnh, việc, lượng, giá/tên/miễn phí và các xác nhận; lỗi server ở footer giữ nội dung/key. Polling giữ form. Ngưỡng duyệt giá vẫn do server quyết định: sai thì toàn bộ nghiệm thu/vật tư không ghi; retry giữ key và snapshot đúng.
+
+Hàm sửa: `openForm` (reset skin/call), `moneyPayload` (đọc giá qua adapter), `submitForm` (cập nhật trạng thái sau lỗi), `patchPhotos` (patch ô ảnh/CTA), `selectPhoto` (đầu vào kind cho ô ảnh). Thêm `techChargeValue`, `formatTechCharge`, `enhanceTechChargeRows`, `enhanceTechComplete`, `patchTechCompletePhotos`, `updateTechComplete` và listener giao diện. CSS chỉ body.is-tech ≤750px. Test cũ chỉ đổi nút lượng sang stepper và kiểm nút disabled thay bấm khi còn thiếu xác nhận; giữ mọi assertion nghiệp vụ. `technician-complete-browser.cjs` kiểm 10 nhóm kịch bản gồm snapshot tiền, miễn phí/công nợ, replay, chụp lại/lỗi mạng, duyệt giá, giữ form và viewport.
+
 ## Phần desktop mới — kế hoạch theo README_DESKTOP
 
 Áp dụng ≥1000px, không phải thợ; 751–999px giữ giao diện hiện tại. Đây là phạm vi đã ghi nhận, chưa triển khai trong (b):
@@ -58,9 +70,7 @@ Hàm sửa: `openForm` (reset modal skin và gọi bố cục), `updatePickupFie
 - (o) `syncBoard`, `financeMapping`, `paymentMethods`, `customers`: các màn quản trị, giữ cấu hình ngân hàng gộp của v38, không quay lại hai nơi theo hình mẫu cũ.
 - (p) HTML đăng nhập, giữ xác thực hiện có.
 
-## Các bước mobile còn lại — (e) đến (h)
-
-(e) phần complete của `openForm`, `chargeEditor`, `patchPhotos`: bố cục nghiệm thu; giữ đầy đủ consent và ảnh hiện có.
+## Các bước mobile còn lại — (f) đến (h)
 
 (f) `moneyForm`, `bankDetails`, `paymentList`: giao diện thu; dùng binding ngân hàng cố định của bản v38.
 

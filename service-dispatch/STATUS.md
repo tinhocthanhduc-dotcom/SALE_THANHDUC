@@ -1,5 +1,13 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (e)
+
+- Nghiệm thu thành form mobile toàn màn hình: hai ô ảnh 116px, chip kết quả nhiều lựa chọn, stepper Giao khách/Đã dùng và Mang về/Trả kho, nhiều dòng công/vật tư tính tiền, tổng 26px, ba xác nhận số lượng/đồng ý giá/nghiệm thu giữ riêng; ghi chú tùy chọn thu gọn. CTA gốc 62px cố định, lỗi server hiển thị ở footer. Desktop >750px/vai trò khác giữ form cũ.
+- Ô tiền định dạng 1.250.000 bằng adapter hiển thị; payload vẫn integer 1250000. Không mặc định 0/tên công, không gộp nhiều dòng hay consent; khoản 0đ cần miễn phí. Tính tiền theo hàng thực giao, không tính mang về; preview không thay server billing/duyệt giá. Khách công nợ và đơn miễn phí không có thu tại chỗ sai.
+- Chụp lại trong form qua queue/transport/API riêng tư cũ, progress không xác định thay % giả; lỗi thì khóa hoàn tất, retry cùng key không trùng, cập nhật version từ upload mà không query toàn bộ hoặc mất dữ liệu nhập. Cửa vào nghiệm thu vẫn photosReady; sau hoàn tất giữ đường về đơn/Thu tiền hiện có, không tự tạo PT. Điều kiện vật tư, chuyển thợ, xác nhận và ngưỡng duyệt giá không đổi.
+- Đạt local: 113 Node, 10 complete-browser mới, 48 UI nghiệp vụ, 9 delivery, 12 money, 8 pickup, 9 detail, 10 shell, 8 board, 10 hồ sơ máy, 10 integration, 9 GAS iframe, photo queue (3 ảnh/200 đơn/replay/thumbnail/full query 0) và 9 live browser. Build GAS đạt, Code.gs byte-identical với bước (d). Có ảnh trước/sau 390px và trạng thái sẵn sàng. Phần còn lại (f) thu tiền, (g) tiền giữ, (h) trống/mất mạng và desktop i–p. Không suy ra Google UAT từ kiểm local, không sửa Kho/Finance/AI thật.
+
+
 ## 15/10/2026 — giao diện thợ mobile, hoàn tất bước (d)
 
 - Màn lấy hàng riêng cho thợ ≤750px: đầu PX/kho/thời điểm soạn/khách dùng dữ liệu thật, nút Đã lấy đủ tất cả ở trên, mỗi món checkbox 36px + mã/tên/số lượng và stepper; một nút gửi gốc 62px cố định ở đáy. Một PX ẩn chọn phiếu, nhiều PX chọn được. Không đổi form/lệnh/API/payload/role/version/idempotency, desktop và vai trò khác dùng giao diện cũ.
