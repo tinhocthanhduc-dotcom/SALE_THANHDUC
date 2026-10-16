@@ -18,25 +18,126 @@ function dbTable_(name) {
   const sh = ss_().getSheetByName(name);
   if (!sh) throw new Error('Thiếu sheet ' + name);
   const values = sh.getDataRange().getValues(), headers = (values.shift() || []).map(dbText_);
+  const expected = DB_HEADERS_[name] || (name === DB_RECEIPT_TABLE_ ? DB_RECEIPT_HEADERS_ : null);
+  if (expected && JSON.stringify(headers) !== JSON.stringify(expected)) {
+    const error = new Error('Sai header sheet ' + name + ', cần kiểm tra trước khi đọc/ghi.');
+    error.donBanMissingHeader = headers.length <= expected.length && headers.every((h, i) => !h || h === expected[i]);
+    throw error;
+  }
   return values.map((r, i) => ({row: i + 2, data: headers.reduce((o, h, j) => { o[h] = r[j]; return o; }, {})}))
     .filter(x => Object.values(x.data).some(v => v !== '' && v != null));
 }
 function dbFind_(name, field, value) {
   return dbTable_(name).find(x => dbText_(x.data[field]) === dbText_(value));
 }
-function dbSetup_() {
+const DB_RECEIPT_TABLE_ = 'LENH_DON_BAN';
+const DB_RECEIPT_HEADERS_ = ['RequestKey', 'Fingerprint', 'Action', 'ResultJson', 'TaoLuc'];
+function dbSchemaReady_() {
+  if (PropertiesService.getScriptProperties().getProperty('DON_BAN_SCHEMA_V1') !== 'DONE') return false;
   const book = ss_();
-  Object.keys(DB_HEADERS_).forEach(name => {
-    const sh = book.getSheetByName(name) || book.insertSheet(name), headers = DB_HEADERS_[name];
+  return Object.keys(DB_HEADERS_).concat(DB_RECEIPT_TABLE_).every(name => {
+    const sh = book.getSheetByName(name), headers = DB_HEADERS_[name] || DB_RECEIPT_HEADERS_;
+    return sh && sh.getLastRow() > 0 && sh.getLastColumn() >= headers.length;
+  });
+}
+/** Gọi trong ScriptLock, chỉ setup/migrate một lần hoặc khi thiếu bảng/header. */
+function dbSetup_(forceMigration) {
+  if (!forceMigration && dbSchemaReady_()) return {migrated: 0, alreadyCopied: 0};
+  const book = ss_();
+  Object.keys(DB_HEADERS_).concat(DB_RECEIPT_TABLE_).forEach(name => {
+    const sh = book.getSheetByName(name) || book.insertSheet(name);
+    const headers = name === DB_RECEIPT_TABLE_ ? DB_RECEIPT_HEADERS_ : DB_HEADERS_[name];
     dbRoom_(sh, 1, headers.length);
     if (!sh.getLastRow()) sh.getRange(1, 1, 1, headers.length).setValues([headers]);
     const actual = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
-    if (JSON.stringify(actual) !== JSON.stringify(headers)) throw new Error('Sai header sheet ' + name + ', cần kiểm tra trước khi ghi.');
-    ['DienThoai', 'MaSoThue', 'MaGiaoDichNH'].forEach(h => {
-      const col = headers.indexOf(h);
-      if (col >= 0) sh.getRange(1, col + 1, sh.getMaxRows(), 1).setNumberFormat('@');
-    });
+    if (JSON.stringify(actual) !== JSON.stringify(headers)) {
+      if (actual.length <= headers.length && actual.every((h, i) => h === '' || h === headers[i]))
+        sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+      else throw new Error('Sai header sheet ' + name + ', cần kiểm tra trước khi ghi.');
+    }
+    if (name === DB_RECEIPT_TABLE_ && !sh.isSheetHidden()) sh.hideSheet();
   });
+  const result = dbMigrateReceipts_();
+  PropertiesService.getScriptProperties().setProperty('DON_BAN_SCHEMA_V1', 'DONE');
+  return result;
+}
+function dbReceipt_(key) {
+  const sh = ss_().getSheetByName(DB_RECEIPT_TABLE_), last = sh.getLastRow();
+  if (last < 2) return null;
+  const matches = sh.getRange(2, 1, last - 1, 1).createTextFinder(key).matchEntireCell(true).findAll();
+  if (matches.length > 1) throw new Error('Receipt Đơn bán trùng khóa, báo quản trị.');
+  if (!matches.length) return null;
+  const row = sh.getRange(matches[0].getRow(), 1, 1, 5).getValues()[0];
+  return {fingerprint: row[1], action: row[2], result: JSON.parse(row[3])};
+}
+function dbSaveReceipt_(key, fingerprint, action, result) {
+  const old = dbReceipt_(key);
+  if (old) {
+    if (old.fingerprint !== fingerprint || JSON.stringify(old.result) !== JSON.stringify(result))
+      throw new Error('Receipt Đơn bán không khớp journal, báo quản trị.');
+    return;
+  }
+  const sh = ss_().getSheetByName(DB_RECEIPT_TABLE_), row = sh.getLastRow() + 1;
+  dbRoom_(sh, row, 5);
+  sh.getRange(row, 1, 1, 5).setValues([[key, fingerprint, action, JSON.stringify(result), new Date().toISOString()]]);
+  SpreadsheetApp.flush(); // Receipt phải bền vững trước khi xóa journal tạm.
+}
+function dbLegacyAction_(result) {
+  if (result && result.soBaoGia) return 'chotDon';
+  if (result && result.maBaoThu) return result.maDon ? 'baoThu' : 'huyBaoThu';
+  return result && result.maDon ? 'huyDon' : 'LEGACY';
+}
+/** Copy -> flush -> kiểm lại -> xóa từng khóa cũ. Dừng giữa chừng chạy lại an toàn. */
+function dbMigrateReceipts_() {
+  const props = PropertiesService.getScriptProperties(), all = props.getProperties();
+  const keys = Object.keys(all).filter(k => k.startsWith('DON_BAN_REQ_'));
+  if (!keys.length) return {migrated: 0, alreadyCopied: 0};
+  const sh = ss_().getSheetByName(DB_RECEIPT_TABLE_);
+  const copied = new Map();
+  dbTable_(DB_RECEIPT_TABLE_).forEach(x => {
+    if (copied.has(x.data.RequestKey)) throw new Error('Receipt Đơn bán trùng khóa, báo quản trị.');
+    copied.set(x.data.RequestKey, x.data);
+  });
+  let migrated = 0, alreadyCopied = 0;
+  for (let start = 0; start < keys.length; start += 100) {
+    const group = keys.slice(start, start + 100), rows = [];
+    group.forEach(key => {
+      const old = JSON.parse(all[key]);
+      if (!old || typeof old.fingerprint !== 'string' || !Object.prototype.hasOwnProperty.call(old, 'result'))
+        throw new Error('Receipt cũ không hợp lệ, giữ khóa để quản trị kiểm tra.');
+      const saved = copied.get(key), resultJson = JSON.stringify(old.result);
+      if (saved) {
+        if (saved.Fingerprint !== old.fingerprint || JSON.stringify(JSON.parse(saved.ResultJson)) !== resultJson)
+          throw new Error('Receipt cũ khác receipt trong sheet, không xóa khóa cũ.');
+        alreadyCopied++;
+      } else {
+        rows.push([key, old.fingerprint, old.action || dbLegacyAction_(old.result), resultJson, new Date().toISOString()]);
+      }
+    });
+    if (rows.length) {
+      const first = sh.getLastRow() + 1;
+      dbRoom_(sh, first + rows.length - 1, 5);
+      sh.getRange(first, 1, rows.length, 5).setValues(rows);
+      SpreadsheetApp.flush();
+      if (JSON.stringify(sh.getRange(first, 1, rows.length, 5).getValues()) !== JSON.stringify(rows))
+        throw new Error('Chưa xác minh được receipt đã chuyển, giữ khóa cũ.');
+      rows.forEach(r => copied.set(r[0], Object.fromEntries(DB_RECEIPT_HEADERS_.map((h, i) => [h, r[i]]))));
+      migrated += rows.length;
+    }
+    group.forEach(key => props.deleteProperty(key));
+  }
+  return {migrated, alreadyCopied};
+}
+/** Chủ có thể chạy trực tiếp; tự chạy khi dùng module lần đầu sau nâng cấp. */
+function migrateDonBanReceipts() {
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const result = dbSetup_(true); dbRecover_();
+    const report = {success: true, ...result};
+    console.log('don-ban-receipts-migration ' + JSON.stringify(report));
+    return report;
+  }
+  finally { lock.releaseLock(); }
 }
 /** Chỉ gọi từ nextNo_ khi command Đơn bán đã giữ ScriptLock. Không đổi số BG/HD. */
 function donBanNextNo_(prefix) {
@@ -121,8 +222,17 @@ function dbPaymentState_(order, receipts, finance) {
 }
 function dbJson_(value) { return JSON.parse(JSON.stringify(value)); }
 function dbRead_(fn) {
-  const lock = LockService.getScriptLock(); lock.waitLock(30000);
-  try { dbSetup_(); dbRecover_(); return dbJson_(fn()); } finally { lock.releaseLock(); }
+  const props = PropertiesService.getScriptProperties();
+  if (!dbSchemaReady_() || props.getProperty('DON_BAN_PENDING')) {
+    const lock = LockService.getScriptLock(); lock.waitLock(30000);
+    try { dbSetup_(); dbRecover_(); } finally { lock.releaseLock(); }
+  }
+  try { return dbJson_(fn()); } catch (error) {
+    if (!error.donBanMissingHeader) throw error;
+    const lock = LockService.getScriptLock(); lock.waitLock(30000);
+    try { dbSetup_(true); dbRecover_(); } finally { lock.releaseLock(); }
+    return dbJson_(fn());
+  }
 }
 function listDonBan(forceRefresh) {
   return dbRead_(() => {
@@ -151,11 +261,11 @@ function dbRun_(action, requestId, payload, prepare) {
   try {
     dbSetup_(); dbRecover_();
     const props = PropertiesService.getScriptProperties(), key = 'DON_BAN_REQ_' + dbHash_(requestId);
-    const fingerprint = dbHash_(JSON.stringify({action, payload})), old = props.getProperty(key);
-    if (old) { const receipt = JSON.parse(old); if (receipt.fingerprint !== fingerprint) throw new Error('requestId đã dùng cho nội dung khác.'); return receipt.result; }
+    const fingerprint = dbHash_(JSON.stringify({action, payload})), receipt = dbReceipt_(key);
+    if (receipt) { if (receipt.fingerprint !== fingerprint) throw new Error('requestId đã dùng cho nội dung khác.'); return receipt.result; }
     let plan;
     try { plan = prepare(); } catch (error) { throw new Error('DON_BAN_VALIDATION: ' + (error.message || error)); }
-    plan.key = key; plan.fingerprint = fingerprint;
+    plan.key = key; plan.fingerprint = fingerprint; plan.action = action;
     const raw = JSON.stringify(plan), chunks = Math.ceil(raw.length / 1800);
     if (chunks > 100) throw new Error('Đơn quá lớn, cần chia báo giá trước khi chốt.');
     for (let i = 0; i < chunks; i++) props.setProperty('DON_BAN_PLAN_' + i, raw.slice(i * 1800, (i + 1) * 1800));
@@ -176,7 +286,6 @@ function dbRecover_() {
     const row = found ? found.row : sh.getLastRow() + 1;
     dbRoom_(sh, row, headers.length);
     const safe = v => typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v;
-    ['DienThoai', 'MaSoThue', 'MaGiaoDichNH'].forEach(h => { const c = headers.indexOf(h); if (c >= 0) sh.getRange(row, c + 1).setNumberFormat('@'); });
     if (found) {
       // Chỉ sửa đúng cột của delta: đổi trạng thái không ghi lại giá/VAT/công thức cũ.
       Object.keys(step.data).filter(h => !step.keys.includes(h)).forEach(h => {
@@ -184,11 +293,12 @@ function dbRecover_() {
         sh.getRange(row, col + 1).setValue(safe(step.data[h]));
       });
     } else {
+      ['DienThoai', 'MaSoThue', 'MaGiaoDichNH'].forEach(h => { const c = headers.indexOf(h); if (c >= 0) sh.getRange(row, c + 1).setNumberFormat('@'); });
       sh.getRange(row, 1, 1, headers.length).setValues([headers.map(h => safe(step.data[h] == null ? '' : step.data[h]))]);
     }
   });
   SpreadsheetApp.flush();
-  props.setProperty(plan.key, JSON.stringify({fingerprint: plan.fingerprint, result: plan.result}));
+  dbSaveReceipt_(plan.key, plan.fingerprint, plan.action || dbLegacyAction_(plan.result), plan.result);
   props.deleteProperty('DON_BAN_PENDING');
   for (let i = 0; i < m.chunks; i++) props.deleteProperty('DON_BAN_PLAN_' + i);
 }

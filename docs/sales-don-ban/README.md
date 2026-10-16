@@ -43,7 +43,7 @@ Các hook lưu nguồn và guard là cần thiết để thực hiện hai yêu 
 
 - Bốn lệnh mới `chotDon`, `huyDon`, `baoThu`, `huyBaoThu` bắt buộc requestId, ScriptLock. Cùng key/nội dung trả kết quả cũ; đổi nội dung dùng lại key bị từ chối. UI giữ nguyên key khi thử lại sau mất phản hồi, khóa nút/fields khi chưa rõ kết quả.
 - Journal delta tạm và checksum trong Script Properties; nếu lỗi giữa các bước, lần đọc/lệnh tiếp theo khôi phục xong trước khi xử lý. Upsert theo MaDon/STT hoặc MaBaoThu, không xóa dòng. Đổi trạng thái báo giá chỉ ghi cột trạng thái, không ghi đè giá/VAT/công thức.
-- Request receipts lưu bền trong Script Properties; có giới hạn quota nền tảng (500KB/project), vì yêu cầu chỉ thêm đúng 3 bảng. Không tự xóa receipt vì sẽ mất chống replay. Nếu dùng khối lượng lớn cần thống nhất bảng command riêng trước khi vượt quota; journal có giới hạn kích thước và lỗi quota không được hiểu là thành công.
+- Receipt chống trùng hiện lưu bền trong sheet ẩn LENH_DON_BAN, không còn tăng Script Properties theo số lệnh. Script Properties chỉ giữ bộ đếm, journal tạm và cờ DON_BAN_SCHEMA_V1. Khóa DON_BAN_REQ_* cũ được chuyển an toàn sang sheet. Xem STORAGE_MIGRATION.md trước khi cập nhật bản này.
 - Lock Sales không khóa được project Finance. Việc hủy kiểm tra KQ_SALES mới nhất, vẫn xử lý trường hợp Finance xác nhận đến sau bằng số đã thu và cảnh báo đỏ đúng yêu cầu; không tự đảo phiếu Finance.
 - Quyền truy cập Sales hiện có giữ nguyên; không thêm phương thức ghi vào Finance/Kho hay tự cấp vai trò.
 - Giữ lại cả báo thu bị từ chối/hủy; khi chưa cấu hình Finance không coi tiền báo là tiền đã xác nhận.
@@ -77,3 +77,7 @@ Google Apps Script không cho server và HTML trùng tên DonBan. Repo giữ Don
 - GET chỉ đọc URL triển khai trả về HTML 179.385 byte, có DonBan, include đã được evaluate, không có ReferenceError/SyntaxError trong HTML trả về. Không thực hiện lệnh chốt đơn/báo thu trên sổ thật để kiểm thử.
 - 38/38 test local đạt; thêm regression chống trùng tên file GAS sau sự cố đóng gói đầu tiên.
 - Cần điền `NHAN_VIEN_BAN_HANG` trong CAU_HINH trước khi chọn người báo. Thẻ B “Nhận từ Sales” bên Finance chưa triển khai trong việc này.
+
+## Bản sửa lưu receipt và đường đọc (chưa deploy)
+
+50/50 test local đạt: giữ 38 ca trước, thêm 12 ca storage/migration/read. Thay đổi runtime chỉ ở DonBan.js; code.js, Index.html và DonBan.html không đổi. Chi tiết và cách chuyển dữ liệu ở [STORAGE_MIGRATION.md](STORAGE_MIGRATION.md). Deployment v63 phía trên là bản trước sửa này.
