@@ -1,16 +1,16 @@
 diff --git a/Index.html b/Index.html
-index d209315..6fdda71 100644
+index 481f25b..8b57fce 100644
 --- a/Index.html
 +++ b/Index.html
-@@ -541,6 +541,7 @@ tbody tr:last-child td{border-bottom:0}
- <button data-page="customers">👥 Khách hàng</button>
- <button data-page="products">📦 Sản phẩm</button>
- <button data-page="history">📋 Báo giá đã lưu</button>
-+<button data-page="donban">🛒 Đơn bán</button>
- </nav>
- <main>
- <section id="quote" class="page active"><div class="grid two">
-@@ -754,6 +755,7 @@ tbody tr:last-child td{border-bottom:0}
+@@ -356,6 +356,7 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
+     <div class="nav-label">BÁN HÀNG</div>
+     <button class="active" data-page="quote">Tạo báo giá</button>
+     <button data-page="history">Báo giá đã lưu</button>
++    <button data-page="donban">Đơn bán</button>
+     <div class="nav-label">DỮ LIỆU</div>
+     <button data-page="customers">Khách hàng</button>
+     <button data-page="products">Sản phẩm</button>
+@@ -550,6 +551,7 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
    </div>
  </section>
  
@@ -18,7 +18,7 @@ index d209315..6fdda71 100644
  </main></div>
  
  <div id="customerModal" class="modal"><div class="dialog large"><div class="head"><b id="customerModalTitle">Khách hàng</b><button class="light" onclick="closeModal('customerModal')">✕</button></div><div class="body"><div class="form">
-@@ -1970,6 +1972,7 @@ function quotePayload(){
+@@ -1780,6 +1782,7 @@ function quotePayload(){
        ).value
      ),
      items:quoteItems.map(item=>({
@@ -26,7 +26,7 @@ index d209315..6fdda71 100644
        code:item.code,
        name:item.name,
        unit:item.unit,
-@@ -2571,6 +2574,8 @@ function renderHistory(){
+@@ -2381,6 +2384,8 @@ function renderHistory(){
        <td class="right">${money(quote.total)}</td>
        <td>
          <div class="row-actions">
@@ -35,7 +35,7 @@ index d209315..6fdda71 100644
            <button class="light mini"
              onclick="openQuoteForEdit('${esc(quote.no)}',false)">
              ${cancelled?'Xem':'Xem/Sửa'}
-@@ -2686,6 +2691,7 @@ function openQuoteForEdit(no,duplicate){
+@@ -2496,6 +2501,7 @@ function openQuoteForEdit(no,duplicate){
          DB.products.find(p=>p.code===item.code)||{};
  
        return {
@@ -44,7 +44,7 @@ index d209315..6fdda71 100644
          name:item.name,
          unit:item.unit||product.unit||'Cái',
 diff --git a/code.js b/code.js
-index 1ea9993..910902b 100644
+index 6f10ec1..5df7957 100644
 --- a/code.js
 +++ b/code.js
 @@ -7,7 +7,10 @@ const APP = {
@@ -166,7 +166,7 @@ index 1ea9993..910902b 100644
      const contractSheet = sheet_(APP.SHEETS.CONTRACTS);
      const contractMeta = sheetHeaderMap_(contractSheet);
      const contractQuoteCol = contractMeta.byName.MaBaoGia;
-@@ -5951,6 +5971,7 @@ function getQuote(no) {
+@@ -6029,6 +6049,7 @@ function getQuote(no) {
      });
  
      return {

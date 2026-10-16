@@ -1,6 +1,6 @@
 # Đơn bán — Chốt đơn và Báo thu
 
-Mã nguồn dựa trên Sales ở nhánh `erp/sprint1-architecture-20261012`, base `446d825`.
+Mã nguồn dựa trên Sales ở nhánh `erp/sprint1-architecture-20261012`, bản triển khai ghép lên main `ba9dd8f` (giữ giao diện mới và bản sửa in kho).
 Chưa push main hoặc deploy Sales/Finance/Kho. Mọi dữ liệu trong ảnh/test là TEST_.
 
 ## Các file bàn giao
@@ -60,3 +60,10 @@ Browser dùng Playwright + Chromium có sẵn trong môi trường; có thể đ
 Kết quả: **37/37 đạt** (28 ca domain, 2 regression, 7 browser). Test định dạng 1.250.000 → sửa giữa thành 1.350.000 giữ caret; dán 50,000đ; số nguyên gửi lên RPC; nguồn KHO; chọn người/phương thức; lọc không dấu/SĐT; hủy mềm; trạng thái/MA_PHIEU/lý do Finance; mất phản hồi sau khi server ghi rồi retry không trùng; fault injection giữa các ghi tạo/hủy; header/text; mọi ghi ở Sales trong lock; không ghi Finance.
 
 Regression so sánh nguyên văn các hàm tính giá/PDF/hợp đồng với base 446d825 và parse mọi inline script sau include. Ảnh 390×844 nằm trong `screenshots/`: list-390.png, detail-390.png, payment-390.png. Chưa chạy thử trên Google thật hoặc thiết bị điện thoại thật; chưa deploy.
+
+## Sửa theo tài liệu bước 1 trước triển khai
+
+- `TU_CHOI` được có SO_TIEN=0; chỉ yêu cầu số tiền Finance khớp số báo khi DA_XAC_NHAN. Khoản từ chối trả lại khả năng báo thu, không tính vào đã thu hoặc đang chờ.
+- MaKhachChung luôn để trống ở bước 1, kể cả hồ sơ khách đã có mã; chưa nối Danh bạ.
+- 37/37 test chạy lại trên main ba9dd8f, có ca Finance từ chối 0đ và giữ nguyên hàm PDF/hợp đồng/pricing của bản mới.
+- Bộ deploy chỉ nạp appsscript.json, code.js, Index.html, DonBan.js, DonBan.html; không đẩy các app ERP/Điều phối/Danh bạ còn trên máy.
