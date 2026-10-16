@@ -1,5 +1,16 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 16/10/2026 — giảm IO snapshot, chọn KTD không ghi và chờ kết quả thật
+
+- Bản cũ gọi compact 3 lần/lệnh; bản mới chỉ gọi 1 lần khi số snapshot **vượt 30**, giảm còn 20. Recover/read/replay không compact. Manifests mới ghi revision trong cột metadata; các snapshot cũ chỉ decode để lấy revision trong đợt compact/migration, không decode mỗi lệnh. Archive đọc phần đuôi bằng kích thước một attempt; copy/verify trước khi xóa, giữ fault-injection và retry partial-copy.
+- `latest()` chỉ decode block cuối có manifest, `append()` chỉ kiểm tra lại block vừa ghi; không decode tất cả bản cũ. Validate một lần khi tạo repository của request. Vẫn kiểm marker, checksum, durable intent, expected_version và idempotency dưới lock.
+- Chọn KTD bình thường là preview đã xác minh từ Danh bạ, **không mở Sheets Điều phối, không ghi state** kể cả nhánh native GAS. Khi tạo đơn, server đọc lại KTD qua HMAC ngoài lock, rồi lưu khách + đơn trong cùng một commit. Máy và ID khách cũ giữ nguyên; Gán mã KTD vẫn là thao tác ghi riêng. Retry đơn đã commit vẫn trả receipt cũ khi Danh bạ bị mất mạng; payload khác vẫn bị chặn.
+- UI không bỏ phản hồi ở 8s: hiện thông báo chờ giữ nguyên, đợi tới 60s; hết hạn mở lại thao tác và hiện Thử lại, không đổi idempotency_key. Đã có browser test giả lập server commit rồi mất phản hồi, retry chỉ tạo một đơn.
+- Console chỉ ghi thời gian số, không tên/SĐT/token/payload: request, directory_fetch, lock_wait, recover, snapshot_read, compact, domain, journal, state, commit, export_outbox. `profileDispatchStorage()` trả kích thước snapshot và dòng STATE/JOURNAL/ARCHIVE, không in khách. Maintenance 10 phút là tùy chọn, không tự tạo trigger.
+- Đo driver local cùng dữ liệu giả: đọc JSON 30.922.296 → 772.558 ký tự, decode 125 → 4, compact 3 → 0, archive read 3 → 0, số lần đọc Sheets 21 → 11. Không coi đây là số giây GAS; CPU local biến động. [Báo cáo đo và hướng dẫn staging](../docs/service-dispatch/performance-20261016/README.md).
+- Hồi quy: 337/337 Node (bao gồm 6 ca bổ sung), 26/26 bộ browser Điều phối; browser Danh bạ và ERP UI chạy lại. Build GAS đạt. Đang thử đo staging qua Execution API; chưa khẳng định mục tiêu <5s/<3s hoặc kích thước workbook thật khi chưa có kết quả native.
+
+
 ## 16/10/2026 — thu gọn màn thợ, chụp ảnh và chốt tiền nghiệm thu
 
 - CSS cho `body.is-tech`, rộng ≤480px: biến chữ nội dung 15px, phụ 13px, tiêu đề thẻ 16px, tiêu đề màn 17px; ô nhập luôn 16px. Giảm khoảng cách thẻ và thanh đáy, giữ nút tối thiểu 44px (nút chính giữ 62px). Không đổi CSS của vai trò khác hoặc desktop. Fixture 390×844 hiển thị trọn ít nhất 3 đơn phía trên thanh nút đáy.

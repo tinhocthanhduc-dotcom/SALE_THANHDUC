@@ -1,0 +1,31 @@
+{
+  "fixture": "36 synthetic orders, same payload and domain; local memory Sheets driver, not GAS latency",
+  "before": {
+    "local_ms": 121.71,
+    "sheets_read_calls": 21,
+    "read_json_chars": 30922296,
+    "snapshots_decoded": 125,
+    "compact_invocations": 3,
+    "archive_reads": 3,
+    "snapshot_chars": 164526,
+    "rows": {
+      "ERP_STATE": 182,
+      "ERP_JOURNAL": 182,
+      "ERP_ARCHIVE": 65
+    }
+  },
+  "after": {
+    "local_ms": 4.99,
+    "sheets_read_calls": 11,
+    "read_json_chars": 772558,
+    "snapshots_decoded": 4,
+    "compact_invocations": 0,
+    "archive_reads": 0,
+    "snapshot_chars": 164526,
+    "rows": {
+      "ERP_STATE": 210,
+      "ERP_JOURNAL": 210,
+      "ERP_ARCHIVE": 37
+    }
+  }
+}

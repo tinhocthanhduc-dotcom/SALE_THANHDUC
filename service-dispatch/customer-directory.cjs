@@ -11,7 +11,7 @@ function createClient({config,send,hmac,now=()=>Date.now(),id}){
   if(!mapping||mapping.role!==role||!mapping.actor_id)fail('DIRECTORY_ACTOR_UNMAPPED');
   const envelope={client_id:'DIEUPHOI',actor_id:mapping.actor_id,timestamp:now(),nonce:id(),action,payload,...command};
   envelope.signature=hmac(stable(envelope),c.secret);
-  let response;try{response=send(c.url,envelope);}catch(e){const code=e.code||e.message;if(/^(DIRECTORY_NOT_CONFIGURED|DIRECTORY_NETWORK_ERROR|DIRECTORY_HTTP_[0-9]{3}|DIRECTORY_GOOGLE_LOGIN|DIRECTORY_NON_JSON|DIRECTORY_RESPONSE_TOO_LARGE|DIRECTORY_REDIRECT_REJECTED)$/.test(code))fail(code);fail('DIRECTORY_UNAVAILABLE');}
+  let response;const sent=Date.now();try{response=send(c.url,envelope);}catch(e){const code=e.code||e.message;if(/^(DIRECTORY_NOT_CONFIGURED|DIRECTORY_NETWORK_ERROR|DIRECTORY_HTTP_[0-9]{3}|DIRECTORY_GOOGLE_LOGIN|DIRECTORY_NON_JSON|DIRECTORY_RESPONSE_TOO_LARGE|DIRECTORY_REDIRECT_REJECTED)$/.test(code))fail(code);fail('DIRECTORY_UNAVAILABLE');}finally{console.info('dispatch-command-timing',JSON.stringify({phase:'directory_fetch',ms:Date.now()-sent}));}
   if(!response||typeof response.ok!=='boolean')fail('DIRECTORY_UNAVAILABLE');
   if(!response.ok)fail('DIRECTORY_'+(response.error||'UNAVAILABLE'),response.details);if(!response.data||typeof response.data!=='object')fail('DIRECTORY_UNAVAILABLE');
   return response.data;
@@ -30,7 +30,7 @@ function controller({client,auth,repository,now,id,catalogue}){
    const actor=auth.actor(token);
    if(action==='directory_search')return search(client,actor,p);
    if(action==='directory_select'){
-    if(!manage(actor))fail('FORBIDDEN');const state=snapshot();if(!/^KTD-\d{6,}$/.test(p.ma||''))fail('DIRECTORY_CODE_REQUIRED');if(p.customer_id){const existing=state.customers[p.customer_id];if(!existing)fail('UNKNOWN_CUSTOMER');if(existing.ma_khach_chung&&existing.ma_khach_chung!==p.ma)fail('DIRECTORY_ALREADY_LINKED');}
+    if(!manage(actor))fail('FORBIDDEN');if(!p.customer_id){if(!/^KTD-\d{6,}$/.test(p.ma||''))fail('DIRECTORY_CODE_REQUIRED');const remote=client.call(actor,'get',{ma:p.ma}),c=record(remote.customer,now());return {id:c.ma_khach_chung,customer:{id:c.ma_khach_chung,customer_no:c.ma_khach_chung,version:1,area:'',...c},deferred:true};}const state=snapshot();if(!/^KTD-\d{6,}$/.test(p.ma||''))fail('DIRECTORY_CODE_REQUIRED');if(p.customer_id){const existing=state.customers[p.customer_id];if(!existing)fail('UNKNOWN_CUSTOMER');if(existing.ma_khach_chung&&existing.ma_khach_chung!==p.ma)fail('DIRECTORY_ALREADY_LINKED');}
     if(typeof p.idempotency_key!=='string'||!p.idempotency_key.trim()||p.idempotency_key.length>180)fail('REQUIRED_FIELD');const fingerprint=stable({action,payload:{ma:p.ma,customer_id:p.customer_id}}),prior=state.commands[actor.id+':'+p.idempotency_key];if(prior){if(prior.fingerprint!==fingerprint)fail('IDEMPOTENCY_CONFLICT');return {...prior.result,replayed:true};}
     const remote=client.call(actor,'get',{ma:p.ma});return cache(actor,remote.customer,{customer_id:p.customer_id,key:p.idempotency_key,fingerprint,reason:'Liên kết mã khách chung'});
    }
@@ -42,6 +42,7 @@ function controller({client,auth,repository,now,id,catalogue}){
    }
    fail('UNKNOWN_ACTION');
   },
+  verifyOrder(token,command){const actor=auth.actor(token);if(!manage(actor))fail('FORBIDDEN');const p=command.payload||{},ma=p.ma_khach_chung||(/^KTD-\d{6,}$/.test(p.customer_id||'')?p.customer_id:snapshot().customers[p.customer_id]?.ma_khach_chung);if(!ma)fail('DIRECTORY_CODE_REQUIRED');return record(client.call(actor,'get',{ma}).customer,now());},
   command(token,command){
    const actor=auth.actor(token);if(!manage(actor))fail('FORBIDDEN');const fingerprint=stable(command),key=actor.id+':'+command.idempotency_key,state=snapshot(),prior=state.commands[key];
    if(typeof command.idempotency_key!=='string'||!command.idempotency_key.trim()||('DIEUPHOI:'+actor.id+':'+command.idempotency_key).length>180)fail('REQUIRED_FIELD');if(prior){if(prior.fingerprint!==fingerprint)fail('IDEMPOTENCY_CONFLICT');return {...prior.result,replayed:true};}

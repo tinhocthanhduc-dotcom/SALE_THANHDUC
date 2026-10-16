@@ -61,7 +61,7 @@ function execute(state,command,context){
   if(!next.customers[payload.customer_id])fail('UNKNOWN_CUSTOMER');
   entity=addMachine(payload.customer_id,payload);
  }else if(command.type==='create_order'){
-  const customer=next.customers[payload.customer_id];let machine=next.machines[payload.machine_id];
+  let customer=next.customers[payload.customer_id];const verified=context.directory_verified;if(context.directory_required&&verified){if(!/^KTD-\d{6,}$/.test(verified.ma_khach_chung))fail('FORBIDDEN');if(customer&&customer.ma_khach_chung!==verified.ma_khach_chung&&customer.ma_khach_chung!==payload.ma_khach_chung)fail('DIRECTORY_ALREADY_LINKED');customer=customer||Object.values(next.customers).find(c=>c.ma_khach_chung===verified.ma_khach_chung);if(!customer){customer={id:verified.ma_khach_chung,customer_no:verified.ma_khach_chung,version:0,area:'',created_at:at};next.customers[customer.id]=customer;}if((customer.directory_version||0)>verified.directory_version)fail('DIRECTORY_STALE_VERSION');Object.assign(customer,verified,{version:customer.version+1,updated_at:at});}let machine=next.machines[payload.machine_id];
   if(!customer)fail('UNKNOWN_CUSTOMER');if(context.directory_required&&!customer.ma_khach_chung)fail('DIRECTORY_CODE_REQUIRED');if(payload.machine_id&&(!machine||machine.customer_id!==customer.id))fail('MACHINE_CUSTOMER_MISMATCH');if(machine&&machine.active===false)fail('MACHINE_INACTIVE');
   if(!['hotline','zalo','other'].includes(payload.source)||!['normal','urgent','critical'].includes(payload.priority))fail('INVALID_CATEGORY');
   const serviceDate=appointmentDay(payload,at);let appointmentStart=payload.appointment_start,appointmentEnd=payload.appointment_end;

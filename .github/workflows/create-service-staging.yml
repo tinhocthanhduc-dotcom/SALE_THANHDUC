@@ -170,6 +170,22 @@ jobs:
           fs.writeFileSync(path.join(root,'changes-benchmark-status.json'),JSON.stringify({measured,errors:[dev.error?.message,raw.error?.message].filter(Boolean),exit_code:Number(process.env.DISPATCH_BENCHMARK_EXIT),report:measured?report:undefined,reason:measured?undefined:'Execution API unavailable or did not return timing; owner can run benchmarkDispatchChanges in editor.'},null,2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nChanges timing: '+(measured?report.average_ms+' ms average (GAS)':'not measured; Execution API did not return timing. Owner can run benchmarkDispatchChanges in editor.')+'\n');
           JS
+      - name: Try owner-only storage profiling without changing API access
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          profile_exit=0
+          timeout 45s clasp --json run profileDispatchStorage > "$RUNNER_TEMP/project-registry/storage-profile-raw.json" 2> "$RUNNER_TEMP/project-registry/storage-profile-error.txt" || profile_exit=$?
+          export DISPATCH_PROFILE_EXIT="$profile_exit"
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),root=path.join(process.env.RUNNER_TEMP,'project-registry');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(root,'storage-profile-raw.json'),'utf8'));}catch(ignore){}
+          const report=raw.response||raw.result||raw,measured=Number.isFinite(report.snapshot_chars)&&Array.isArray(report.tabs);
+          const status={measured,exit_code:Number(process.env.DISPATCH_PROFILE_EXIT),error:raw.error?.message,report:measured?report:undefined,reason:measured?undefined:'Execution API did not return storage metrics. No API access or scopes were widened. Owner can run profileDispatchStorage in editor.'};
+          fs.writeFileSync(path.join(root,'storage-profile-status.json'),JSON.stringify(status,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nStorage profile: '+(measured?report.snapshot_chars+' chars; '+report.tabs.map(t=>t.name+': '+t.rows+' rows').join(', '):status.reason)+'\n');
+          JS
       - name: Upload project links
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

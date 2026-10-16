@@ -42,6 +42,7 @@ jobs:
       - run: node service-dispatch/test/technician-pickup-browser.cjs
       - run: node service-dispatch/test/technician-complete-browser.cjs
       - run: node service-dispatch/test/mobile-revision-browser.cjs
+      - run: node service-dispatch/test/slow-request-browser.cjs
       - run: node service-dispatch/test/technician-payment-browser.cjs
       - run: node service-dispatch/test/technician-cash-browser.cjs
       - run: node service-dispatch/test/desktop-dispatch-browser.cjs
