@@ -1,0 +1,20 @@
+{
+  "measured": false,
+  "exit_code": 0,
+  "error": "We're sorry, a server error occurred while reading from storage. Error code NOT_FOUND.",
+  "reason": "Execution API did not return storage metrics. No API access or scopes were widened. Owner can run profileDispatchStorage in editor.",
+  "deployment_version": 65,
+  "feature_commit": "fb61d77",
+  "workflow_url": "https://github.com/tinhocthanhduc-dotcom/SALE_THANHDUC/actions/runs/38828914957",
+  "snapshot_chars": null,
+  "tabs": null,
+  "write_under_5_seconds_verified": false,
+  "select_under_3_seconds_verified": false,
+  "user_reported_before_dispatchApi_seconds": [
+    41.0,
+    37.2,
+    19.3,
+    13.0,
+    14.0
+  ]
+}

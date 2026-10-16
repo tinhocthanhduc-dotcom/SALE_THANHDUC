@@ -8,7 +8,7 @@
 - UI không bỏ phản hồi ở 8s: hiện thông báo chờ giữ nguyên, đợi tới 60s; hết hạn mở lại thao tác và hiện Thử lại, không đổi idempotency_key. Đã có browser test giả lập server commit rồi mất phản hồi, retry chỉ tạo một đơn.
 - Console chỉ ghi thời gian số, không tên/SĐT/token/payload: request, directory_fetch, lock_wait, recover, snapshot_read, compact, domain, journal, state, commit, export_outbox. `profileDispatchStorage()` trả kích thước snapshot và dòng STATE/JOURNAL/ARCHIVE, không in khách. Maintenance 10 phút là tùy chọn, không tự tạo trigger.
 - Đo driver local cùng dữ liệu giả: đọc JSON 30.922.296 → 772.558 ký tự, decode 125 → 4, compact 3 → 0, archive read 3 → 0, số lần đọc Sheets 21 → 11. Không coi đây là số giây GAS; CPU local biến động. [Báo cáo đo và hướng dẫn staging](../docs/service-dispatch/performance-20261016/README.md).
-- Hồi quy: 337/337 Node (bao gồm 6 ca bổ sung), 26/26 bộ browser Điều phối; browser Danh bạ và ERP UI chạy lại. Build GAS đạt. Đang thử đo staging qua Execution API; chưa khẳng định mục tiêu <5s/<3s hoặc kích thước workbook thật khi chưa có kết quả native.
+- Hồi quy: 337/337 Node (bao gồm 6 ca bổ sung), 26/26 bộ browser Điều phối; browser Danh bạ và ERP UI chạy lại. Build GAS đạt. Đã deploy **staging v65**, cùng project/URL và giữ dữ liệu, gồm bản mobile 55ced52. Workflow đo native trả `NOT_FOUND` khi gọi Execution API: chưa lấy được kích thước workbook hay thời gian giai đoạn thật; **chưa xác nhận <5s/<3s**. Chủ cần chạy `profileDispatchStorage` trong editor và thao tác thử để lấy log. [Trạng thái đo native](../docs/service-dispatch/performance-20261016/staging-measurement.json).
 
 
 ## 16/10/2026 — thu gọn màn thợ, chụp ảnh và chốt tiền nghiệm thu
