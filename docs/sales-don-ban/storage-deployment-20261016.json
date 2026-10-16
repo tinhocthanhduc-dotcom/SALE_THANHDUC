@@ -1,0 +1,25 @@
+{
+  "source_commit": "8dfb4a29d9cb2e5a9bf42bff273553786742a1b9",
+  "version": 64,
+  "github_run": 38862076183,
+  "tests_local": {
+    "passed": 50,
+    "failed": 0
+  },
+  "native_migration": {
+    "success": true,
+    "migrated": 0,
+    "alreadyCopied": 0
+  },
+  "native_migration_repeat": {
+    "success": true,
+    "migrated": 0,
+    "alreadyCopied": 0
+  },
+  "native_list_read": {
+    "ok": true,
+    "elapsed_ms": 3917
+  },
+  "native_business_test_writes": false,
+  "finance_or_warehouse_writes": false
+}

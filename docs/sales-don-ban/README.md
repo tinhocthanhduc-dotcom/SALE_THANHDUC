@@ -78,6 +78,8 @@ Google Apps Script không cho server và HTML trùng tên DonBan. Repo giữ Don
 - 38/38 test local đạt; thêm regression chống trùng tên file GAS sau sự cố đóng gói đầu tiên.
 - Cần điền `NHAN_VIEN_BAN_HANG` trong CAU_HINH trước khi chọn người báo. Thẻ B “Nhận từ Sales” bên Finance chưa triển khai trong việc này.
 
-## Bản sửa lưu receipt và đường đọc (chưa deploy)
+## Bản sửa lưu receipt và đường đọc — đã deploy v64
 
 50/50 test local đạt: giữ 38 ca trước, thêm 12 ca storage/migration/read. Thay đổi runtime chỉ ở DonBan.js; code.js, Index.html và DonBan.html không đổi. Chi tiết và cách chuyển dữ liệu ở [STORAGE_MIGRATION.md](STORAGE_MIGRATION.md). Deployment v63 phía trên là bản trước sửa này.
+
+Đã tự triển khai bản sửa thành Sales v64 và chạy migration Google hai lần thành công (`migrated:0`, không có receipt Properties cũ). Đọc listDonBan Google thành công. Xem bằng chứng trong STORAGE_MIGRATION.md; chủ chỉ cần tải lại app, không cần chạy hàm thủ công.
