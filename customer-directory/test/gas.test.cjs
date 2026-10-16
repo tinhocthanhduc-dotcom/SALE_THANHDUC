@@ -154,3 +154,10 @@ test('API-only accepts signed DIEUPHOI search/create with replay; refuses other 
  for(const action of ['merge','scan_copies','finalize_import','command'])assert.equal(send(action).error,'FORBIDDEN');
  const before=f.opens();assert.equal(send('get',{},'bad','DIEUPHOI','wrong').error,'BAD_SIGNATURE');assert.equal(f.opens(),before);
 });
+
+test('owner create benchmark uses TEST_ phone/address, replays same command and logs only phase metrics',()=>{
+ const f=runtime(actors.director.id),logs=[];f.ctx.Logger={log:s=>logs.push(JSON.parse(s))};
+ const r=plain(f.ctx.benchmarkCustomerDirectoryCreate());assert.equal(r.replayed,true);assert(r.phases.some(x=>x.phase==='read_state'));assert(r.phases.some(x=>x.phase==='history_append'));
+ assert.equal(f.raw.sheets.KHACH.getLastRow(),2);assert(f.raw.sheets.KHACH.rows[1][2].startsWith('TEST_'));assert(f.raw.sheets.KHACH.rows[1][4]);assert(f.raw.sheets.KHACH.rows[1][6]);
+ assert(!JSON.stringify(logs).includes('TEN'));assert(!JSON.stringify(logs).includes('DIEN_THOAI'));
+});

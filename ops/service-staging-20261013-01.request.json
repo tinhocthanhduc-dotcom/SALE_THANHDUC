@@ -4,6 +4,7 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 44,
-  "update": "Deploy security fix 775543b to SAME Dispatch staging script/deployment. Backoff instead of hard user lockout, pre-hash quota gate, private owner secret-paste dialog and failed-login audit. Preserve users/sessions/data/storage mode/Directory mappings/all existing secrets. DO NOT invoke secret rotation/revoke/setters, setup, migration, or archive installers. Attempt synthetic benchmarkDispatchPasswordHash with existing owner Execution API only; log numeric timing, preserve 600000 policy, report unavailable honestly. No real apps changed. 370 Node and 27 old browser suites plus security dialog browser pass. Include follow-up: consume dialog nonce inside the SAME ScriptLock as storing the key; never rotate or revoke secrets automatically."
+  "revision": 45,
+  "update": "Deploy customer-directory transport response budget to SAME Dispatch staging. Preserve data/users/sessions/storage mode/integration copies/all secrets. Run owner-only benchmarkDispatchDirectoryCreate (TEST_ customer through the approved signed COPY API) if Execution API permits; no setup/reset/migration/rotation/revoke or live apps.",
+  "run_directory_create_benchmark": true
 }

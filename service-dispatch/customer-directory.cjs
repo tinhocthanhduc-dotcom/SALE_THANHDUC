@@ -4,14 +4,14 @@ const {stable}=require('../customer-directory/core.cjs');
 function fail(code,details){throw Object.assign(new Error(code),{code,details});}
 const manage=a=>a.roles.some(r=>['dispatcher','director'].includes(r));
 function search(client,actor,p={}){if(!manage(actor))fail('FORBIDDEN');if(typeof p.q!=='string'||p.q.trim().length<2)return {customers:[]};return client.call(actor,'search',{q:p.q.trim().slice(0,200)});}
-function createClient({config,send,hmac,now=()=>Date.now(),id}){
+function createClient({config,send,hmac,now=()=>Date.now(),clock=()=>Date.now(),timeoutMs=8000,id}){
  return {call(actor,action,payload={},command={}){
   let c;try{c=config();}catch(e){fail('DIRECTORY_NOT_CONFIGURED');}if(!c||typeof c!=='object')fail('DIRECTORY_NOT_CONFIGURED');const mapping=c.actors?.[actor.id],role=actor.roles.includes('director')?'director':'dispatcher';
   if(!c.url||!c.secret)fail('DIRECTORY_NOT_CONFIGURED');
   if(!mapping||mapping.role!==role||!mapping.actor_id)fail('DIRECTORY_ACTOR_UNMAPPED');
   const envelope={client_id:'DIEUPHOI',actor_id:mapping.actor_id,timestamp:now(),nonce:id(),action,payload,...command};
   envelope.signature=hmac(stable(envelope),c.secret);
-  let response;const sent=Date.now();try{response=send(c.url,envelope);}catch(e){const code=e.code||e.message;if(/^(DIRECTORY_NOT_CONFIGURED|DIRECTORY_NETWORK_ERROR|DIRECTORY_HTTP_[0-9]{3}|DIRECTORY_GOOGLE_LOGIN|DIRECTORY_NON_JSON|DIRECTORY_RESPONSE_TOO_LARGE|DIRECTORY_REDIRECT_REJECTED)$/.test(code))fail(code);fail('DIRECTORY_UNAVAILABLE');}finally{console.info('dispatch-command-timing',JSON.stringify({phase:'directory_fetch',ms:Date.now()-sent}));}
+  let response;const sent=clock();try{response=send(c.url,envelope,{timeoutMs,deadline:sent+timeoutMs});if(clock()-sent>=timeoutMs)fail('DIRECTORY_UNAVAILABLE');}catch(e){const code=e.code||e.message;if(clock()-sent>=timeoutMs||/timeout|timed out/i.test(String(code)))fail('DIRECTORY_UNAVAILABLE');if(/^(DIRECTORY_NOT_CONFIGURED|DIRECTORY_NETWORK_ERROR|DIRECTORY_HTTP_[0-9]{3}|DIRECTORY_GOOGLE_LOGIN|DIRECTORY_NON_JSON|DIRECTORY_RESPONSE_TOO_LARGE|DIRECTORY_REDIRECT_REJECTED)$/.test(code))fail(code);fail('DIRECTORY_UNAVAILABLE');}finally{console.info('dispatch-command-timing',JSON.stringify({phase:'directory_fetch',ms:clock()-sent}));}
   if(!response||typeof response.ok!=='boolean')fail('DIRECTORY_UNAVAILABLE');
   if(!response.ok)fail('DIRECTORY_'+(response.error||'UNAVAILABLE'),response.details);if(!response.data||typeof response.data!=='object')fail('DIRECTORY_UNAVAILABLE');
   return response.data;

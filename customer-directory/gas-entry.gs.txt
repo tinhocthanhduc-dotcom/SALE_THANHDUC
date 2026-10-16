@@ -396,3 +396,17 @@ function configureDispatchDirectoryClient() {
   });
  }finally{c.p.deleteProperty('CD_DISPATCH_USERS');}
 }
+
+/** Owner-only COPY benchmark. Creates exactly one TEST_ customer per supplied key;
+ * logs phase numbers only, never names/phones, preserves all existing customers. */
+function benchmarkCustomerDirectoryCreate() {
+  cdOwner_();
+  var init=Date.now(),config=cdProperties_(),actor=cdActor_(config),repo=cdRepository_(config);
+  var initMs=Date.now()-init,key='TEST_CREATE_BENCH_'+Utilities.getUuid();
+  var command={type:'create',payload:{customer:{TEN:'TEST_CREATE_BENCH_'+Utilities.getUuid(),LOAI:'CA_NHAN',DIEN_THOAI:'099'+String(Date.now()%10000000).padStart(7,'0'),DIA_CHI:'TEST_BENCHMARK_COPY'}},idempotency_key:key};
+  var start=Date.now(),result=repo.submit(command,actor),elapsed=Date.now()-start,phases=repo.driver.lastTimings||[];
+  var retryStart=Date.now(),retry=repo.submit(command,actor);
+  if(!retry.replayed||retry.customer.MA_KHACH!==result.customer.MA_KHACH)throw new Error('BENCHMARK_REPLAY_FAILED');
+  var report={environment:'Google_COPY',repository_init_ms:initMs,submit_ms:elapsed,total_ms:initMs+elapsed,replay_ms:Date.now()-retryStart,phases:phases,replayed:true,target_ms:5000};
+  Logger.log(JSON.stringify(report));return report;
+}

@@ -200,6 +200,15 @@ jobs:
           fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/hash-benchmark-status.json'),JSON.stringify(status,null,2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nPassword hash: '+(measured?JSON.stringify(status.samples):status.reason)+'\n');
           JS
+      - name: Benchmark staging to Directory COPY TEST_ create if authorized
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_directory_create_benchmark===true?0:1)' "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.request.json"; then
+            cd "$RUNNER_TEMP/dispatch-project"
+            timeout 90s clasp --json run benchmarkDispatchDirectoryCreate > "$RUNNER_TEMP/directory-create-raw.json" 2> "$RUNNER_TEMP/directory-create-error.txt" || true
+            node "$GITHUB_WORKSPACE/customer-directory/create-timing-status.cjs" "$RUNNER_TEMP/directory-create-raw.json" "$RUNNER_TEMP/directory-create-error.txt" "$RUNNER_TEMP/project-registry/directory-create-timing.json"
+          fi
       - name: Upload project links
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

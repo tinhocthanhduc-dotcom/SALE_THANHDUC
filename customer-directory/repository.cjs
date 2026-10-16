@@ -31,23 +31,32 @@ class Repository {
     if (!command || typeof command.idempotency_key !== "string" || !command.idempotency_key.trim() || command.idempotency_key.length > 180) C.fail("IDEMPOTENCY_REQUIRED");
     if (command.expected_version !== void 0 && (!Number.isSafeInteger(command.expected_version) || command.expected_version < 0)) C.fail("INVALID_VERSION");
     const requestHash = this.hash(stable({ command, actor: actor.id }));
+    this.driver.beginRequest?.();
+    const timed = (phase, fn) => this.driver.measure ? this.driver.measure(phase, fn) : fn();
+    const waiting = Date.now();
     try { return this.driver.lock(() => {
-      this.driver.recover();
+      this.driver.recordTiming?.('lock_wait', Date.now() - waiting);
+      timed('recover', () => this.driver.recover());
       const old = this.driver.receipt(command.idempotency_key);
       if (old) {
         if (old.hash !== requestHash) C.fail("IDEMPOTENCY_CONFLICT");
         return { ...C.clone(old.result), replayed: true };
       }
-      const state = this.driver.read(), ctx = { actor, now: this.now, id: this.id, allocate: () => this.driver.allocate() }, out = ["scan_import", "review_import", "finalize_import"].includes(command.type) ? M.apply(state, command, ctx, this.hash) : C.change(state, command, ctx), result = { ...out.result, revision: out.state.revision }, transaction = { id: this.id(), key: command.idempotency_key, hash: requestHash, base_revision: state.revision, delta: delta(state, out.state), result };
-      this.driver.prepare(transaction);
-      this.driver.apply(transaction);
-      this.driver.commit(transaction);
+      const state = timed('read_state', () => this.driver.read({light: !['scan_import', 'review_import', 'finalize_import'].includes(command.type), mappings: command.type === 'merge'}));
+      const ctx = {actor, now: this.now, id: this.id, allocate: () => this.driver.allocate()};
+      const out = timed('domain', () => ['scan_import', 'review_import', 'finalize_import'].includes(command.type) ? M.apply(state, command, ctx, this.hash) : C.change(state, command, ctx));
+      const result = {...out.result, revision: out.state.revision};
+      const transaction = {id: this.id(), key: command.idempotency_key, hash: requestHash, base_revision: state.revision, delta: delta(state, out.state), result};
+      timed('prepare', () => this.driver.prepare(transaction));
+      timed('apply', () => this.driver.apply(transaction));
+      timed('commit', () => this.driver.commit(transaction));
       return C.clone(result);
     }); } finally { this.driver.endRequest?.(); }
   }
   read(action, payload, actor) {
     C.access(actor);
     if (["import_view", "review_detail", "mappings", "report"].includes(action)) C.access(actor, ["finance", "director"]);
+    this.driver.beginRequest?.();
     try {
     if (["search", "get", "history"].includes(action) && this.driver.readConsistent) return this.driver.readConsistent(action, payload);
     return this.driver.lock(() => {

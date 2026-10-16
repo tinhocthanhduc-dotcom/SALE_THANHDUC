@@ -7,6 +7,7 @@ class Sheet {
     this.name = name;
     this.rows = [];
   }
+  deleteRows(start, count) { this.rows.splice(start - 1, count); }
   getDataRange() {
     const n = Math.max(1, this.rows.length), width = Math.max(1, ...this.rows.map(r => r.length));
     return { getDisplayValues: () => Array.from({length:n}, (_,i) => Array.from({length:width}, (_,j) => String(this.rows[i]?.[j] ?? ""))) };

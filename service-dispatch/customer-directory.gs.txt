@@ -1,14 +1,16 @@
 /** Shared ContentService transport. Record statuses only, never redirect query tokens or bodies. */
-function dispatchDirectoryFetch_(url,options,diagnostic,props,property){
+function dispatchDirectoryFetch_(url,options,diagnostic,props,property,deadline){
+ function budget(){if(deadline&&Date.now()>=deadline)throw new Error('DIRECTORY_UNAVAILABLE');}
+ budget();
  options.followRedirects=false;options.escaping=false;
- var response=UrlFetchApp.fetch(url,options),status=response.getResponseCode();diagnostic.initial_http_status=status;diagnostic.phase='API_ENDPOINT';props.setProperty(property,JSON.stringify(diagnostic));
+ var response=UrlFetchApp.fetch(url,options);budget();var status=response.getResponseCode();diagnostic.initial_http_status=status;diagnostic.phase='API_ENDPOINT';props.setProperty(property,JSON.stringify(diagnostic));
  if(status!==302&&status!==303)return response;
  var headers=response.getAllHeaders(),location=String(headers.Location||headers.location||'');
  if(/^https:\/\/accounts\.google\.com\//.test(location))throw new Error('DIRECTORY_GOOGLE_LOGIN');
  if(!/^https:\/\/script\.googleusercontent\.com\/macros\/echo\?/.test(location))throw new Error('DIRECTORY_REDIRECT_REJECTED');
  diagnostic.phase='CONTENT_SERVICE_RESPONSE';diagnostic.redirect_host='script.googleusercontent.com';props.setProperty(property,JSON.stringify(diagnostic));
  // Google signs this already-encoded URL. Do not re-escape it or forward POST/HMAC.
- response=UrlFetchApp.fetch(location,{method:'get',escaping:false,muteHttpExceptions:true,followRedirects:false});diagnostic.redirect_http_status=response.getResponseCode();props.setProperty(property,JSON.stringify(diagnostic));return response;
+ budget();response=UrlFetchApp.fetch(location,{method:'get',escaping:false,muteHttpExceptions:true,followRedirects:false});budget();diagnostic.redirect_http_status=response.getResponseCode();props.setProperty(property,JSON.stringify(diagnostic));return response;
 }
 /** COPY-only directory client. All credentials remain in Script Properties. */
 function dispatchDirectoryClient_(props) {
@@ -16,13 +18,13 @@ function dispatchDirectoryClient_(props) {
   config:function(){var p=props.getProperties();if(p.DISPATCH_CD_COPY_ACK!=='CUSTOMER_DIRECTORY_COPY')throw new Error('DIRECTORY_NOT_CONFIGURED');var url=typeof DispatchDirectoryCopyEndpoint!=='undefined'?DispatchDirectoryCopyEndpoint.web_app_url:p.DISPATCH_CD_URL;return {url:url,secret:p.DISPATCH_CD_SECRET,actors:JSON.parse(p.DISPATCH_CD_ACTORS||'{}')};},
   id:function(){return Utilities.getUuid();},
   hmac:function(raw,key){return Utilities.computeHmacSha256Signature(raw,key,Utilities.Charset.UTF_8).map(function(b){return ('0'+((b+256)%256).toString(16)).slice(-2);}).join('');},
-  send:function(url,envelope){
+  send:function(url,envelope,limits){
    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url))throw new Error('DIRECTORY_NOT_CONFIGURED');
-   // GAS has no configurable HTTP timeout. The browser enforces its 8s wait budget;
-   // retries reuse the original command key even if this fetch completes later.
+   // GAS cannot abort an in-flight UrlFetch. Enforce the 8s response budget before/after
+   // each hop and reject late results; retries preserve the original command key.
    var started=Date.now(),diagnostic={checked_at:new Date().toISOString(),target:'APPROVED_COPY_API',deployment_id:typeof DispatchDirectoryCopyEndpoint!=='undefined'?DispatchDirectoryCopyEndpoint.deployment_id:null},response,raw;
    function stop(code){diagnostic.error=code;diagnostic.elapsed_ms=Date.now()-started;props.setProperty('DISPATCH_CD_TRANSPORT_CHECK',JSON.stringify(diagnostic));throw new Error(code);}
-   try{response=dispatchDirectoryFetch_(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true},diagnostic,props,'DISPATCH_CD_TRANSPORT_CHECK');
+   try{response=dispatchDirectoryFetch_(url,{method:'post',contentType:'application/json',payload:JSON.stringify(envelope),muteHttpExceptions:true},diagnostic,props,'DISPATCH_CD_TRANSPORT_CHECK',limits&&limits.deadline);
    }catch(e){if(/^DIRECTORY_[A-Z_]+$/.test(e.message))stop(e.message);stop('DIRECTORY_NETWORK_ERROR');}
    diagnostic.http_status=response.getResponseCode();
    if(diagnostic.http_status!==200)stop('DIRECTORY_HTTP_'+diagnostic.http_status);
@@ -51,3 +53,15 @@ function checkDispatchDirectoryConnection(){
  if(!checked.length)throw new Error('DIRECTORY_ACTOR_UNMAPPED');var result={ok:true,checked_at:new Date().toISOString(),checked_user_ids:checked,client_id:'DIEUPHOI',target:'COPY',secrets_exposed:false};p.setProperty('DISPATCH_CD_CHECK',JSON.stringify(result));return result;
 }
 function enableDispatchCustomerDirectory(){dispatchBridgeOwner_();var result=checkDispatchDirectoryConnection();dispatchLock_(function(){PropertiesService.getScriptProperties().setProperty('DISPATCH_CD_ENABLED','true');});return result;}
+
+/** Owner-only staging->COPY TEST_ benchmark; no resets, secrets or customer PII logs. */
+function benchmarkDispatchDirectoryCreate(){
+ dispatchBridgeOwner_();var p=PropertiesService.getScriptProperties(),users=dispatchAuth_(p).directory(),mapping=JSON.parse(p.getProperty('DISPATCH_CD_ACTORS')||'{}');
+ var id=Object.keys(mapping).find(function(k){return users[k]&&users[k].active!==false&&users[k].roles.some(function(r){return r==='director'||r==='dispatcher';});});
+ if(!id)throw new Error('DIRECTORY_ACTOR_UNMAPPED');
+ var client=dispatchDirectoryClient_(p),key='TEST_BENCH_'+Utilities.getUuid(),payload={customer:{TEN:'TEST_DISPATCH_CREATE_'+Utilities.getUuid(),LOAI:'CA_NHAN',DIEN_THOAI:'099'+String(Date.now()%10000000).padStart(7,'0'),DIA_CHI:'TEST_COPY_BENCHMARK'}},start=Date.now();
+ var first=client.call(users[id],'create',payload,{idempotency_key:key}),elapsed=Date.now()-start;
+ var retryStart=Date.now(),second=client.call(users[id],'create',payload,{idempotency_key:key});
+ if(!second.replayed||first.customer.MA_KHACH!==second.customer.MA_KHACH)throw new Error('BENCHMARK_REPLAY_FAILED');
+ var report={environment:'STAGING_TO_DIRECTORY_COPY',directory_fetch_ms:elapsed,replay_ms:Date.now()-retryStart,replayed:true,target_ms:5000};console.info('dispatch-directory-create-benchmark',JSON.stringify(report));return report;
+}

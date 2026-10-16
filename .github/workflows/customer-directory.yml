@@ -165,6 +165,15 @@ jobs:
           cd "$RUNNER_TEMP/customer-directory-gas"
           timeout 45s clasp --json run benchmarkCustomerDirectorySearch > "$RUNNER_TEMP/customer-search-private.json" 2> "$RUNNER_TEMP/customer-search-private.err" || true
           node "$GITHUB_WORKSPACE/customer-directory/search-timing-status.cjs" "$RUNNER_TEMP/customer-search-private.json" "$RUNNER_TEMP/customer-registry/search-timing.json"
+      - name: Benchmark TEST_ create only on approved Directory COPY
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_create_benchmark===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            cd "$RUNNER_TEMP/customer-directory-gas"
+            timeout 90s clasp --json run benchmarkCustomerDirectoryCreate > "$RUNNER_TEMP/create-benchmark-raw.json" 2> "$RUNNER_TEMP/create-benchmark-error.txt" || true
+            node "$GITHUB_WORKSPACE/customer-directory/create-timing-status.cjs" "$RUNNER_TEMP/create-benchmark-raw.json" "$RUNNER_TEMP/create-benchmark-error.txt" "$RUNNER_TEMP/customer-registry/create-timing.json"
+          fi
       - name: Try authorized source-number rescan on the configured COPY
         shell: bash
         run: |

@@ -1,0 +1,51 @@
+{
+  "environment": "local_sheetDriver_only",
+  "dataset": {
+    "customers": 200,
+    "NGUON": 1770,
+    "DUYET_TRUNG": 824
+  },
+  "before": {
+    "dataset": {
+      "customers": 200,
+      "sources": 1770,
+      "reviews": 824
+    },
+    "reads": 30,
+    "cells": 72759,
+    "tables": {
+      "CD_META": 7,
+      "CD_JOURNAL": 3,
+      "CD_RECEIPTS": 3,
+      "KHACH": 4,
+      "NGUON": 3,
+      "DUYET_TRUNG": 3,
+      "ANH_XA": 3,
+      "LICH_SU": 3,
+      "CHI_MUC": 1
+    },
+    "elapsed_local_ms": 22
+  },
+  "after": {
+    "dataset": {
+      "customers": 200,
+      "sources": 1770,
+      "reviews": 824
+    },
+    "reads": 7,
+    "cells": 7870,
+    "tables": {
+      "CD_META": 1,
+      "CD_JOURNAL": 3,
+      "CD_RECEIPTS": 1,
+      "KHACH": 1,
+      "CHI_MUC": 1
+    },
+    "elapsed_local_ms": 6
+  },
+  "node_tests": {
+    "directory": 108,
+    "dispatch": 196
+  },
+  "google_timing_measured": false
+}
