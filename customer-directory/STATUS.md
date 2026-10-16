@@ -4,7 +4,7 @@
 
 - Auth HMAC hỗ trợ khóa hiện tại và khóa trước tới đúng `previous_expires_at`, không dựa vào timestamp do client tự khai để kéo dài. Thu hồi ngay xóa khóa trước. Rotation/revoke dưới ScriptLock; không thay actor map hoặc dữ liệu khách.
 - Trang bảo mật riêng tư cho chủ mở hộp thoại khóa một lần bằng nonce UserCache. Đóng/tải lại xóa giá trị; không có hàm đọc lại khóa, không đưa khóa vào URL/Sheet/log. Project độc lập dùng HtmlService; entrypoint editor chỉ trả link UI đã ghim, không nhầm API anonymous. API_ONLY vẫn chặn mọi UI/owner action.
-- Kiểm thử chung 370/370 Node và hộp thoại bảo mật 4/4 đạt. Cần triển khai cả UI riêng tư và API trên cùng COPY project để hỗ trợ chuyển khóa; không chạy setup/gộp/chuẩn hóa hoặc xoay khóa tự động trong deployment. [OWNER_SETUP — 5 bước](../docs/customer-directory/OWNER_SETUP.md).
+- Kiểm thử chung 371/371 Node và hộp thoại bảo mật 4/4 đạt. Đã triển khai trên COPY: API v10 và UI Google riêng tư v11 (workflow 38847683131), hỗ trợ chuyển khóa ở cả hai endpoint; không chạy setup/gộp/chuẩn hóa hoặc xoay khóa tự động trong deployment. [OWNER_SETUP — 5 bước](../docs/customer-directory/OWNER_SETUP.md).
 
 ## 15/10/2026 — cấu hình client Điều phối staging
 

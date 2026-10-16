@@ -1,6 +1,6 @@
 # Đổi khóa DIEUPHOI — 5 bước cho chủ
 
-Áp dụng cho Danh bạ COPY và Điều phối staging. Cần triển khai bản vá này vào **cả giao diện riêng tư lẫn API HMAC của Danh bạ**, và Điều phối, trước khi đổi khóa. API cũ chưa có hỗ trợ khóa giao nhau. Không tạo lại client, không chạy setup, không sửa dữ liệu khách và không gửi khóa vào chat/GitHub/Sheet.
+Áp dụng cho Danh bạ COPY và Điều phối staging. Đã triển khai bản vá: **Danh bạ COPY UI v11 + API HMAC v10, Điều phối staging v68**. Khóa thật chưa đổi; chủ thực hiện 5 bước bên dưới. Không tạo lại client, không chạy setup, không sửa dữ liệu khách và không gửi khóa vào chat/GitHub/Sheet.
 
 1. **Mở bảo mật Danh bạ bằng tài khoản Google chủ project.** Mở [trang bảo mật Danh bạ COPY](https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec?admin=security). Hoặc chạy `rotateDispatchDirectorySecret` trong editor: nếu có cửa sổ Sheet sẽ mở hộp thoại; project độc lập sẽ in **đường dẫn trang bảo mật**, không in khóa. Chưa bấm “Tạo khóa mới” thì chưa thay đổi khóa.
 2. **Bấm “Tạo khóa mới”, sao chép và giữ hộp thoại mở.** Từ lúc này khóa cũ còn dùng trong 30 phút; khóa mới dùng ngay. Hộp thoại hiện giờ hết hạn theo giờ Việt Nam. Đóng hoặc tải lại là không xem lại được khóa qua giao diện. Nếu đang có lượt đổi chưa hết hạn, hệ thống chặn tạo lượt mới để không làm mất khóa của bên Điều phối.
