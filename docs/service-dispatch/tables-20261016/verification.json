@@ -176,7 +176,7 @@
   "gas_build": true,
   "native_google": {
     "measured": false,
-    "reason": "Execution API previously returned NOT_FOUND; this change has not been deployed or migrated on Google. Native thresholds remain pending."
+    "reason": "Staging v66 deployed and public shell verified. Execution API returned NOT_FOUND; COPY migration and native 1000-order thresholds remain pending."
   },
   "rollout": "LEGACY remains default; owner-only guarded COPY migration"
 }

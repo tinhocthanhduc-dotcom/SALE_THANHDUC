@@ -29,4 +29,4 @@ Mỗi đơn chạy Domain thật: tạo, giao, nhận, bắt đầu, hai ảnh m
 
 ## Native và rollout
 
-**Chưa đo Google với 1.000 đơn; chưa xác nhận <5s / <3s.** Chưa deploy hoặc migrate staging trong đợt này. [Hướng dẫn bản sao, đo và rollback](OWNER_SETUP.md). Mốc trước pilot còn: benchmark native, UAT toàn bộ trên COPY, workload hỗn hợp, rollback sau ghi mới và phân trang báo cáo toàn lịch sử.
+**Chưa đo Google với 1.000 đơn; chưa xác nhận <5s / <3s.** Đã deploy staging **v66**, HTTP 200 và client payload khớp bản build; chưa migrate COPY hay chạy UAT có đăng nhập. [Hướng dẫn bản sao, đo và rollback](OWNER_SETUP.md). Mốc trước pilot còn: benchmark native, UAT toàn bộ trên COPY, workload hỗn hợp, rollback sau ghi mới và phân trang báo cáo toàn lịch sử.
