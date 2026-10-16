@@ -356,6 +356,7 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
     <div class="nav-label">BÁN HÀNG</div>
     <button class="active" data-page="quote">Tạo báo giá</button>
     <button data-page="history">Báo giá đã lưu</button>
+    <button data-page="donban">Đơn bán</button>
     <div class="nav-label">DỮ LIỆU</div>
     <button data-page="customers">Khách hàng</button>
     <button data-page="products">Sản phẩm</button>
@@ -550,6 +551,7 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
   </div>
 </section>
 
+<?!= includeDonBan_(); ?>
 </main></div>
 
 <div id="customerModal" class="modal"><div class="dialog large"><div class="head"><b id="customerModalTitle">Khách hàng</b><button class="light" onclick="closeModal('customerModal')">✕</button></div><div class="body"><div class="form">
@@ -1780,6 +1782,7 @@ function quotePayload(){
       ).value
     ),
     items:quoteItems.map(item=>({
+      source:item.source||'',
       code:item.code,
       name:item.name,
       unit:item.unit,
@@ -2381,6 +2384,8 @@ function renderHistory(){
       <td class="right">${money(quote.total)}</td>
       <td>
         <div class="row-actions">
+          <button class="mini" data-db-write data-db-locked="${['HỦY','ĐÃ HỦY','ĐÃ CHỐT ĐƠN'].includes(String(quote.status||'').toUpperCase())}" data-db-quote="${esc(quote.no)}"
+            onclick="DonBan.chot(this)" ${['HỦY','ĐÃ HỦY','ĐÃ CHỐT ĐƠN'].includes(String(quote.status||'').toUpperCase())?'disabled':''}>Chốt đơn</button>
           <button class="light mini"
             onclick="openQuoteForEdit('${esc(quote.no)}',false)">
             ${cancelled?'Xem':'Xem/Sửa'}
@@ -2496,6 +2501,7 @@ function openQuoteForEdit(no,duplicate){
         DB.products.find(p=>p.code===item.code)||{};
 
       return {
+        source:item.source||'',
         code:item.code,
         name:item.name,
         unit:item.unit||product.unit||'Cái',

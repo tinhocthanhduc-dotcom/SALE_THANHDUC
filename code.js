@@ -7,7 +7,10 @@ const APP = {
     QUOTE_LINES: 'CHI_TIET_BAO_GIA',
     CONTRACTS: 'HOP_DONG',
     CONFIG: 'CAU_HINH',
-    GROUPS: 'NHOM_HANG'
+    GROUPS: 'NHOM_HANG',
+    ORDERS: 'DON_BAN',
+    ORDER_LINES: 'CHI_TIET_DON_BAN',
+    COLLECTIONS: 'BAO_THU'
   },
   TZ: 'Asia/Ho_Chi_Minh',
   WAREHOUSE: {
@@ -25,7 +28,7 @@ const APP_RUNTIME = {
 };
 
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
+  return HtmlService.createTemplateFromFile('Index').evaluate()
     .setTitle('Thành Đức Sales')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -211,6 +214,7 @@ function cfg_() {
 }
 
 function nextNo_(prefix) {
+  if (prefix === 'DB' || prefix === 'BT') return donBanNextNo_(prefix);
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -2485,6 +2489,10 @@ function saveQuote(q) {
   ensureAppReady_();
 
   const no = q.no || nextNo_('BG');
+  const donBanLock = LockService.getScriptLock();
+  donBanLock.waitLock(30000);
+  try {
+  donBanAssertQuoteEditable_(no);
   const now = new Date();
   const quoteDate = q.date
     ? new Date(q.date + 'T00:00:00')
@@ -2553,14 +2561,16 @@ function saveQuote(q) {
 
   const lineSheet = sheet_(APP.SHEETS.QUOTE_LINES);
 
+  const donBanLineStart = lineSheet.getLastRow() + 1;
   lineSheet
     .getRange(
-      lineSheet.getLastRow() + 1,
+      donBanLineStart,
       1,
       lines.length,
       12
     )
     .setValues(lines);
+  donBanSaveSources_(lineSheet, donBanLineStart, q.items);
 
   return {
     success: true,
@@ -2584,6 +2594,7 @@ function saveQuote(q) {
       pdf: ''
     }
   };
+  } finally { donBanLock.releaseLock(); }
 }
 
 function listQuotes(filters) {
@@ -2807,6 +2818,7 @@ function updateQuote(q) {
   lock.waitLock(30000);
 
   try {
+    donBanAssertQuoteEditable_(no);
     const quoteSheet = sheet_(APP.SHEETS.QUOTES);
     const quoteMeta = sheetHeaderMap_(quoteSheet);
     const quoteNoColumn = quoteMeta.byName.SoBaoGia;
@@ -2955,14 +2967,16 @@ function updateQuote(q) {
       ];
     });
 
+    const donBanLineStart = lineSheet.getLastRow() + 1;
     lineSheet
       .getRange(
-        lineSheet.getLastRow() + 1,
+        donBanLineStart,
         1,
         lines.length,
         12
       )
       .setValues(lines);
+    donBanSaveSources_(lineSheet, donBanLineStart, q.items);
 
     return {
       success: true,
@@ -2999,6 +3013,10 @@ function cancelQuote(no, reason) {
   no = clean_(no);
   if (!no) throw new Error('Thiếu số báo giá.');
 
+  const donBanLock = LockService.getScriptLock();
+  donBanLock.waitLock(30000);
+  try {
+  donBanAssertQuoteEditable_(no);
   const sh = sheet_(APP.SHEETS.QUOTES);
   const meta = sheetHeaderMap_(sh);
   const noCol = meta.byName.SoBaoGia;
@@ -3056,6 +3074,7 @@ function cancelQuote(no, reason) {
     no: no,
     message: 'Đã hủy báo giá ' + no
   };
+  } finally { donBanLock.releaseLock(); }
 }
 
 
@@ -3070,6 +3089,7 @@ function deleteQuotePermanently(no) {
   lock.waitLock(30000);
 
   try {
+    donBanAssertQuoteEditable_(no);
     const contractSheet = sheet_(APP.SHEETS.CONTRACTS);
     const contractMeta = sheetHeaderMap_(contractSheet);
     const contractQuoteCol = contractMeta.byName.MaBaoGia;
@@ -6029,6 +6049,7 @@ function getQuote(no) {
     });
 
     return {
+      source: clean_(item.NguonHang),
       code: clean_(item.MaSanPham),
       name: clean_(item.TenSanPham),
       unit: clean_(item.DonViTinh) || 'Cái',
