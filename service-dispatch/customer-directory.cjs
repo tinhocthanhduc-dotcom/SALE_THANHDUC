@@ -22,16 +22,16 @@ function record(c,at){
  return {ma_khach_chung:c.MA_KHACH,name:c.TEN,phone:(c.DIEN_THOAI||[]).join('; '),tax:c.MST||'',address:c.DIA_CHI||'',directory_type:c.LOAI,directory_version:c.VERSION,directory_fetched_at:at,directory_credit_limit:c.HAN_MUC_NO||0,directory_allow_credit:c.CHO_PHEP_NO===true,allow_credit:c.CHO_PHEP_NO===true};
 }
 function controller({client,auth,repository,now,id,catalogue}){
- const snapshot=()=>repository.snapshot().state;
+ const snapshot=(options={})=>repository.snapshot(options).state;
  const cache=(actor,c,{customer_id,order_id,key,fingerprint,reason}={})=>repository.submit({type:'cache_directory_customer',idempotency_key:key||'directory:'+id(),payload:{customer_id,order_id,reason:reason||''}}, {actor,directory:auth.directory(),now,id,catalogue:catalogue.read(),directory_verified:record(c,now()),directory_source_fingerprint:fingerprint});
- function authorized(actor,p){const state=snapshot();if(p.order_id){const o=state.orders[p.order_id];if(!o||!require('./domain.cjs').canRead(actor,o))fail('FORBIDDEN');return {state,customer:state.customers[o.customer_id],order:o};}if(!manage(actor))fail('FORBIDDEN');return {state,customer:state.customers[p.customer_id]};}
+ function authorized(actor,p){const state=snapshot({orderId:p.order_id});if(p.order_id){const o=state.orders[p.order_id];if(!o||!require('./domain.cjs').canRead(actor,o))fail('FORBIDDEN');return {state,customer:state.customers[o.customer_id],order:o};}if(!manage(actor))fail('FORBIDDEN');return {state,customer:state.customers[p.customer_id]};}
  return {
   action(token,action,p={}){
    const actor=auth.actor(token);
    if(action==='directory_search')return search(client,actor,p);
    if(action==='directory_select'){
     if(!manage(actor))fail('FORBIDDEN');if(!p.customer_id){if(!/^KTD-\d{6,}$/.test(p.ma||''))fail('DIRECTORY_CODE_REQUIRED');const remote=client.call(actor,'get',{ma:p.ma}),c=record(remote.customer,now());return {id:c.ma_khach_chung,customer:{id:c.ma_khach_chung,customer_no:c.ma_khach_chung,version:1,area:'',...c},deferred:true};}const state=snapshot();if(!/^KTD-\d{6,}$/.test(p.ma||''))fail('DIRECTORY_CODE_REQUIRED');if(p.customer_id){const existing=state.customers[p.customer_id];if(!existing)fail('UNKNOWN_CUSTOMER');if(existing.ma_khach_chung&&existing.ma_khach_chung!==p.ma)fail('DIRECTORY_ALREADY_LINKED');}
-    if(typeof p.idempotency_key!=='string'||!p.idempotency_key.trim()||p.idempotency_key.length>180)fail('REQUIRED_FIELD');const fingerprint=stable({action,payload:{ma:p.ma,customer_id:p.customer_id}}),prior=state.commands[actor.id+':'+p.idempotency_key];if(prior){if(prior.fingerprint!==fingerprint)fail('IDEMPOTENCY_CONFLICT');return {...prior.result,replayed:true};}
+    if(typeof p.idempotency_key!=='string'||!p.idempotency_key.trim()||p.idempotency_key.length>180)fail('REQUIRED_FIELD');const fingerprint=stable({action,payload:{ma:p.ma,customer_id:p.customer_id}}),prior=repository.receipt?repository.receipt(actor.id,p.idempotency_key):state.commands[actor.id+':'+p.idempotency_key];if(prior){if(prior.fingerprint!==fingerprint)fail('IDEMPOTENCY_CONFLICT');return {...prior.result,replayed:true};}
     const remote=client.call(actor,'get',{ma:p.ma});return cache(actor,remote.customer,{customer_id:p.customer_id,key:p.idempotency_key,fingerprint,reason:'Liên kết mã khách chung'});
    }
    if(action==='directory_get'){
@@ -44,7 +44,7 @@ function controller({client,auth,repository,now,id,catalogue}){
   },
   verifyOrder(token,command){const actor=auth.actor(token);if(!manage(actor))fail('FORBIDDEN');const p=command.payload||{},ma=p.ma_khach_chung||(/^KTD-\d{6,}$/.test(p.customer_id||'')?p.customer_id:snapshot().customers[p.customer_id]?.ma_khach_chung);if(!ma)fail('DIRECTORY_CODE_REQUIRED');return record(client.call(actor,'get',{ma}).customer,now());},
   command(token,command){
-   const actor=auth.actor(token);if(!manage(actor))fail('FORBIDDEN');const fingerprint=stable(command),key=actor.id+':'+command.idempotency_key,state=snapshot(),prior=state.commands[key];
+   const actor=auth.actor(token);if(!manage(actor))fail('FORBIDDEN');const fingerprint=stable(command),key=actor.id+':'+command.idempotency_key,state=snapshot(),prior=repository.receipt?repository.receipt(actor.id,command.idempotency_key):state.commands[key];
    if(typeof command.idempotency_key!=='string'||!command.idempotency_key.trim()||('DIEUPHOI:'+actor.id+':'+command.idempotency_key).length>180)fail('REQUIRED_FIELD');if(prior){if(prior.fingerprint!==fingerprint)fail('IDEMPOTENCY_CONFLICT');return {...prior.result,replayed:true};}
    const p=command.payload||{},updating=command.type==='update_customer',existing=updating?state.customers[p.customer_id]:null;
    if(updating&&!existing?.ma_khach_chung)fail('DIRECTORY_CODE_REQUIRED');if(updating&&(!Number.isSafeInteger(command.expected_version)||command.expected_version<1))fail('DIRECTORY_VERSION_CONFLICT');

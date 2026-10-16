@@ -4,14 +4,14 @@ const Directory=require('./customer-directory.cjs');
 const {digest}=require('./auth.cjs');
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 function createService({auth,repository,files,now,id,directoryClient=null,changes={read:()=>({version:0})},catalogue={read:()=>({verified_copy:false,stock:[],accounts:[],categories:[],customers:[],employees:[]})}}){
- const state=()=>repository.snapshot().state;
+ const state=(options={})=>repository.snapshot(options).state;
  const directory=directoryClient?Directory.controller({client:directoryClient,auth,repository,now,id,catalogue}):null;
  return {
   directory:(token,action,payload)=>{if(!directory)fail('DIRECTORY_NOT_CONFIGURED');return directory.action(token,action,payload);},
   integrationSnapshot_:state,integrationCommit_:(command,context)=>repository.submit(command,context),
   login:(username,password)=>auth.login(username,password),logout:token=>auth.logout(token),
   changes(token){auth.actor(token);return changes.read();},
-  query(token,orderId){const actor=auth.actor(token),change=changes.read(),snapshot=repository.snapshot(),current=snapshot.state;if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory(),now(),catalogue.read());result.change_version=change.version;result.customer_directory={enabled:!!directory};if(repository.capacity&&actor.roles.some(r=>['director','finance','warehouse'].includes(r)))result.storage=repository.capacity(snapshot);if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
+  query(token,orderId,view,date){const actor=auth.actor(token),change=changes.read(),snapshot=repository.snapshot({orderId,view:view||'open',date,actor}),current=snapshot.state;if(orderId&&!current.orders[orderId])orderId=Object.values(current.orders).find(o=>o.order_no===orderId)?.id||orderId;if(orderId&&(!current.orders[orderId]||!Domain.canRead(actor,current.orders[orderId])))fail('FORBIDDEN');const result=Domain.project(current,actor,auth.directory(),now(),catalogue.read());result.change_version=change.version;if(repository.kind==='tables')result.storage_model='tables';result.customer_directory={enabled:!!directory};if(repository.capacity&&(repository.kind!=='tables'||view==='storage')&&actor.roles.some(r=>['director','finance','warehouse'].includes(r)))result.storage=repository.capacity(snapshot);if(orderId){result.orders=result.orders.filter(o=>o.id===orderId);result.events=result.events.filter(e=>e.order_id===orderId);}return result;},
   command(token,command){
    if(directory&&['create_customer','update_customer'].includes(command.type))return directory.command(token,command);
    if(['cache_directory_customer','add_evidence','sync_result'].includes(command.type))fail('FORBIDDEN');
@@ -21,7 +21,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
     catch(error){
      // A lost response must remain replayable even if Directory goes offline afterwards.
      // Only the existing receipt is eligible; Domain still checks the exact fingerprint.
-     const prior=repository.snapshot().state.commands[actor.id+':'+command.idempotency_key];
+     const prior=repository.receipt?repository.receipt(actor.id,command.idempotency_key):repository.snapshot().state.commands[actor.id+':'+command.idempotency_key];
      if(!prior)throw error;
      return repository.submit(command,context);
     }
@@ -31,7 +31,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
   upload(token,payload){
    const clock=()=>typeof performance==='object'?performance.now():Date.now(),started=clock(),timings={auth_ms:0,snapshot_ms:0,locked_snapshot_ms:0,drive_ms:0,sheets_ms:0,projection_ms:0};
    let tick=clock();const {actor,directory}=auth.context(token);timings.auth_ms=clock()-tick;
-   tick=clock();const current=state();timings.snapshot_ms=clock()-tick;
+   tick=clock();const current=state({orderId:payload.order_id});timings.snapshot_ms=clock()-tick;
    const order=current.orders[payload.order_id];if(!order||!Domain.canRead(actor,order))fail('FORBIDDEN');
    if(!['after','handover','payment_receipt','old_machine'].includes(payload.kind)||!['image/jpeg','image/png','image/webp'].includes(payload.mime)||typeof payload.base64!=='string'||payload.base64.length>550000||!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.base64))fail('INVALID_IMAGE');
    if(payload.thumbnail_base64!==undefined&&(typeof payload.thumbnail_base64!=='string'||payload.thumbnail_base64.length>40000||!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.thumbnail_base64)))fail('INVALID_IMAGE');
@@ -39,7 +39,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
    const uploadDigest=digest(JSON.stringify({order_id:payload.order_id,kind:payload.kind,...(payload.payment_id?{payment_id:payload.payment_id}:{}),mime:payload.mime,base64:payload.base64,expected_version:payload.expected_version,...(payload.thumbnail_base64?{thumbnail_base64:payload.thumbnail_base64}:{})}));
    const project=snapshot=>{const at=clock(),o=snapshot.state.orders[payload.order_id];if(!o||!Domain.canRead(actor,o))fail('FORBIDDEN');const projected=Domain.project({...snapshot.state,orders:{[o.id]:o},events:snapshot.state.events.filter(e=>e.order_id===o.id),customers:{},machines:{}},actor,directory,now());timings.projection_ms+=clock()-at;return {order:projected.orders[0],events:projected.events};};
    const response=(receipt,projection)=>{timings.total_ms=clock()-started;console.info('dispatch-upload-timing',JSON.stringify(timings));return {...receipt,...projection,timings};};
-   const prior=current.commands[actor.id+':'+payload.idempotency_key];
+   const prior=repository.receipt?repository.receipt(actor.id,payload.idempotency_key):current.commands[actor.id+':'+payload.idempotency_key];
    if(prior){if(prior.result.upload_digest!==uploadDigest)fail('IDEMPOTENCY_CONFLICT');return response({...prior.result,replayed:true},project({state:current}));}
    if(!actor.roles.includes('technician')||order.technician_id!==actor.id)fail('FORBIDDEN');if(payload.kind==='payment_receipt'){const receipt=current.payments?.[payload.payment_id];if(!receipt||receipt.actor_id!==actor.id||receipt.order_id!==order.id)fail('FORBIDDEN');if(!['accepted_work','unable'].includes(order.status))fail('INVALID_TRANSITION');}else if(payload.kind==='old_machine'?!['working','accepted_work'].includes(order.status):order.status!=='working')fail('INVALID_TRANSITION');if(order.version!==payload.expected_version)fail('VERSION_CONFLICT');
    const saved=[];let projection;
@@ -56,7 +56,7 @@ function createService({auth,repository,files,now,id,directoryClient=null,change
     throw e;
    }
   },
-  image(token,orderId,evidenceId,variant){const actor=auth.actor(token),current=state(),order=current.orders[orderId];if(!order||!Domain.canRead(actor,order))fail('FORBIDDEN');const evidence=order.evidence.find(e=>e.id===evidenceId);if(!evidence)fail('FORBIDDEN');if(variant==='thumbnail'&&!evidence.thumbnail_file_id)return {missing:true};return files.read(variant==='thumbnail'?evidence.thumbnail_file_id:evidence.file_id);}
+  image(token,orderId,evidenceId,variant){const actor=auth.actor(token),current=state({orderId}),order=current.orders[orderId];if(!order||!Domain.canRead(actor,order))fail('FORBIDDEN');const evidence=order.evidence.find(e=>e.id===evidenceId);if(!evidence)fail('FORBIDDEN');if(variant==='thumbnail'&&!evidence.thumbnail_file_id)return {missing:true};return files.read(variant==='thumbnail'?evidence.thumbnail_file_id:evidence.file_id);}
 
  };
 }

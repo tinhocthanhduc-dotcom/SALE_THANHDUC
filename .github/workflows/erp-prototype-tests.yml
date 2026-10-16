@@ -21,6 +21,10 @@ jobs:
       - run: node --test erp-prototype/test/*.test.cjs
       - run: npm ci --prefix service-dispatch --ignore-scripts
       - run: node --test service-dispatch/test/*.test.cjs
+      - name: Verify scoped table persistence against unchanged domain tests
+        run: node --require ./service-dispatch/test/table-domain-preload.cjs --test service-dispatch/test/domain.test.cjs service-dispatch/test/money.test.cjs service-dispatch/test/terms.test.cjs service-dispatch/test/cash-corrections.test.cjs service-dispatch/test/delivery.test.cjs service-dispatch/test/customer-machines.test.cjs service-dispatch/test/integration.test.cjs service-dispatch/test/customer-directory.test.cjs
+      - name: Simulate 9000 completed cash orders
+        run: node service-dispatch/test/table-year-load.cjs
   browser-tests:
     runs-on: ubuntu-latest
     steps:
@@ -61,6 +65,7 @@ jobs:
       - run: node service-dispatch/test/session-browser.cjs
       - run: node service-dispatch/test/gas-ui-browser.cjs
       - run: node service-dispatch/test/live-browser.cjs
+      - run: node service-dispatch/test/tables-browser.cjs
       - name: Build service dispatch staging package
         run: node service-dispatch/build-gas.cjs "${{ runner.temp }}/service-dispatch-gas"
       - name: Upload service dispatch Apps Script package

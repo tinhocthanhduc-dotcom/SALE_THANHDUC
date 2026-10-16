@@ -1,0 +1,182 @@
+{
+  "node": {
+    "passed": 357,
+    "failed": 0
+  },
+  "unchanged_domain_table_parity": {
+    "passed": 118,
+    "failed": 0
+  },
+  "dispatch_browser_suites": [
+    {
+      "suite": "browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 34.5
+    },
+    {
+      "suite": "cash-corrections-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 12.8
+    },
+    {
+      "suite": "choice-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 11.9
+    },
+    {
+      "suite": "customer-directory-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 23.0
+    },
+    {
+      "suite": "customer-machines-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.8
+    },
+    {
+      "suite": "delivery-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.7
+    },
+    {
+      "suite": "desktop-administration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 24.2
+    },
+    {
+      "suite": "desktop-dispatch-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 13.1
+    },
+    {
+      "suite": "desktop-operations-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 21.9
+    },
+    {
+      "suite": "gas-ui-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.5
+    },
+    {
+      "suite": "integration-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.0
+    },
+    {
+      "suite": "live-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 87.8
+    },
+    {
+      "suite": "mobile-revision-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 9.3
+    },
+    {
+      "suite": "money-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 10.8
+    },
+    {
+      "suite": "money-input-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.2
+    },
+    {
+      "suite": "photo-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 25.3
+    },
+    {
+      "suite": "session-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 12.0
+    },
+    {
+      "suite": "slow-request-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.2
+    },
+    {
+      "suite": "tables-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 4.4
+    },
+    {
+      "suite": "technician-board-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.7
+    },
+    {
+      "suite": "technician-cash-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.1
+    },
+    {
+      "suite": "technician-complete-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.9
+    },
+    {
+      "suite": "technician-detail-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.0
+    },
+    {
+      "suite": "technician-payment-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 6.5
+    },
+    {
+      "suite": "technician-pickup-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 5.8
+    },
+    {
+      "suite": "technician-shell-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 8.4
+    },
+    {
+      "suite": "terms-browser.cjs",
+      "pass": true,
+      "exit_code": 0,
+      "seconds": 7.8
+    }
+  ],
+  "directory_browser_cases": 11,
+  "erp_browser_cases": 21,
+  "gas_build": true,
+  "native_google": {
+    "measured": false,
+    "reason": "Execution API previously returned NOT_FOUND; this change has not been deployed or migrated on Google. Native thresholds remain pending."
+  },
+  "rollout": "LEGACY remains default; owner-only guarded COPY migration"
+}

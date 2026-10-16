@@ -1,5 +1,16 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 16/10/2026 — chế độ bảng chuẩn hóa, COPY-first (chưa nghiệm thu Google)
+
+- Thêm repository riêng cho DP_ORDERS, CUSTOMERS, MACHINES, PAYMENTS, DEPOSITS, DEBTS, CASH_CORRECTIONS, OUTBOX, SEQUENCES, META; mỗi bản ghi một dòng. EVENTS/COMMANDS append-only; tra receipt theo khóa, không nạp toàn bộ commands. Journal chỉ chứa delta có checksum; lock, version, idempotency và recovery được giữ. Legacy repository không đổi và vẫn mặc định hoạt động.
+- Lần tải đầu chỉ lấy đơn mở; tab Đã đóng gọi query riêng theo lựa chọn của chủ. Báo cáo/Quỹ tải riêng; ngày chọn dùng chỉ mục metadata. Archive đơn đóng quá 30 ngày, giữ tra cứu theo mã TD/link và quyền; cập nhật archive không làm sống lại đơn ngoài ý muốn. Có trigger archive tùy chọn do chủ cài.
+- Migration chỉ chấp nhận COPY có guard, backup đọc lại kiểm hash, so đầy đủ bản ghi + tổng tiền trước khi bật cờ. Chạy lại không nhân đôi; lỗi từng bước chạy tiếp được. Rollback tự động chỉ trước khi có ghi mới; sau đó chặn rõ thay vì bỏ mất giao dịch.
+- **357/357 Node** gồm toàn bộ hồi quy và fault injection cũ; thêm kiểm thử journal hỏng, các điểm ngắt migration/recovery, replay, stale version, archive/reopen, trần record, state >1MB và native Sheets driver mô phỏng. **118/118** bài nghiệp vụ/tích hợp chạy thêm với nạp dữ liệu theo bảng và so toàn state/receipt với Domain cũ. Build GAS đạt.
+- Browser: **27/27 bộ Điều phối đạt**, gồm 26 bộ cũ và 5/5 ca TABLES trên Chromium 390×844 (open-only, lazy closed, quay lại, mã archive, quyền). Danh bạ và ERP UI chạy lại đạt. Không đổi bố cục hay lệnh nghiệp vụ.
+- Mô phỏng Domain 9.000 đơn hoàn tất tiền mặt: **6.837.915 ô dữ liệu**; 10.950 đơn (30×365): **8.322.840 ô**. Các số này chưa gồm phần lưới trống, legacy/backup trong toàn tệp; JSON có ước tính lưới DP tối thiểu 1.000 dòng/tab. Đây là workload cơ sở không hàng/công nợ/outbox, chưa phải bảo đảm mọi workload đều vừa 10 triệu ô. Có cảnh báo dung lượng 70% trên Đồng bộ.
+- **Chưa deploy/migrate staging, chưa đo native Google ở 1.000 đơn; chưa xác nhận <5s ghi / <3s danh sách.** Execution API trước đó trả NOT_FOUND. Mốc trước pilot: đo COPY và UAT, workload hỗn hợp, lưu trữ journal/event dài hạn, phân trang báo cáo và rollback sau ghi mới. Không sửa app/sheet Kho, Finance hoặc Danh bạ thật.
+- [Thiết kế, số dòng từng bảng và kết quả mô phỏng](../docs/service-dispatch/tables-20261016/README.md); [OWNER_SETUP: tạo COPY, migration, đo và quay lại](../docs/service-dispatch/tables-20261016/OWNER_SETUP.md).
+
 ## 16/10/2026 — giảm IO snapshot, chọn KTD không ghi và chờ kết quả thật
 
 - Bản cũ gọi compact 3 lần/lệnh; bản mới chỉ gọi 1 lần khi số snapshot **vượt 30**, giảm còn 20. Recover/read/replay không compact. Manifests mới ghi revision trong cột metadata; các snapshot cũ chỉ decode để lấy revision trong đợt compact/migration, không decode mỗi lệnh. Archive đọc phần đuôi bằng kích thước một attempt; copy/verify trước khi xóa, giữ fault-injection và retry partial-copy.

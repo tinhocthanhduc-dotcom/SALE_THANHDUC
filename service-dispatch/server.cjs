@@ -17,7 +17,8 @@ function createApp(directory,options={}){
  const auth=new Auth({store,random});
  const images=path.join(directory,'images');fs.mkdirSync(images,{recursive:true});
  const files={save(mime,base64){const data=Buffer.from(base64,'base64');if(!data.length||data.length>400000)throw Error('INVALID_IMAGE');const valid=mime==='image/png'?data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):mime==='image/jpeg'?data[0]===255&&data[1]===216:data.toString('ascii',0,4)==='RIFF'&&data.toString('ascii',8,12)==='WEBP';if(!valid)throw Error('INVALID_IMAGE');const id=crypto.randomUUID();fs.writeFileSync(path.join(images,id),data,{flag:'wx',mode:0o600});fs.writeFileSync(path.join(images,id+'.mime'),mime,{flag:'wx',mode:0o600});return id;},remove(id){for(const suffix of ['','.mime'])fs.rmSync(path.join(images,id+suffix),{force:true});},read(id){return {mime:fs.readFileSync(path.join(images,id+'.mime'),'utf8'),data:fs.readFileSync(path.join(images,id))};}};
- const service=createService({auth,repository:business,files,directoryClient:options.directoryClient,catalogue:options.catalogue,changes:{read:readChanges},now:options.now||(()=>new Date().toISOString()),id:()=>crypto.randomUUID()});
+ const repository=options.repository||business;
+ const service=createService({auth,repository,files,directoryClient:options.directoryClient,catalogue:options.catalogue,changes:{read:options.repository?()=>({version:repository.meta().revision,pending:false}):readChanges},now:options.now||(()=>new Date().toISOString()),id:()=>crypto.randomUUID()});
  const server=http.createServer(async(req,res)=>{
   const respond=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
   res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');
@@ -35,7 +36,7 @@ function createApp(directory,options={}){
    let result;
    if(input.action==='sync_refresh'){const actor=auth.actor(token);if(!actor.roles.some(r=>['director','finance','warehouse'].includes(r)))throw Object.assign(Error('FORBIDDEN'),{code:'FORBIDDEN'});result=options.importResults?options.importResults(actor,business,auth):{imported:0};}
    else if(input.action==='changes')result=service.changes(token);
-   else if(input.action==='query')result=service.query(token,input.order_id);
+   else if(input.action==='query')result=service.query(token,input.order_id,input.view,input.date);
    else if(['directory_search','directory_select','directory_get'].includes(input.action))result=service.directory(token,input.action,input.payload||{});
    else if(input.action==='command')result=service.command(token,input.command);
    else if(input.action==='upload')result=service.upload(token,input.payload);
@@ -44,7 +45,7 @@ function createApp(directory,options={}){
    respond(200,result);
   }catch(e){const error=e.code||(['INVALID_IMAGE'].includes(e.message)?e.message:'SERVER_ERROR');respond(['AUTH_REQUIRED','INVALID_LOGIN'].includes(error)?401:error==='FORBIDDEN'?403:400,{error,...(e.details?{details:e.details}:{})});}
  });
- return {server,service,auth,business,store};
+ return {server,service,auth,business:repository,store};
 }
 if(require.main===module){const dir=process.env.DISPATCH_FIXTURE_DIR||path.join(require('node:os').tmpdir(),'thanhduc-dispatch-fixture');if(!path.isAbsolute(dir))throw Error('ABSOLUTE_PATH_REQUIRED');const port=Number(process.env.DISPATCH_PORT||8787);const app=createApp(dir);app.server.listen(port,'127.0.0.1',()=>console.log('Local fixture server started on port '+port+'. See README for synthetic accounts.'));}
 module.exports={createApp};
