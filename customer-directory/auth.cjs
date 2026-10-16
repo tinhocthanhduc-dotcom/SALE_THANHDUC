@@ -15,7 +15,10 @@ function authenticate(envelope, { clients, users, hmac, now = () => Date.now() }
   const unsigned = { ...envelope };
   delete unsigned.signature;
   if (stable(unsigned).length > 15e5) fail("REQUEST_TOO_LARGE");
-  if (!equal(hmac(stable(unsigned), client.secret), envelope.signature)) fail("BAD_SIGNATURE");
+  const message=stable(unsigned),current=equal(hmac(message,client.secret),envelope.signature);
+  const previous=client.previous_secret&&Number.isSafeInteger(client.previous_expires_at)&&now()<client.previous_expires_at
+    ? equal(hmac(message,client.previous_secret),envelope.signature):false;
+  if (!current&&!previous) fail("BAD_SIGNATURE");
   access(actor);
   return actor;
 }

@@ -21,3 +21,10 @@ try{
  // Restore editor/HEAD source even if creation fails. Both immutable deployments stay pinned.
  clasp(['push','--force'],uiDir);
 }
+
+// Explicit security rollout updates the existing Google-authenticated UI as well.
+if(process.argv.includes('--update-private-ui')){
+ const result=JSON.parse(clasp(['--json','create-deployment','--deploymentId',p.deployment_id,'--description','COPY owner security dialogs; Google login required'],uiDir,true));
+ if(result.deploymentId!==p.deployment_id)throw Error('PRIVATE_UI_DEPLOYMENT_UNCONFIRMED');
+ const meta=JSON.parse(fs.readFileSync(out,'utf8'));meta.private_ui_version=result.versionNumber;fs.writeFileSync(out,JSON.stringify(meta,null,2));
+}

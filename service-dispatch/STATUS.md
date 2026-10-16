@@ -1,5 +1,15 @@
 # Điều phối dịch vụ – trạng thái ngày 13/10/2026
 
+## 16/10/2026 — chuyển khóa DIEUPHOI và giới hạn đăng nhập
+
+- Danh bạ xác minh khóa hiện tại hoặc khóa trước còn hạn 30 phút; `revokeOldDispatchSecret` tắt khóa trước ngay. Rotation giữ nguyên client/actor, chặn lượt chồng nhau. Khóa mới chỉ trả cho hộp thoại chủ đã có nonce một lần; entrypoint editor chỉ mở hộp thoại hoặc in link riêng tư, không log khóa. Script Properties vẫn chỉ editor/chủ được đọc.
+- Điều phối có `setDispatchDirectorySecret`: hộp thoại riêng cho chủ, lưu Script Properties, tự kiểm kết nối, xóa ô nhập và trả OK/mã lỗi đã lọc. Danh bạ dùng đúng URL UI riêng tư, không nhầm API ẩn danh của cùng project. Không tạo trigger để thu hồi khóa, không ghi sheet.
+- Bỏ khóa cứng 5 sai/15 phút. Rate limit theo tên đăng nhập (kể cả tên không tồn tại) và tổng hệ thống, backoff 1–60s; từ chối trước PBKDF2 trong thời gian chờ, không gia hạn chờ vì bị spam. Giới hạn hai phép băm đồng thời bằng lease hai phút, băm ngoài ScriptLock và kiểm lại credentials trước ghi. Tài khoản đúng vào được sau hết chờ, kể cả đang có trường khóa cũ.
+- Lưu riêng 50 thời gian/tên thử sai gần nhất trong Script Properties, không mật khẩu. Chỉ chủ/director xem. Audit dùng textContent; chia hai property để giữ dưới giới hạn mỗi giá trị; bucket tài khoản tối đa 256. Giữ 8h, 100 phiên, resume một lần và thu hồi khi tắt nhân viên/đổi version.
+- Giữ mặc định PBKDF2 600.000 vòng. Có log số `hash_ms/iterations/phase` và benchmark mật khẩu giả trên Google; không log tên, mật khẩu, salt hay hash. Chỉ nâng hash yếu hơn sau login đúng, không hạ hash mạnh hơn; thay policy cần chủ xem số đo.
+- Kiểm thử bổ sung: cả hai khóa cùng chạy/hết hạn/tắt ngay; 100 lần sai dồn và 100 lần sai có chờ; chống băm khi rate limited; generic errors/global bucket; upgrade hash; quyền audit; hộp thoại nonce một lần/xóa/lọc lỗi; deploy UI/API riêng tư được kiểm bằng mock. Hồi quy **370/370 Node**, 27/27 bộ browser cũ Điều phối, thêm 4/4 ca hộp thoại bảo mật; Danh bạ 11/11 và phiên/resume browser chạy lại đạt. Build UI/API Danh bạ và Điều phối đạt.
+- [Hướng dẫn chủ đúng 5 bước](../docs/customer-directory/OWNER_SETUP.md). Chưa tạo hoặc thu hồi khóa thật tự động: chủ cần copy trực tiếp giữa hai hộp thoại.
+
 ## 16/10/2026 — chế độ bảng chuẩn hóa, COPY-first (chưa nghiệm thu Google)
 
 - Thêm repository riêng cho DP_ORDERS, CUSTOMERS, MACHINES, PAYMENTS, DEPOSITS, DEBTS, CASH_CORRECTIONS, OUTBOX, SEQUENCES, META; mỗi bản ghi một dòng. EVENTS/COMMANDS append-only; tra receipt theo khóa, không nạp toàn bộ commands. Journal chỉ chứa delta có checksum; lock, version, idempotency và recovery được giữ. Legacy repository không đổi và vẫn mặc định hoạt động.

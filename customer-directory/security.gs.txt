@@ -1,0 +1,14 @@
+/** Owner page only. Secrets are never returned by editor entrypoints or logged. */
+function cdSecurityPage_(){
+ cdOwner_();var ticket=Utilities.getUuid();CacheService.getUserCache().put('cd-security:'+ticket,'ready',600);
+ return HtmlService.createHtmlOutput(HtmlService.createHtmlOutputFromFile('Security').getContent().replace('__TICKET__',JSON.stringify(ticket))).setTitle('Đổi khóa Điều phối');
+}
+function cdSecurityOpen_(){
+ cdOwner_();var page=cdSecurityPage_();try{SpreadsheetApp.getUi().showModalDialog(page.setWidth(560).setHeight(500),'Bảo mật Danh bạ');return {dialog:true};}catch(ignore){var url=(typeof CD_PRIVATE_UI_URL_!=='undefined'?CD_PRIVATE_UI_URL_:ScriptApp.getService().getUrl())+'?admin=security';console.info('Mở trang bảo mật bằng tài khoản chủ: '+url);return {open_url:url};}
+}
+function rotateDispatchDirectorySecret(ticket){
+ cdOwner_();if(!ticket)return cdSecurityOpen_();
+ var cache=CacheService.getUserCache();if(cache.get('cd-security:'+ticket)!=='ready')throw new Error('SECURITY_DIALOG_EXPIRED');cache.remove('cd-security:'+ticket);
+ return cdLock_(function(){var p=PropertiesService.getScriptProperties(),clients=JSON.parse(p.getProperty('CD_CLIENTS')||'{}'),result=DirectoryBundle.ClientSecrets.rotate(clients,{random:function(){return (Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');}});p.setProperty('CD_CLIENTS',JSON.stringify(result.clients));return {secret:result.secret,previous_expires_at:result.previous_expires_at};});
+}
+function revokeOldDispatchSecret(){cdOwner_();return cdLock_(function(){var p=PropertiesService.getScriptProperties(),clients=JSON.parse(p.getProperty('CD_CLIENTS')||'{}');p.setProperty('CD_CLIENTS',JSON.stringify(DirectoryBundle.ClientSecrets.revoke(clients)));return {revoked:true};});}

@@ -186,6 +186,20 @@ jobs:
           fs.writeFileSync(path.join(root,'storage-profile-status.json'),JSON.stringify(status,null,2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nStorage profile: '+(measured?report.snapshot_chars+' chars; '+report.tabs.map(t=>t.name+': '+t.rows+' rows').join(', '):status.reason)+'\n');
           JS
+      - name: Measure synthetic password hash if owner Execution API is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          timeout 90s clasp --json run benchmarkDispatchPasswordHash > "$RUNNER_TEMP/hash-benchmark-raw.json" 2> "$RUNNER_TEMP/hash-benchmark-error.txt" || true
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'hash-benchmark-raw.json'),'utf8'));}catch(ignore){}
+          const r=raw.response||raw.result||raw,measured=Array.isArray(r.samples)&&r.samples.length===3&&r.samples.every(x=>Number.isFinite(x.hash_ms)&&Number.isInteger(x.iterations));
+          const status={measured,error:raw.error?.message,policy_changed:false,...(measured?{samples:r.samples.map(x=>({iterations:x.iterations,hash_ms:x.hash_ms})),proposed_iterations:r.proposed_iterations}:{reason:'Execution API unavailable; owner can run benchmarkDispatchPasswordHash in editor. Default 600000 retained.'})};
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/hash-benchmark-status.json'),JSON.stringify(status,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nPassword hash: '+(measured?JSON.stringify(status.samples):status.reason)+'\n');
+          JS
       - name: Upload project links
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

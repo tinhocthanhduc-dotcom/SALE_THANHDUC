@@ -266,7 +266,8 @@ function doPost(e) {
   });
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
-function doGet() {
+function doGet(event) {
+  if(event&&event.parameter&&event.parameter.admin==="security")return cdSecurityPage_();
   if (typeof CD_API_ONLY_ !== "undefined" && CD_API_ONLY_) return ContentService.createTextOutput(JSON.stringify({ok:false,error:"HMAC_REQUIRED"})).setMimeType(ContentService.MimeType.JSON);
   return HtmlService.createHtmlOutputFromFile("Index").setTitle("Thành Đức · Danh bạ khách").addMetaTag("viewport", "width=device-width, initial-scale=1");
 }

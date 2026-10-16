@@ -1,5 +1,7 @@
 # Nối Điều phối staging → Danh bạ COPY
 
+**Đổi khóa hoặc khôi phục sau lộ khóa:** dùng [hướng dẫn 5 bước mới](../../../docs/customer-directory/OWNER_SETUP.md), qua hộp thoại một lần.
+
 Điều phối staging v60 đã triển khai. Danh bạ COPY: giao diện riêng tư v8 giữ nguyên; API riêng có HMAC v9. Điều phối dùng API riêng qua server. Chỉ hai project staging/COPY. Không chạy lại setup/reset, không quét/gộp nguồn, không sửa Sales/CARE/Finance/Kho thật. Danh bạ hiện tại đã chứa KTD; không nhập lại khách. Chỉ bật sau khi kiểm tra kết nối đạt. Khi chưa bật, staging giữ luồng cũ để chủ có thời gian cài; sau khi bật không tạo khách tạm hoặc đơn mới với khách thiếu KTD.
 
 ## Đã cài xong nhưng gặp DIRECTORY_UNAVAILABLE
@@ -23,11 +25,11 @@ Sau Run, mở Script Properties bên Danh bạ, sao chép giá trị **CD_DISPAT
 | Script Property | Giá trị |
 |---|---|
 | DISPATCH_CD_URL | URL `web_app_url` trong `customer-directory/api.copy.json` (API v9), không phải URL giao diện |
-| DISPATCH_CD_SECRET | Secret của `DIEUPHOI` trong JSON Script Property **CD_CLIENTS** bên Danh bạ |
+| DISPATCH_CD_SECRET | Dán khóa một lần qua hộp thoại **setDispatchDirectorySecret**, theo hướng dẫn mới |
 | DISPATCH_CD_ACTORS | Giá trị **CD_DISPATCH_ACTOR_MAP** từ bước 2 |
 | DISPATCH_CD_COPY_ACK | `CUSTOMER_DIRECTORY_COPY` |
 
-Secret chỉ copy giữa hai trang Script Properties. Không gửi vào chat, không dán vào Sheet, không đưa vào GitHub/log. Không dùng DISPATCH_BRIDGE_HMAC của bộ nối Kho/Finance thay secret Danh bạ.
+Secret mới chỉ copy trực tiếp giữa hai hộp thoại bảo mật. Không gửi vào chat, không dán vào Sheet, không đưa vào GitHub/log. Không dùng DISPATCH_BRIDGE_HMAC của bộ nối Kho/Finance thay secret Danh bạ.
 
 ## 4. Kiểm tra rồi bật
 

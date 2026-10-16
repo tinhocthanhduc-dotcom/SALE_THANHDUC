@@ -66,6 +66,7 @@ jobs:
       - run: node service-dispatch/test/gas-ui-browser.cjs
       - run: node service-dispatch/test/live-browser.cjs
       - run: node service-dispatch/test/tables-browser.cjs
+      - run: node service-dispatch/test/security-browser.cjs
       - name: Build service dispatch staging package
         run: node service-dispatch/build-gas.cjs "${{ runner.temp }}/service-dispatch-gas"
       - name: Upload service dispatch Apps Script package
