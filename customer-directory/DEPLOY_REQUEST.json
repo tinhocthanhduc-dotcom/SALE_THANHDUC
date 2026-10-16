@@ -1,10 +1,11 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 9,
+  "revision": 10,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
-  "scope": "Owner approved separate HMAC-only API deployment on SAME COPY script. Preserve private UI deployment, data, properties, keys and actors. Restore normal private UI HEAD in finally.",
+  "scope": "Security fix 775543b on SAME approved COPY project. Update BOTH pinned signed API and pinned Google-authenticated private UI deployment, restore private HEAD. Preserve all properties, keys, actors, data; no real apps.",
   "run_source_zero_rescan": false,
-  "update": "Publish isolated signed DIEUPHOI API transport. No setup, provisioning, customer writes, source rescan, or real app changes.",
+  "update": "Publish dual-key HMAC validation and owner one-time rotation dialog. DO NOT call rotate/revoke/provision/setup/rescan. Owner alone copies a new key using the dialogs after deployment. Keep existing key working until owner rotates.",
   "run_setup": false,
-  "deploy_api_only": true
+  "deploy_api_only": false,
+  "deploy_security_pair": true
 }

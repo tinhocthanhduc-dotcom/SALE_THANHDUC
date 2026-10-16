@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 42,
-  "update": "User explicitly requested deploy after review of commit 7e32afa. Update SAME Dispatch staging script and existing deployment URL only with copy-first normalized tables code. Keep LEGACY default; DO NOT call createDispatchTablesCopy, migrateDispatchToTables, rollback, setup/reset, archive installers or alter Script Properties, data, users, sessions, secrets, actor mappings, integration flags or triggers. No real Kho/Finance/AI_KHO/Sales/CARE or Directory updates. 357 Node,118 scoped-domain parity,27 Dispatch browser suites passed; native 1000-order thresholds remain unmeasured. Deploy source only; migrations need separate COPY rollout."
+  "revision": 43,
+  "update": "Deploy security fix 775543b to SAME Dispatch staging script/deployment. Backoff instead of hard user lockout, pre-hash quota gate, private owner secret-paste dialog and failed-login audit. Preserve users/sessions/data/storage mode/Directory mappings/all existing secrets. DO NOT invoke secret rotation/revoke/setters, setup, migration, or archive installers. Attempt synthetic benchmarkDispatchPasswordHash with existing owner Execution API only; log numeric timing, preserve 600000 policy, report unavailable honestly. No real apps changed. 370 Node and 27 old browser suites plus security dialog browser pass."
 }
