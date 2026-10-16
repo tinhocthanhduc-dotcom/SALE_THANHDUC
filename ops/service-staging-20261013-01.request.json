@@ -4,6 +4,6 @@
   "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
   "production_apps": "Do not update, redeploy or write any of the five existing apps.",
   "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
-  "revision": 41,
-  "update": "Deploy reviewed performance change fb61d77 (includes technician UI 55ced52) to SAME Dispatch staging script/deployment only. User requested measuring/fixing v64 latency on staging. Bounded snapshot reads; compact only above30 snapshots ->20, once; read-only Directory select and atomic create_order customer snapshot; 8s wait notice /60s retry same key; per-phase numeric-only timings. Passed 337 Node and26 Dispatch browser suites plus Directory/ERP browser. Attempt owner-only profileDispatchStorage through existing Execution API; report unavailable honestly, never widen API access or scopes. Preserve all data/users/sessions/secrets/actor mappings/integration flags/triggers. No setup/reset, no real Kho/Finance/AI_KHO/Sales/CARE or Directory deployment."
+  "revision": 42,
+  "update": "User explicitly requested deploy after review of commit 7e32afa. Update SAME Dispatch staging script and existing deployment URL only with copy-first normalized tables code. Keep LEGACY default; DO NOT call createDispatchTablesCopy, migrateDispatchToTables, rollback, setup/reset, archive installers or alter Script Properties, data, users, sessions, secrets, actor mappings, integration flags or triggers. No real Kho/Finance/AI_KHO/Sales/CARE or Directory updates. 357 Node,118 scoped-domain parity,27 Dispatch browser suites passed; native 1000-order thresholds remain unmeasured. Deploy source only; migrations need separate COPY rollout."
 }
