@@ -1,7 +1,7 @@
 # Đơn bán — Chốt đơn và Báo thu
 
 Mã nguồn dựa trên Sales ở nhánh `erp/sprint1-architecture-20261012`, bản triển khai ghép lên main `ba9dd8f` (giữ giao diện mới và bản sửa in kho).
-Chưa push main hoặc deploy Sales/Finance/Kho. Mọi dữ liệu trong ảnh/test là TEST_.
+Đã triển khai Sales v63 theo yêu cầu chủ; không triển khai hoặc ghi dữ liệu Finance/Kho. Mọi dữ liệu trong ảnh/test là TEST_.
 
 ## Các file bàn giao
 
@@ -57,15 +57,23 @@ node --test test/don-ban/browser.cjs
 
 Browser dùng Playwright + Chromium có sẵn trong môi trường; có thể đặt `PLAYWRIGHT_MODULE` và `CHROMIUM_PATH` cho máy khác. Chạy full Index đã ghép DonBan, dùng RPC shim gọi chính server trong fixture Sheet TEST_, không phải Google thật.
 
-Kết quả: **37/37 đạt** (28 ca domain, 2 regression, 7 browser). Test định dạng 1.250.000 → sửa giữa thành 1.350.000 giữ caret; dán 50,000đ; số nguyên gửi lên RPC; nguồn KHO; chọn người/phương thức; lọc không dấu/SĐT; hủy mềm; trạng thái/MA_PHIEU/lý do Finance; mất phản hồi sau khi server ghi rồi retry không trùng; fault injection giữa các ghi tạo/hủy; header/text; mọi ghi ở Sales trong lock; không ghi Finance.
+Kết quả: **38/38 đạt** (28 ca domain, 3 regression, 7 browser). Test định dạng 1.250.000 → sửa giữa thành 1.350.000 giữ caret; dán 50,000đ; số nguyên gửi lên RPC; nguồn KHO; chọn người/phương thức; lọc không dấu/SĐT; hủy mềm; trạng thái/MA_PHIEU/lý do Finance; mất phản hồi sau khi server ghi rồi retry không trùng; fault injection giữa các ghi tạo/hủy; header/text; mọi ghi ở Sales trong lock; không ghi Finance.
 
-Regression so sánh nguyên văn các hàm tính giá/PDF/hợp đồng với base 446d825 và parse mọi inline script sau include. Ảnh 390×844 nằm trong `screenshots/`: list-390.png, detail-390.png, payment-390.png. Chưa chạy thử trên Google thật hoặc thiết bị điện thoại thật; chưa deploy.
+Regression so sánh nguyên văn các hàm tính giá/PDF/hợp đồng với base ba9dd8f và parse mọi inline script sau include. Ảnh 390×844 nằm trong `screenshots/`: list-390.png, detail-390.png, payment-390.png. Chưa chạy các lệnh tạo đơn/thu tiền trên dữ liệu Google thật hoặc thiết bị điện thoại thật. Đã deploy và kiểm tra chỉ đọc HTML Google như bên dưới.
 
 ## Sửa theo tài liệu bước 1 trước triển khai
 
 - `TU_CHOI` được có SO_TIEN=0; chỉ yêu cầu số tiền Finance khớp số báo khi DA_XAC_NHAN. Khoản từ chối trả lại khả năng báo thu, không tính vào đã thu hoặc đang chờ.
 - MaKhachChung luôn để trống ở bước 1, kể cả hồ sơ khách đã có mã; chưa nối Danh bạ.
-- 37/37 test chạy lại trên main ba9dd8f, có ca Finance từ chối 0đ và giữ nguyên hàm PDF/hợp đồng/pricing của bản mới.
+- 38/38 test chạy lại trên main ba9dd8f, có ca Finance từ chối 0đ và giữ nguyên hàm PDF/hợp đồng/pricing của bản mới.
 - Bộ deploy chỉ nạp appsscript.json, code.js, Index.html, DonBanServer.js (copy nguyên nội dung DonBan.js), DonBan.html; không đẩy các app ERP/Điều phối/Danh bạ còn trên máy.
 
 Google Apps Script không cho server và HTML trùng tên DonBan. Repo giữ DonBan.js; bước deploy copy chính xác sang DonBanServer.js và chỉ đẩy bản đó. HTML vẫn tên DonBan để include không đổi. Lần đầu bị Google từ chối trùng tên trước khi cập nhật deployment; bản sửa này khắc phục cách đóng gói.
+
+## Bằng chứng triển khai 16/10/2026
+
+- Source commit `0f4f6e9`, Sales deployment **v63**, giữ URL hiện có: https://script.google.com/macros/s/AKfycbyNT-outokhNSw6pJ6h0o35sphKGrFrYUaIx6u4KNox1lI0XhMapZyFjlZNZwj_IIcR/exec
+- GitHub Actions run [38857523570](https://github.com/tinhocthanhduc-dotcom/SALE_THANHDUC/actions/runs/38857523570) thành công, Google nhận đúng 5 file và cập nhật deployment lúc 05:47:06 UTC.
+- GET chỉ đọc URL triển khai trả về HTML 179.385 byte, có DonBan, include đã được evaluate, không có ReferenceError/SyntaxError trong HTML trả về. Không thực hiện lệnh chốt đơn/báo thu trên sổ thật để kiểm thử.
+- 38/38 test local đạt; thêm regression chống trùng tên file GAS sau sự cố đóng gói đầu tiên.
+- Cần điền `NHAN_VIEN_BAN_HANG` trong CAU_HINH trước khi chọn người báo. Thẻ B “Nhận từ Sales” bên Finance chưa triển khai trong việc này.

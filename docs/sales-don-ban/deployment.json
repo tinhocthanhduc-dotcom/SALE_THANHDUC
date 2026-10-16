@@ -1,0 +1,13 @@
+{
+  "source_commit": "0f4f6e97d3f2332c8d85ffd505b771ad10be09e6",
+  "version": 63,
+  "deployment_id": "AKfycbyNT-outokhNSw6pJ6h0o35sphKGrFrYUaIx6u4KNox1lI0XhMapZyFjlZNZwj_IIcR",
+  "github_run": 38857523570,
+  "tests_local": {
+    "passed": 38,
+    "failed": 0
+  },
+  "native_html_read_only": true,
+  "native_business_uat": false,
+  "finance_or_warehouse_writes": false
+}
