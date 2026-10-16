@@ -1,10 +1,10 @@
 {
   "request_id": "customer-directory-copy-20261015-01",
-  "revision": 10,
+  "revision": 11,
   "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
   "scope": "Security fix 775543b on SAME approved COPY project. Update BOTH pinned signed API and pinned Google-authenticated private UI deployment, restore private HEAD. Preserve all properties, keys, actors, data; no real apps.",
   "run_source_zero_rescan": false,
-  "update": "Publish dual-key HMAC validation and owner one-time rotation dialog. DO NOT call rotate/revoke/provision/setup/rescan. Owner alone copies a new key using the dialogs after deployment. Keep existing key working until owner rotates.",
+  "update": "Publish dual-key HMAC validation and owner one-time rotation dialog. DO NOT call rotate/revoke/provision/setup/rescan. Owner alone copies a new key using the dialogs after deployment. Keep existing key working until owner rotates. Consume the one-use dialog nonce atomically inside the rotation ScriptLock.",
   "run_setup": false,
   "deploy_api_only": false,
   "deploy_security_pair": true

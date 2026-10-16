@@ -8,7 +8,7 @@ function cdSecurityOpen_(){
 }
 function rotateDispatchDirectorySecret(ticket){
  cdOwner_();if(!ticket)return cdSecurityOpen_();
- var cache=CacheService.getUserCache();if(cache.get('cd-security:'+ticket)!=='ready')throw new Error('SECURITY_DIALOG_EXPIRED');cache.remove('cd-security:'+ticket);
- return cdLock_(function(){var p=PropertiesService.getScriptProperties(),clients=JSON.parse(p.getProperty('CD_CLIENTS')||'{}'),result=DirectoryBundle.ClientSecrets.rotate(clients,{random:function(){return (Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');}});p.setProperty('CD_CLIENTS',JSON.stringify(result.clients));return {secret:result.secret,previous_expires_at:result.previous_expires_at};});
+ var cache=CacheService.getUserCache();
+ return cdLock_(function(){if(cache.get('cd-security:'+ticket)!=='ready')throw new Error('SECURITY_DIALOG_EXPIRED');cache.remove('cd-security:'+ticket);var p=PropertiesService.getScriptProperties(),clients=JSON.parse(p.getProperty('CD_CLIENTS')||'{}'),result=DirectoryBundle.ClientSecrets.rotate(clients,{random:function(){return (Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');}});p.setProperty('CD_CLIENTS',JSON.stringify(result.clients));return {secret:result.secret,previous_expires_at:result.previous_expires_at};});
 }
 function revokeOldDispatchSecret(){cdOwner_();return cdLock_(function(){var p=PropertiesService.getScriptProperties(),clients=JSON.parse(p.getProperty('CD_CLIENTS')||'{}');p.setProperty('CD_CLIENTS',JSON.stringify(DirectoryBundle.ClientSecrets.revoke(clients)));return {revoked:true};});}
