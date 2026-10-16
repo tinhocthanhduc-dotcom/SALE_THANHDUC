@@ -5,7 +5,7 @@ Chưa push main hoặc deploy Sales/Finance/Kho. Mọi dữ liệu trong ảnh/t
 
 ## Các file bàn giao
 
-- `DonBan.js`: toàn bộ server mới. Khi thêm thủ công trong Apps Script, tạo tệp Script tên **DonBan** (editor tự đặt .gs), dán nội dung file .js này.
+- `DonBan.js`: toàn bộ server mới. Khi thêm thủ công trong Apps Script, tạo tệp Script tên **DonBanServer** (editor tự đặt .gs), dán nội dung file .js này.
 - `DonBan.html`: toàn bộ giao diện mới, tạo tệp HTML tên **DonBan**.
 - `hooks.patch`: chỉ những chỗ ghép trong code.js/Index.html; dùng `git apply --check` trước khi apply lên bản gốc cùng base. Trong checkout này đã áp dụng, không apply lần hai.
 
@@ -66,4 +66,6 @@ Regression so sánh nguyên văn các hàm tính giá/PDF/hợp đồng với ba
 - `TU_CHOI` được có SO_TIEN=0; chỉ yêu cầu số tiền Finance khớp số báo khi DA_XAC_NHAN. Khoản từ chối trả lại khả năng báo thu, không tính vào đã thu hoặc đang chờ.
 - MaKhachChung luôn để trống ở bước 1, kể cả hồ sơ khách đã có mã; chưa nối Danh bạ.
 - 37/37 test chạy lại trên main ba9dd8f, có ca Finance từ chối 0đ và giữ nguyên hàm PDF/hợp đồng/pricing của bản mới.
-- Bộ deploy chỉ nạp appsscript.json, code.js, Index.html, DonBan.js, DonBan.html; không đẩy các app ERP/Điều phối/Danh bạ còn trên máy.
+- Bộ deploy chỉ nạp appsscript.json, code.js, Index.html, DonBanServer.js (copy nguyên nội dung DonBan.js), DonBan.html; không đẩy các app ERP/Điều phối/Danh bạ còn trên máy.
+
+Google Apps Script không cho server và HTML trùng tên DonBan. Repo giữ DonBan.js; bước deploy copy chính xác sang DonBanServer.js và chỉ đẩy bản đó. HTML vẫn tên DonBan để include không đổi. Lần đầu bị Google từ chối trùng tên trước khi cập nhật deployment; bản sửa này khắc phục cách đóng gói.

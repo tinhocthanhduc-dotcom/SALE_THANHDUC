@@ -47,6 +47,14 @@ jobs:
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
           chmod 600 "$HOME/.clasprc.json"
 
+      - name: Prepare unique Apps Script filenames
+        run: |
+          # GAS has one filename namespace across SERVER_JS and HTML.
+          # Keep DonBan.js as the reviewed source; deploy its exact bytes as DonBanServer.
+          cp DonBan.js DonBanServer.js
+          node --check code.js
+          node --check DonBanServer.js
+
       - name: Verify Apps Script project
         run: clasp status
 
