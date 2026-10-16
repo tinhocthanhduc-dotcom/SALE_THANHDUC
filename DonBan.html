@@ -1,0 +1,176 @@
+<style>
+#donban{font-size:16px}#donban button,#db-dialog button{min-height:44px}#donban .db-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#donban .db-toolbar input{flex:1;min-width:180px}#donban input,#donban select,#db-dialog input,#db-dialog select{font-size:16px;min-height:44px;max-width:100%;box-sizing:border-box}
+.db-orders{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}.db-order{border:1px solid var(--line,#ddd);padding:14px;border-radius:10px;background:#fff;min-width:0}.db-order h3{font-size:17px;margin:0 0 10px}.db-order p{margin:8px 0;overflow-wrap:anywhere}.db-tag{display:inline-block;background:#e5f2f0;padding:4px 8px;border-radius:14px;font-size:14px}.db-warning{color:#a31313;background:#fff0f0;border:1px solid #e9b2b2;padding:10px;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}.db-note{padding:10px;color:#475569}.db-receipt{border-top:1px solid #ddd;padding:12px 0;overflow-wrap:anywhere}.db-total{font-size:20px;font-weight:700}.db-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.db-detail-table{overflow:auto}.db-detail-table table{min-width:620px}.db-modal[hidden]{display:none}.db-modal{position:fixed;inset:0;background:#0007;z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}.db-dialog{background:#fff;border-radius:12px;width:480px;max-width:100%;max-height:92vh;overflow:auto;padding:18px;box-sizing:border-box}.db-dialog h2{font-size:20px}.db-dialog label{display:block;margin:12px 0 6px}.db-methods{display:flex;gap:6px}.db-methods button{flex:1;padding:10px 6px;background:#edf2f7;color:#17384c}.db-methods button[aria-pressed=true]{background:#116f65;color:white}.db-dialog input,.db-dialog select,.db-dialog textarea{width:100%;font-size:16px}.db-dialog [hidden]{display:none}#db-message:empty{display:none}#db-message{margin:8px 0}.db-fieldset{border:0;padding:0;margin:0;min-width:0}.db-error{color:#b91c1c}
+@media(max-width:480px){#donban .body{padding:10px}.db-orders{grid-template-columns:1fr}.db-order{padding:12px}.db-toolbar>*{width:100%}.db-dialog{padding:14px}.db-actions button{flex:1}#donban .db-toolbar input{min-width:0}}
+</style>
+<section id="donban" class="page" aria-label="Đơn bán">
+  <div class="card"><div class="head"><b>Đơn bán</b><button type="button" id="db-refresh">Làm mới</button></div>
+    <div class="body"><div id="db-message" role="status" aria-live="polite"></div><div id="db-retry"></div>
+      <div id="db-finance" class="db-note"></div>
+      <div id="db-list"><div class="db-toolbar"><input id="db-search" type="search" aria-label="Tìm đơn bán" placeholder="Mã đơn, tên khách, số điện thoại">
+        <select id="db-filter" aria-label="Mức thanh toán"><option value="">Tất cả mức thanh toán</option><option>CHƯA THU</option><option>THU MỘT PHẦN</option><option>ĐÃ THU ĐỦ</option></select></div>
+        <div id="db-orders" class="db-orders"></div></div><div id="db-detail" hidden></div>
+    </div>
+  </div>
+</section>
+<div id="db-modal" class="db-modal" hidden><div id="db-dialog" class="db-dialog" role="dialog" aria-modal="true" aria-labelledby="db-form-title" tabindex="-1">
+  <form id="db-payment"><h2 id="db-form-title">Báo thu</h2><p id="db-remaining"></p><fieldset id="db-fields" class="db-fieldset">
+    <label for="db-amount">Số tiền (đồng)</label><input id="db-amount" type="text" inputmode="numeric" required autocomplete="off" aria-describedby="db-amount-help"><small id="db-amount-help">Nhập số tiền khách đã trả. Không tự điền số còn lại.</small>
+    <label>Hình thức</label><div id="db-methods" class="db-methods" role="group" aria-label="Hình thức thanh toán">
+      <button type="button" data-method="TIEN_MAT" aria-pressed="false">Tiền mặt</button><button type="button" data-method="CK_ACB" aria-pressed="false">CK ACB</button><button type="button" data-method="CK_TCB" aria-pressed="false">CK TCB</button>
+    </div>
+    <div id="db-bank-wrap" hidden><label for="db-bank">Mã giao dịch ngân hàng</label><input id="db-bank" type="text" autocomplete="off"></div>
+    <label for="db-person">Người báo</label><select id="db-person" required></select>
+    <label for="db-note">Ghi chú</label><textarea id="db-note" rows="2"></textarea>
+  </fieldset><p id="db-form-error" class="db-error" role="alert"></p><div id="db-form-retry"></div>
+  <div class="db-actions"><button id="db-submit" type="submit">Gửi báo thu</button><button id="db-close" type="button" class="light">Đóng</button></div></form>
+</div></div>
+<script>
+window.DonBan = (() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money = n => Number(n || 0).toLocaleString('vi-VN') + ' đ';
+  const norm = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+  const date = v => v ? new Date(v).toLocaleString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'}) : '';
+  const rpc = (name, args) => new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args));
+  let orders = [], current = null, employees = [], method = '', busy = false, pending = null, focusBefore = null, readSeq = 0;
+  const msg = (text, error = false) => { $('db-message').textContent = text; $('db-message').className = error ? 'db-warning' : 'db-note'; };
+  function controls() {
+    $('db-fields').disabled = busy || !!pending;
+    $('db-submit').disabled = busy || !!pending;
+    $('db-close').disabled = busy || !!pending;
+    document.querySelectorAll('[data-db-write]').forEach(b => b.disabled = busy || !!pending || b.dataset.dbLocked === 'true');
+    $('db-refresh').disabled = busy;
+  }
+  async function send(intent) {
+    if (busy) return;
+    pending = intent; busy = true; controls();
+    msg('Đang lưu, vui lòng chờ…'); $('db-form-error').textContent = '';
+    $('db-retry').replaceChildren(); $('db-form-retry').replaceChildren();
+    try {
+      const result = await rpc(intent.name, intent.args);
+      pending = null; busy = false; controls();
+      if (intent.after) await intent.after(result);
+      msg('Đã lưu');
+    } catch (e) {
+      busy = false; controls();
+      const text = e.message || String(e), display = text.replace(/(?:Error: )?DON_BAN_VALIDATION:\s*/, '');
+      msg(display, true); $('db-form-error').textContent = display;
+      const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = 'Thử lại cùng yêu cầu'; retry.onclick = () => send(intent);
+      // Giữ requestId và nội dung gốc nếu mất phản hồi, tránh lập phiếu thứ hai.
+      ($('db-modal').hidden ? $('db-retry') : $('db-form-retry')).append(retry);
+      if (/DON_BAN_VALIDATION:/.test(text)) {
+        // Lỗi xác thực nghiệp vụ chưa ghi: cho sửa; thao tác không đổi vẫn dùng requestId cũ qua nút retry.
+        pending = null; controls();
+      }
+    }
+  }
+  const requestId = () => window.crypto?.randomUUID?.() || 'DB-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  function financeView(finance) { $('db-finance').textContent = finance.message || 'Finance: đã kết nối · dữ liệu đọc được lưu tạm tối đa 60 giây'; }
+  async function load(force = false) {
+    const seq = ++readSeq; msg('Đang tải…');
+    try {
+      const result = await rpc('listDonBan', [force]); if (seq !== readSeq) return;
+      orders = result.orders; employees = result.employees; financeView(result.finance); renderList(); msg('');
+    } catch (e) { msg(e.message || String(e), true); }
+  }
+  function renderList() {
+    const q = norm($('db-search').value), filter = $('db-filter').value;
+    const list = orders.filter(o => (!filter || o.MucThanhToan === filter) && norm([o.MaDon,o.TenKhach,o.DienThoai].join(' ')).includes(q));
+    $('db-orders').innerHTML = list.map(o => `<article class="db-order"><h3>${esc(o.MaDon)} · ${esc(o.TenKhach)}</h3>
+      <p>${esc(date(o.NgayChot))} · ${esc(o.DienThoai)}</p><span class="db-tag">${esc(o.MucThanhToan)}</span> ${o.TrangThaiDon === 'ĐÃ HỦY' ? '<span class="db-error">Đã hủy</span>' : ''}
+      <p>Tổng: <b>${money(o.TongTien)}</b></p><p>Đã thu: ${money(o.DaThuXacNhan)} · Còn: <b>${money(o.ConPhaiThu)}</b></p>
+      ${o.warnings.map(w => `<div class="db-warning">${esc(w)}</div>`).join('')}<button type="button" class="light" data-open="${esc(o.MaDon)}">Xem đơn</button></article>`).join('') || '<p>Không có đơn bán phù hợp.</p>';
+    $('db-orders').querySelectorAll('[data-open]').forEach(b => b.onclick = () => open(b.dataset.open));
+  }
+  function receiptStatus(r) {
+    if (r.finance?.KET_QUA === 'DA_XAC_NHAN') return 'Đã xác nhận · ' + (r.finance.MA_PHIEU || '');
+    if (r.finance?.KET_QUA === 'TU_CHOI') return 'Từ chối · ' + (r.finance.LY_DO || '');
+    return r.TrangThai === 'ĐÃ HỦY' ? 'Đã hủy' : 'Chờ xác nhận';
+  }
+  async function open(id, force = false) {
+    const seq = ++readSeq; msg('Đang tải đơn…');
+    try {
+      const result = await rpc('getDonBan', [id, force]); if (seq !== readSeq) return;
+      current = result.order; employees = result.employees; financeView(result.finance);
+      $('db-list').hidden = true; $('db-detail').hidden = false;
+      $('db-detail').innerHTML = `<button type="button" class="light" id="db-back">← Danh sách</button><h2>${esc(current.MaDon)} · ${esc(current.TenKhach)}</h2>
+        <p>Báo giá: ${esc(current.SoBaoGia)} · ${esc(date(current.NgayChot))}</p><p>${esc(current.DienThoai)} · MST ${esc(current.MaSoThue)}</p>
+        <span class="db-tag">${esc(current.MucThanhToan)}</span> · ${esc(current.TrangThaiDon)}
+        ${current.warnings.map(w => `<div class="db-warning">${esc(w)}</div>`).join('')}
+        <div class="db-detail-table"><table><thead><tr><th>Hàng</th><th>Nguồn</th><th>ĐVT</th><th>SL</th><th>Đơn giá</th><th>CK</th><th>VAT dòng</th><th>Thành tiền</th></tr></thead><tbody>${result.items.map(l => `<tr><td>${esc(l.MaHang)} · ${esc(l.TenHang)}</td><td>${esc(l.NguonHang)}</td><td>${esc(l.DVT)}</td><td>${esc(l.SoLuong)}</td><td>${money(l.DonGia)}</td><td>${esc(l.CKDong)}</td><td>${esc(l.VATDong)}</td><td>${money(l.ThanhTien)}</td></tr>`).join('')}</tbody></table></div>
+        <p>Tiền hàng: ${money(current.TienHang)} · Chiết khấu: ${money(current.ChietKhau)} · VAT: ${money(current.VAT)}</p>
+        <p class="db-total">Tổng: ${money(current.TongTien)}</p><p>Đã thu: ${money(current.DaThuXacNhan)} · Chờ: ${money(current.DangCho)} · Còn phải thu: ${money(current.ConPhaiThu)}</p>
+        <div class="db-actions">${current.TrangThaiDon !== 'ĐÃ HỦY' ? '<button type="button" data-db-write id="db-report">Báo thu</button><button type="button" data-db-write class="light" id="db-cancel-order">Hủy đơn</button>' : ''}</div>
+        ${current.LyDoHuy ? `<p>Lý do hủy: ${esc(current.LyDoHuy)}</p>` : ''}<h3>Báo thu</h3>
+        ${current.baoThu.map(r => `<article class="db-receipt"><b>${esc(r.MaBaoThu)} · ${money(r.SoTien)}</b><p>${esc(receiptStatus(r))}</p><p>${esc(r.HinhThuc)} · ${esc(r.NguoiBao)} · ${esc(r.MaGiaoDichNH)}</p><p>${esc(r.GhiChu)} ${r.LyDoHuy ? '· Lý do hủy: '+esc(r.LyDoHuy) : ''}</p>${r.TrangThai === 'CHỜ XÁC NHẬN' && !r.finance ? `<button type="button" data-db-write class="light" data-cancel-receipt="${esc(r.MaBaoThu)}">Hủy báo thu</button>` : ''}</article>`).join('') || '<p>Chưa có báo thu.</p>'}`;
+      $('db-back').onclick = () => { current = null; ++readSeq; $('db-list').hidden = false; $('db-detail').hidden = true; load(); };
+      if ($('db-report')) $('db-report').onclick = paymentForm;
+      if ($('db-cancel-order')) $('db-cancel-order').onclick = () => cancel('huyDon', current.MaDon);
+      $('db-detail').querySelectorAll('[data-cancel-receipt]').forEach(b => b.onclick = () => cancel('huyBaoThu', b.dataset.cancelReceipt));
+      controls(); msg('');
+    } catch (e) { msg(e.message || String(e), true); }
+  }
+  function cancel(name, id) {
+    if (busy || pending) return;
+    const reason = prompt('Lý do hủy (bắt buộc):'); if (!reason?.trim()) return;
+    send({name, args:[id, reason.trim(), requestId()], after:() => { if (typeof refresh === 'function') refresh(false); return open(current.MaDon, true); }});
+  }
+  function paymentForm() {
+    if (busy || pending || !current) return;
+    focusBefore = document.activeElement; method = ''; $('db-payment').reset();
+    $('db-person').innerHTML = '<option value="">Chọn người báo</option>' + employees.map(p => `<option>${esc(p)}</option>`).join('');
+    $('db-form-error').textContent = employees.length ? '' : 'Chưa cấu hình NHAN_VIEN_BAN_HANG trong CAU_HINH.';
+    $('db-form-retry').replaceChildren(); $('db-remaining').textContent = 'Còn phải thu: '+money(current.ConPhaiThu)+' · Còn được báo: '+money(current.ConPhaiThu-current.DangCho);
+    $('db-methods').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed','false')); $('db-bank-wrap').hidden = true;
+    $('db-modal').hidden = false; controls(); $('db-amount').focus();
+  }
+  function closeForm() { if (busy || pending) return; $('db-modal').hidden = true; focusBefore?.focus(); }
+  function formatMoney(input) {
+    const pos = input.selectionStart || 0, raw = input.value, left = raw.slice(0, pos).replace(/\D/g,'').length;
+    const digits = raw.replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+    input.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    let caret = 0, count = 0;
+    while (caret < input.value.length && count < left) { if (/\d/.test(input.value[caret])) count++; caret++; }
+    input.setSelectionRange(caret, caret);
+    input.setCustomValidity(/-/.test(raw) ? 'Số tiền phải lớn hơn 0.' : '');
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('[data-page="donban"]').addEventListener('click', () => { current = null; $('db-list').hidden = false; $('db-detail').hidden = true; load(); });
+    $('db-search').oninput = renderList; $('db-filter').onchange = renderList;
+    $('db-refresh').onclick = () => current ? open(current.MaDon, true) : load(true);
+    $('db-close').onclick = closeForm;
+    $('db-amount').oninput = () => formatMoney($('db-amount'));
+    $('db-methods').querySelectorAll('button').forEach(b => b.onclick = () => {
+      method = b.dataset.method; $('db-bank-wrap').hidden = method === 'TIEN_MAT';
+      $('db-methods').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    });
+    $('db-payment').onsubmit = event => {
+      event.preventDefault(); if (busy || pending) return;
+      const amount = Number($('db-amount').value.replace(/\D/g,''));
+      if (!Number.isSafeInteger(amount) || amount <= 0 || !method || !$('db-person').value) { $('db-form-error').textContent = 'Nhập số tiền > 0, chọn hình thức và người báo.'; return; }
+      const p = {maDon:current.MaDon,soTien:amount,hinhThuc:method,maGiaoDichNH:$('db-bank').value,nguoiBao:$('db-person').value,ghiChu:$('db-note').value,requestId:requestId()};
+      send({name:'baoThu', args:[p], after:() => { closeForm(); return open(p.maDon, true); }});
+    };
+    $('db-modal').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeForm(); return; }
+      if (e.key !== 'Tab') return;
+      const elements = [...$('db-dialog').querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')].filter(x => x.getClientRects().length);
+      if (!elements.length) { e.preventDefault(); return; }
+      const first = elements[0], last = elements[elements.length-1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  });
+  return {chot(button) {
+    if (busy || pending || !confirm('Chốt đơn từ báo giá '+button.dataset.dbQuote+'? Giá và VAT được giữ nguyên.')) return;
+    showPage('donban');
+    button.disabled = true;
+    send({name:'chotDon', args:[button.dataset.dbQuote,requestId()], after:async result => {
+      if (typeof refresh === 'function') refresh(false);
+      showPage('donban'); await open(result.maDon, true);
+    }});
+  }};
+})();
+</script>
