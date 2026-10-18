@@ -180,7 +180,7 @@
     const digest=[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');
     const after=frame(config);if(after.pane!==before.pane||after.text!==text)throw Error('GROUP_CHANGED');
     const item={kind:'loaded_dom_snapshot',group,name:config.name,captured_at:new Date().toISOString(),digest,text};
-    const out=C.append(s,item);out.state.groups[group]={...config,header:path(before.header),headerFallback:path(before.header,true),headerTag:before.header.tagName,pane:path(before.pane),paneFallback:path(before.pane,true),paneTag:before.pane.tagName};out.state.status[group]={at:item.captured_at,text:out.added?'Đã lưu bản đọc thử.':'Nội dung giống bản đã lưu; không lưu trùng.'};await save(out.state);
+    const out=C.append(s,item);out.state.groups[group]={...config,header:path(before.header),headerFallback:path(before.header,true),headerTag:before.header.tagName,pane:path(before.pane),paneFallback:path(before.pane,true),paneTag:before.pane.tagName};out.state.status[group]={at:item.captured_at,text:out.added?'Đã lưu bản đọc thử.':'Nội dung giống bản đã lưu; không lưu trùng.'};await save(out.state);void chrome.runtime.sendMessage?.({app:'TD_ZALO_SYNC_REQUEST'}).catch(()=>{});
     return {added:out.added,characters:text.length};
   }
   async function safelyCapture(group) {try{return await capture(group);}catch(err){await status(group,errors[err.message]||'Không đọc được vùng đã chọn. Chọn lại vùng và thử lại.');throw err;}}

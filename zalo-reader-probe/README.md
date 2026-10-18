@@ -1,6 +1,18 @@
-# Thử đọc hai nhóm Zalo — bản 0.10
+# Thử đọc hai nhóm Zalo — bản 0.11
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.11 — tự lưu bản đọc lên Google Sheets (tùy chọn)
+
+Chủ chọn **chỉ tự lưu Google Sheets trước**, chưa dùng OpenAI. Đã có máy chủ Apps Script riêng trong `sheets-archive/Code.gs`; làm đúng [5 bước cài đặt](sheets-archive/OWNER_SETUP.md). Chưa triển khai Google thật từ phiên này.
+
+- Cập nhật cùng thư mục cũ, Reload tiện ích và F5 Zalo. Mở **Tự lưu Google Sheets**, cài URL /exec và khóa kết nối do project riêng tạo, cấp quyền hai host Apps Script khi Chrome hỏi. Tắt mặc định: chỉ bắt đầu tải dữ liệu khi chủ cài và bật. Không cần khóa OpenAI.
+- Sau mỗi lần đọc, tiện ích tự gửi các bản chưa đồng bộ; alarm thử hàng đợi mỗi phút mà không mở Zalo ngoài lịch. Tối đa 3 bản mỗi lượt, lỗi chờ 1/2/4/8/15 phút rồi thử lại; nút gửi thủ công thử ngay. Giữ bản trên máy. Khi mới bật sẽ gửi cả bản cũ còn lưu trên máy.
+- Client ký HMAC bằng khóa kết nối lưu trong tiện ích; server xác minh trước Sheets, kiểm digest nội dung, ScriptLock + tìm digest để không tạo trùng khi mất phản hồi. Khóa không nằm trong URL, log hoặc file xuất bản đọc. Khóa kết nối khác với mật khẩu Google/API key; không gửi khóa trong chat.
+- Host quyền mới là **optional**, chỉ `script.google.com` và `script.googleusercontent.com`; quyền mặc định không đổi. Chưa cấu hình thì không gửi nội dung ra ngoài. Người có quyền sửa project có thể quản trị khóa; không chia sẻ project/file công khai.
+- Server chỉ ghi ZR_BAN_DOC trong file lưu riêng. Một dòng = một bản chụp khung, có thể chứa tin cũ lặp lại; chưa phải đơn/phiếu/tin độc lập. Nội dung JSON chia 4 cột để giữ đầy đủ và không thực thi công thức. Xem bản đầy đủ qua menu Bản đọc Zalo trong Sheet.
+- Chưa đồng bộ nháp sửa tay; chưa có AI, không ghi Kho/Finance, ChatGPT trong cuộc chat chưa có quyền tự đọc Sheet. Mốc AI là bước riêng về sau.
+- Giới hạn 100 bản / khoảng 900.000 ký tự trên máy vẫn giữ. Chưa tự xóa khi đã đồng bộ; kiểm tra Sheet và xuất dự phòng trước khi tự xóa bản cũ. Chưa hỗ trợ đổi đích sau khi đã gửi để tránh nhầm file.
 
 ## Bản 0.10 — mỗi giờ 09:00–19:00, tạm mở cửa sổ để tải tin
 

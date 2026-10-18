@@ -81,3 +81,13 @@ Chủ báo Zalo không tải tin khi thu nhỏ và yêu cầu tạm mở rồi t
 Worker preflight draft/picker, nhớ window state/focus/tab trước, restore minimized → active tab → focus, chờ 3s → scan. Chặn đọc nếu foreground nhưng document vẫn hidden; không coi DOM là đã đồng bộ đủ. Finally trả trạng thái nếu không tương tác; không minimize cửa sổ vốn normal, không giành focus khi user chuyển tab/cửa sổ (kể cả ứng dụng ngoài Chrome). Content theo dõi bấm/gõ/cuộn/chạm, preflight epoch; không restore nếu không xác minh được interaction. Cửa sổ đóng/máy ngủ/worker dừng có thể để trạng thái mở, không tự tái tạo tab. Chưa thử native Windows/Zalo thật bản 0.10.
 
 Kiểm thử 55/55 đạt: 38 browser fixture, 6 core, 6 window/worker mock, 5 draft/lịch. Bao gồm 09:00/19:00, ngoài giờ không bật cửa sổ, lỗi không mở lặp, restore minimized/normal/active tab/focus, input và focus sang ứng dụng khác chặn restore. Syntax, diff và ZIP integrity đạt. Các mock window API không thay cho kiểm thử native Chrome Windows; chủ cần thử mốc đầu giờ sau cập nhật.
+
+## Bản 0.11 — tự lưu Sheets theo lựa chọn chủ, chưa AI
+
+Thêm sync page, worker outbox/receipts/backoff, optional host access chỉ hai host Apps Script. Mặc định không gửi; chủ cài URL/khóa và bật. Signals từ content sau capture và alarm đều thử sync, serialized bằng running guard; không mutate state bản đọc. Lưu receipt sau ack đúng digest; mất ack sau ghi thì server trả duplicate. Không in secret; status/export bản đọc không trả config. Chỉ chủ quản trị nhập secret vào trang tiện ích. Khóa HMAC ở Chrome local/Script Properties là khóa kết nối, không có OpenAI key.
+
+Server Code.gs mới trong project/container riêng, setup giữ dữ liệu; doPost HMAC + timestamp trước Sheets, SHA-256 content trước lock, ScriptLock + digest lookup trước append. Mỗi dòng lưu raw JSON chunks tránh công thức/giới hạn ô. Client abort 20s và retry idempotent; không có timeout UrlFetch giả. Không ghi Kho/Finance/Danh bạ, chưa đồng bộ nháp và chưa có AI. Owner setup 5 bước, default disabled và có rollback về 0.10.
+
+Không có connector/credential Google để tạo file/project hay triển khai từ phiên này. Chưa thử Google thật/Chrome Windows 0.11; phải phân biệt kiểm thử mock với deployment thật. Chủ cần cài backend một lần, kiểm tra kết nối và thử mất mạng/gửi lại theo OWNER_SETUP.
+
+Kiểm thử 61/61 đạt: 39 browser fixture, 6 core, 6 window worker, 5 draft/lịch, 5 archive transport/server mock. Kiểm HMAC sai/hết hạn trước Sheets, raw digest sai, retry sau server commit/lost response, 50.000 ký tự chia ô, công thức lưu JSON, status không lộ secret, optional permission chỉ khi lưu cài đặt. Syntax, diff, ZIP integrity đạt; chưa chạy endpoint Google thật.

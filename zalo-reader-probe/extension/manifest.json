@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Thành Đức · Thử đọc Zalo",
-  "version": "0.10.0",
-  "description": "Thử đọc phần tin đã tải của nhóm đang mở. Chỉ lưu cục bộ, không gửi tin hoặc ghi kho.",
+  "version": "0.11.0",
+  "description": "Đọc hai nhóm kho, lưu trên máy; tùy chọn tự lưu sang Google Sheets riêng. Chưa ghi kho.",
   "permissions": [
     "storage",
     "alarms"
@@ -29,5 +29,9 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "optional_host_permissions": [
+    "https://script.google.com/*",
+    "https://script.googleusercontent.com/*"
+  ]
 }

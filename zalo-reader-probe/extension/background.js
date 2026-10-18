@@ -1,5 +1,6 @@
 'use strict';
 importScripts('drafts-core.js');
+importScripts('sync-core.js','sync-worker.js');
 const ALARM='td-zalo-background',KEY='td-zalo-probe-v1',SCHEDULE='td-zalo-schedule-v1',DRAFTS='td-zalo-drafts-v1',D=globalThis.ZaloDraftCore;
 async function install(){if(!await chrome.alarms.get(ALARM))await chrome.alarms.create(ALARM,{periodInMinutes:1});}
 chrome.runtime.onInstalled.addListener(()=>{void install();});
@@ -62,5 +63,5 @@ chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
  if(msg?.app!=='TD_ZALO_DRAFTS'||!sender.url?.startsWith(chrome.runtime.getURL('')))return;
  serial(async()=>{if(msg.action==='schedule')return setSchedule(msg.enabled===true);if(msg.action==='extract')return extract();if(msg.action==='update')return updateDraft(msg);throw Error('Lệnh không hợp lệ');}).then(value=>reply({ok:true,...value})).catch(e=>reply({ok:false,error:e.message}));return true;
 });
-chrome.alarms.onAlarm.addListener(a=>{if(a.name===ALARM)void tick().catch(()=>{});});
+chrome.alarms.onAlarm.addListener(a=>{if(a.name===ALARM){void tick().catch(()=>{});void globalThis.ZaloArchiveSync?.().catch(()=>{});}});
 void install();

@@ -3,9 +3,10 @@ from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 from hashlib import sha256
 root = Path(__file__).resolve().parent
-output = root / 'ThanhDuc-Zalo-DocThu-v0.10.zip'
-files = [(root/'extension'/name,name) for name in ['manifest.json','background.js','drafts-core.js','drafts.html','drafts.css','drafts.js','core.js','content.js','popup.html','popup.css','popup.js','viewer.html','viewer.css','viewer.js']]
+output = root / 'ThanhDuc-Zalo-DocThu-v0.11.zip'
+files = [(root/'extension'/name,name) for name in ['manifest.json','background.js','sync-core.js','sync-worker.js','sync.html','sync.js','drafts-core.js','drafts.html','drafts.css','drafts.js','core.js','content.js','popup.html','popup.css','popup.js','viewer.html','viewer.css','viewer.js']]
 files += [(root/name,name) for name in ['HUONG_DAN.html','README.md','VERIFICATION.json']]
+files += [(root/'sheets-archive'/name,'sheets-archive/'+name) for name in ['Code.gs','OWNER_SETUP.md']]
 with ZipFile(output,'w',ZIP_DEFLATED) as z:
     for source, name in files:
         info=ZipInfo(name,date_time=(2026,10,18,0,0,0))

@@ -1,14 +1,15 @@
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "checked_date_vietnam": "2026-10-18",
-  "scope": "read_only_loaded_dom_probe",
+  "scope": "loaded_dom_probe_optional_private_sheets_archive",
   "tests": {
     "core": 6,
-    "browser_fixture": 38,
-    "passed": 55,
+    "browser_fixture": 39,
+    "passed": 61,
     "failed": 0,
     "background_worker": 6,
-    "drafts_and_schedule": 5
+    "drafts_and_schedule": 5,
+    "archive_transport": 5
   },
   "tested": [
     "user_selected_header_and_pane",
@@ -69,7 +70,18 @@
     "user_interaction_prevents_window_restore",
     "failed_slot_attempted_once",
     "foreground_hidden_window_rejected",
-    "draft_preflight_before_window_activation"
+    "draft_preflight_before_window_activation",
+    "signed_archive_hmac_before_sheet_access",
+    "archive_timestamp_window",
+    "archive_content_digest_check",
+    "archive_retry_after_lost_response_no_duplicate",
+    "archive_post_commit_failure_replay",
+    "archive_json_chunks_formula_safe",
+    "archive_complete_50000_char_text",
+    "archive_disabled_no_network",
+    "archive_backoff_and_manual_retry",
+    "archive_status_no_secret",
+    "optional_access_on_explicit_setup_390px"
   ],
   "native_extension_install_cloud": {
     "confirmed": false,
@@ -97,5 +109,9 @@
   "stock_catalog_connected": false,
   "draft_status_is_stock_posting": false,
   "daily_schedule_available_opt_in": "hourly_foreground_09_19",
-  "live_zalo_v010_foreground_tested": false
+  "live_zalo_v010_foreground_tested": false,
+  "live_google_archive_tested": false,
+  "archive_configured_in_cloud": false,
+  "ai_enabled": false,
+  "archive_upload_default_enabled": false
 }
