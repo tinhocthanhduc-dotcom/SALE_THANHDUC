@@ -1,11 +1,11 @@
 <!doctype html><html lang="vi"><meta charset="utf-8"><title>Thành Đức · Thử đọc Zalo</title>
 <link rel="stylesheet" href="popup.css">
-<body><h1>Thử đọc Zalo</h1><p>Bản 0.2 · Lưu trên máy · Chưa ghi kho</p>
+<body><h1>Thử đọc Zalo</h1><p>Bản 0.3 · Lưu trên máy · Chưa ghi kho</p>
 <label for="group">Nhóm cần thử</label><select id="group"><option value="58">Kho 58</option><option value="145">Kho 145</option></select>
 <div id="name"></div><div class="steps"><button data-action="pick-header">1. Chọn tên nhóm</button><button data-action="pick-pane">2. Chọn khung tin</button><button data-action="capture">3. Đọc thử</button><button data-action="pick-entry">4. Chọn tên nhóm ở danh sách trái</button></div>
 <button data-action="scan-both">Quét hai nhóm một lần</button><button data-action="watch-both">Tự quét hai nhóm (khoảng 30 giây)</button><button data-action="stop-all">Dừng tất cả</button><div id="scan-state"></div>
 <button data-action="watch">Theo dõi nhóm đang mở mỗi 15 giây</button><button data-action="stop">Dừng theo dõi nhóm này</button>
 <div id="status" role="status" aria-live="polite"></div><div id="count"></div>
-<pre id="preview"></pre><button id="export">Xuất kết quả ra máy</button><button data-action="clear">Xóa dữ liệu thử nhóm này</button>
+<div id="preview-info"></div><pre id="preview"></pre><button id="full-view">Mở bản đọc đầy đủ</button><button id="export">Xuất kết quả ra máy</button><button data-action="clear">Xóa dữ liệu thử nhóm này</button>
 <p>Tự chuyển nhóm chỉ khi bật quét hai nhóm. Không cuộn lịch sử, không đọc ảnh. Số bản lưu không phải số tin nhắn.</p>
 <script src="core.js"></script><script src="popup.js"></script></body></html>

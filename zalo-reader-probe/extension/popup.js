@@ -1,7 +1,18 @@
 'use strict';
 const KEY='td-zalo-probe-v1',C=globalThis.ZaloProbeCore,$=id=>document.getElementById(id);
 async function state(){return (await chrome.storage.local.get(KEY))[KEY]||C.initial();}
-async function render(){const s=await state(),g=$('group').value,c=s.groups[g],items=s.snapshots.filter(x=>x.group===g);$('scan-state').textContent=(s.autoScan?'Tự quét hai nhóm · ':'')+(s.scanStatus||'');$('name').textContent=c?.name||'Chưa chọn tên nhóm';$('status').textContent=s.status[g]?.text||'Mở đúng nhóm trên Zalo Web, rồi chọn tên và khung tin.';$('count').textContent=items.length+' bản đọc thử · '+(c?.watch?'Đang theo dõi khi tab hiển thị':'Chưa theo dõi');$('preview').textContent=items.at(-1)?.text.slice(0,1400)||'';}
+let previewKey=null;
+async function render(){
+ const s=await state(),g=$('group').value,c=s.groups[g],items=s.snapshots.filter(x=>x.group===g),latest=items.at(-1);
+ $('scan-state').textContent='Quét hai nhóm: '+(s.autoScan?'đang bật · ':'')+(s.scanStatus||'chưa bật');
+ $('name').textContent=c?.name||'Chưa chọn tên nhóm';$('status').textContent=s.status[g]?.text||'Mở đúng nhóm trên Zalo Web, rồi chọn tên và khung tin.';
+ $('count').textContent=items.length+' bản đọc thử · '+(c?.watch?'Đang theo dõi khi tab hiển thị':'Chưa theo dõi nhóm đang mở');
+ const key=g+'|'+(latest?.digest||'')+'|'+(latest?.captured_at||'')+'|'+(latest?.text.length||0);
+ if(key!==previewKey){$('preview').textContent=latest?.text||'';$('preview').scrollTop=$('preview').scrollHeight;previewKey=key;}
+ $('preview-info').textContent=latest?'Hiện toàn bộ '+latest.text.length+' ký tự của bản gần nhất · tự cuộn tới cuối':'Chưa có bản đọc thử.';
+ $('full-view').disabled=!latest;
+}
+
 $('group').addEventListener('change',()=>render().catch(showError));
 function showError(){ $('status').textContent='Không kết nối được. Mở chat.zalo.me, tải lại trang rồi thử lại.'; }
 for(const button of document.querySelectorAll('[data-action]'))button.addEventListener('click',async()=>{
@@ -9,5 +20,6 @@ for(const button of document.querySelectorAll('[data-action]'))button.addEventLi
  button.disabled=true;
  try{const [tab]=await chrome.tabs.query({active:true,currentWindow:true});const r=await chrome.tabs.sendMessage(tab.id,{app:'TD_ZALO_PROBE',action:button.dataset.action,group:$('group').value});if(!r?.ok){$('status').textContent=r?.error||'Không thực hiện được.';return;}if(button.dataset.action.startsWith('pick-'))window.close();else await render();}catch{showError();}finally{button.disabled=false;}
 });
-$('export').addEventListener('click',async()=>{try{const s=await state();const report={tool:'TD_ZALO_PROBE',app_version:'0.2.0',version:1,exported_at:new Date().toISOString(),verified_on_live_zalo:false,notice:'Bản đọc DOM để chủ đối chiếu; chưa xác nhận đủ lịch sử, người gửi, ID tin hay chống trùng tin.',...s};const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='zalo-doc-thu-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch{showError();}});
+$('full-view').addEventListener('click',()=>chrome.tabs.create({url:chrome.runtime.getURL('viewer.html')+'?group='+$('group').value}).catch(showError));
+$('export').addEventListener('click',async()=>{try{const s=await state();const report={tool:'TD_ZALO_PROBE',app_version:'0.3.0',version:1,exported_at:new Date().toISOString(),verified_on_live_zalo:false,notice:'Bản đọc DOM để chủ đối chiếu; chưa xác nhận đủ lịch sử, người gửi, ID tin hay chống trùng tin.',...s};const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='zalo-doc-thu-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch{showError();}});
 chrome.storage.onChanged.addListener(()=>render().catch(showError));render().catch(showError);

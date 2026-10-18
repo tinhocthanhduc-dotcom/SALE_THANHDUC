@@ -21,3 +21,11 @@ Chỉ nhấn nhãn nhóm đã gán có chữ khớp tên; từ chối control g�
 18/18 test mô phỏng đạt (4 core + 14 browser), gồm trễ render khung sau header, chọn sai nhãn sidebar, draft, thao tác xen vào và bật/dừng quét hai nhóm. Chưa thử tự chuyển trên Zalo thật/Windows; cloud vẫn bị chặn nạp extension native như ghi ở trên. Không đổi quyền extension hoặc app khác. Chưa bật lịch ghi kho hay ghi sổ.
 
 Cập nhật giữ dữ liệu: giải nén v0.2, chép đè file vào đúng thư mục tiện ích cũ, chrome://extensions bấm tải lại tiện ích, F5 Zalo. Sau đó chọn thêm nút mở nhóm ở sidebar cho mỗi kho. Có thể cần chọn lại header/pane nếu DOM đã thay đổi.
+
+## Bản 0.3 — sửa phần xem trước bị cắt
+
+Ảnh chủ gửi có popup dừng trước các dòng cuối. Code popup dùng text.slice(0,1400), còn snapshot lưu nguyên phần DOM đã chọn (tối đa 50.000 ký tự). Đã bỏ cắt hiển thị, tự cuộn phần xem trước xuống cuối khi có bản mới, giữ vị trí khi chỉ đổi status, hiện độ dài và thêm trang extension local xem toàn bộ bản mới/cũ theo kho. Render bằng textContent, không tải dữ liệu ngoài.
+
+Tách nhãn trạng thái quét hai nhóm, xóa thông báo lỗi chọn nút cũ khi đã gán lại nút. Không thay cách thu nhận, không tự cuộn Zalo/đồng bộ lịch sử, không tăng quyền tiện ích. Không coi việc có đủ chữ trong snapshot là chứng minh đủ tin từ Zalo.
+
+21/21 test mô phỏng đạt (4 core + 17 browser), thêm bản chữ dài có dòng 16/17 sau mốc 1.400 ký tự, popup hiện đủ và ở cuối, mở viewer local và xem bản cũ theo kho, không thực thi HTML trong tin. Chưa kiểm chứng bản 0.3 trên Zalo thật/Windows. Cập nhật ZIP bằng cách chép đè cùng thư mục, tải lại tiện ích và F5 Zalo; không cần gỡ/xóa bộ nhớ.

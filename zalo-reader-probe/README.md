@@ -1,6 +1,14 @@
-# Thử đọc hai nhóm Zalo — bản 0.2
+# Thử đọc hai nhóm Zalo — bản 0.3
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.3: sửa thiếu tin cuối trong phần xem trước
+
+Bản 0.1/0.2 lưu cả khung chữ đã chọn nhưng popup chỉ hiện 1.400 ký tự đầu. Bản 0.3 bỏ giới hạn xem trước và tự cuộn tới cuối, hiển thị số ký tự, thêm **Mở bản đọc đầy đủ** ở tab riêng (chọn xem cả bản cũ, Ctrl+F để tìm).
+
+Cập nhật: chép đè file v0.3 vào đúng thư mục tiện ích cũ → chrome://extensions bấm tải lại tiện ích → F5 Zalo. Không xóa dữ liệu/cấu hình. Bấm Đọc thử rồi kiểm tra dòng cuối (ví dụ tin thứ 17) trong phần xem trước hoặc màn đầy đủ. Nếu cả bản đầy đủ vẫn không có tin đó thì khung đã chọn chưa bao hết phần tin Zalo đã tải; cần chọn lại khung, không coi là chỉ lỗi hiển thị. Chưa tự quét lịch sử hoặc đồng bộ tin từ Zalo PC. Nếu chính Zalo Web chưa hiện các tin có trên điện thoại/PC, dùng chức năng **Đồng bộ tin nhắn gần đây** của Zalo (nếu đang hiện) trước; tiện ích không tự tạo/lấy tin chưa được Zalo Web tải.
+
+Mở tab xem đầy đủ sẽ làm tab Zalo ẩn và tạm dừng vòng quét cho tới khi quay lại. Thông báo **Quét hai nhóm** được tách khỏi trạng thái đọc nhóm đang mở; lỗi nút mở nhóm không đồng nghĩa lưu bản đọc thủ công thất bại.
 
 ## Cập nhật từ bản 0.1
 

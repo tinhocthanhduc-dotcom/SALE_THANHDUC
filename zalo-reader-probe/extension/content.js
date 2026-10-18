@@ -60,7 +60,7 @@
           if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.name=name;}
           else if(kind==='entry'){safeEntry(el,config);config.entry=path(el);}
           else {safePane(el);config.pane=path(el);}
-          config.watch=false;s.autoScan=false;s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
+          config.watch=false;s.autoScan=false;if(kind==='entry')s.scanStatus='Đã chọn nút mở nhóm. Có thể quét thử hai nhóm khi đã chọn đủ hai kho.';s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
         } catch(err) {await status(group,errors[err.message]||err.message);}
       }).catch(()=>{});
     }

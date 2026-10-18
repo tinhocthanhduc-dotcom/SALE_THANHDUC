@@ -1,11 +1,11 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "checked_date_vietnam": "2026-10-18",
   "scope": "read_only_loaded_dom_probe",
   "tests": {
     "core": 4,
-    "browser_fixture": 14,
-    "passed": 18,
+    "browser_fixture": 17,
+    "passed": 21,
     "failed": 0
   },
   "tested": [
@@ -25,7 +25,10 @@
     "header_and_text_settle_wait",
     "unsent_draft_blocks_navigation",
     "user_interaction_cancels_scan",
-    "watch_both_and_stop_all"
+    "watch_both_and_stop_all",
+    "long_snapshot_latest_tail_after_1400_chars",
+    "popup_full_text_and_scroll_to_end",
+    "local_full_snapshot_viewer_and_history"
   ],
   "native_extension_install_cloud": {
     "confirmed": false,
@@ -40,5 +43,6 @@
   "external_data_uploads": 0,
   "daily_schedule_installed": false,
   "user_reported_manual_read": true,
-  "live_zalo_automatic_navigation_tested": false
+  "live_zalo_automatic_navigation_tested": false,
+  "live_zalo_v03_tested": false
 }

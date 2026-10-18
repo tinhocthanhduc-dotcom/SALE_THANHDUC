@@ -3,8 +3,8 @@ from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 from hashlib import sha256
 root = Path(__file__).resolve().parent
-output = root / 'ThanhDuc-Zalo-DocThu-v0.2.zip'
-files = [(root/'extension'/name,name) for name in ['manifest.json','core.js','content.js','popup.html','popup.css','popup.js']]
+output = root / 'ThanhDuc-Zalo-DocThu-v0.3.zip'
+files = [(root/'extension'/name,name) for name in ['manifest.json','core.js','content.js','popup.html','popup.css','popup.js','viewer.html','viewer.css','viewer.js']]
 files += [(root/name,name) for name in ['HUONG_DAN.html','README.md','VERIFICATION.json']]
 with ZipFile(output,'w',ZIP_DEFLATED) as z:
     for source, name in files:
