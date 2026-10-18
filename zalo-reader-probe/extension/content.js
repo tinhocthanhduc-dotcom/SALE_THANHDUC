@@ -191,15 +191,15 @@
       if(selecting||backgroundPending){reply({ok:true,skipped:true});return;}
       backgroundPending=true;
       serial(async()=>{
-        const s=await load();if(!s.autoScan||Date.now()-lastScan<30000)return;
+        const s=await load();if((!s.autoScan&&!msg.scheduled)||(!msg.scheduled&&Date.now()-lastScan<30000))return {skipped:true};
         backgroundScan=true;
-        try{await scanBoth();const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.backgroundSuccessAt=fresh.backgroundAttemptAt;fresh.scanStatus+=' · đọc DOM nền, chưa xác minh Zalo đã tải đủ tin mới';await save(fresh);}
-        catch(e){const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.scanStatus='Quét nền chưa thành công: '+(errors[e.message]||e.message)+'. Sẽ thử lại; mở Zalo để kiểm tra.';await save(fresh);}
+        try{await scanBoth();const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.backgroundSuccessAt=fresh.backgroundAttemptAt;fresh.scanStatus+=' · đọc DOM nền, chưa xác minh Zalo đã tải đủ tin mới';await save(fresh);return {ok:true};}
+        catch(e){const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.scanStatus='Quét nền chưa thành công: '+(errors[e.message]||e.message)+'. Sẽ thử lại; mở Zalo để kiểm tra.';await save(fresh);return {ok:false,error:fresh.scanStatus};}
         finally{backgroundScan=false;}
-      }).then(()=>reply({ok:true})).catch(()=>reply({ok:false})).finally(()=>{backgroundPending=false;});
+      }).then(value=>reply({ok:true,...value})).catch(()=>reply({ok:false})).finally(()=>{backgroundPending=false;});
       return true;
     }
-    if(msg.action==='stop-all'||msg.action?.startsWith('pick-'))interactionEpoch++;
+    if(msg.action==='stop-all'||msg.action?.startsWith('pick-')){interactionEpoch++;void chrome.runtime.sendMessage?.({app:'TD_ZALO_STOP_SCHEDULE'}).catch(()=>{});}
     serial(async()=>{
       if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){const s=await load();s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;await save(s);pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}
       if(msg.action==='scan-both'||msg.action==='watch-both'){

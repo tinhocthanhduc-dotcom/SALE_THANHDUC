@@ -14,6 +14,7 @@ async function render(){
  $('full-view').disabled=!latest;
 }
 
+$('draft-view').addEventListener('click',()=>chrome.tabs.create({url:chrome.runtime.getURL('drafts.html')}).catch(showError));
 $('group').addEventListener('change',()=>render().catch(showError));
 function showError(){ $('status').textContent='Không kết nối được. Mở chat.zalo.me, tải lại trang rồi thử lại.'; }
 for(const button of document.querySelectorAll('[data-action]'))button.addEventListener('click',async()=>{
@@ -22,5 +23,5 @@ for(const button of document.querySelectorAll('[data-action]'))button.addEventLi
  try{const [tab]=await chrome.tabs.query({active:true,currentWindow:true});const r=await chrome.tabs.sendMessage(tab.id,{app:'TD_ZALO_PROBE',action:button.dataset.action,group:$('group').value});if(!r?.ok){$('status').textContent=r?.error||'Không thực hiện được.';return;}if(button.dataset.action.startsWith('pick-'))window.close();else await render();}catch{showError();}finally{button.disabled=false;}
 });
 $('full-view').addEventListener('click',()=>chrome.tabs.create({url:chrome.runtime.getURL('viewer.html')+'?group='+$('group').value}).catch(showError));
-$('export').addEventListener('click',async()=>{try{const s=await state();const report={tool:'TD_ZALO_PROBE',app_version:'0.8.0',version:1,exported_at:new Date().toISOString(),verified_on_live_zalo:false,notice:'Bản đọc DOM để chủ đối chiếu; chưa xác nhận đủ lịch sử, người gửi, ID tin hay chống trùng tin.',...s,snapshots:s.snapshots.map(item=>({...item,cleaned_text:C.readable(item.text).text}))};const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='zalo-doc-thu-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch{showError();}});
+$('export').addEventListener('click',async()=>{try{const s=await state();const report={tool:'TD_ZALO_PROBE',app_version:'0.9.0',version:1,exported_at:new Date().toISOString(),verified_on_live_zalo:false,notice:'Bản đọc DOM để chủ đối chiếu; chưa xác nhận đủ lịch sử, người gửi, ID tin hay chống trùng tin.',...s,snapshots:s.snapshots.map(item=>({...item,cleaned_text:C.readable(item.text).text}))};const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='zalo-doc-thu-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch{showError();}});
 chrome.storage.onChanged.addListener(()=>render().catch(showError));render().catch(showError);

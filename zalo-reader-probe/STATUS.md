@@ -65,3 +65,11 @@ MV3 service worker dùng chrome.alarms mỗi phút, gửi background-tick tới 
 Chưa thử native Chrome Windows hay Zalo thật bản 0.8. Thời điểm DOM đọc thành công không chứng minh tin Zalo mới nhất đã đồng bộ khi thu nhỏ. Máy ngủ, Chrome tắt hoặc tab bị đóng băng vẫn ngăn quét; chưa có lịch ba mốc hằng ngày. Cần chủ thu nhỏ 3 phút và đối chiếu tin mới với bản đọc.
 
 Kiểm thử: 34 browser fixture đạt; 6 core + 2 worker đạt sau cập nhật kiểm tra manifest cho quyền alarms/service worker mới, tổng 42 test. Node syntax và ZIP integrity đạt. Không có kiểm thử native cài tiện ích trong cloud (policy chặn unpacked extension).
+
+## Bản 0.9 — lịch và phiếu nháp, chưa nối Kho
+
+Thêm trang drafts.html từ popup: xem nguyên văn, sửa ngày/loại/kho, dòng hàng, mã TD gõ tay (chưa xác minh), số lượng, ghi chú; lưu/đối chiếu/bỏ qua, lọc, xuất JSON. Parser bảo thủ cho dòng nhập/xuất/điều chuyển; ngày tương đối để trống. Không tự ghép điều chuyển liên nhóm, không có ID tin thật nên fingerprint chỉ giảm nháp trùng, không bảo đảm duy nhất nghiệp vụ. Worker single writer cho nháp riêng, serial và version khi sửa; không sửa raw. Không gửi dữ liệu ra ngoài. Bản đầu này chưa có danh mục Kho, duyệt nghiệp vụ hay ghi sổ; không tự coi nhãn REVIEWED là đã ghi kho.
+
+Lịch quét opt-in ba mốc giờ Việt Nam dùng alarm mỗi phút, độc lập autoScan. Chỉ đánh dấu mốc xong khi content script thực sự quét thành công, lỗi thử lại; một lượt bù nội dung hiện tại có thể đánh dấu nhiều mốc trễ cùng ngày, không phục hồi lịch sử. Không bù ngày trước hoặc mốc trước lúc bật. Dừng tất cả/chọn cấu hình tắt lịch. Không thêm quyền mới. Chưa thử 0.9 native/Zalo thật; chủ đã xác nhận 0.8 quét nền ổn.
+
+50/50 test đạt (36 browser, 6 core, 2 worker, 6 draft/lịch). Browser 390px kiểm tra không tràn ngang, nhập sửa/đối chiếu và raw không thực thi HTML. Ảnh dữ liệu giả lưu artifact Zalo-phieu-nhap-390.png. Syntax/diff và ZIP integrity đạt; chưa chứng nhận lịch đúng giờ trên Windows/Zalo thật.

@@ -1,13 +1,14 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "checked_date_vietnam": "2026-10-18",
   "scope": "read_only_loaded_dom_probe",
   "tests": {
     "core": 6,
-    "browser_fixture": 34,
-    "passed": 42,
+    "browser_fixture": 36,
+    "passed": 50,
     "failed": 0,
-    "background_worker": 2
+    "background_worker": 2,
+    "drafts_and_schedule": 6
   },
   "tested": [
     "user_selected_header_and_pane",
@@ -50,7 +51,17 @@
     "hidden_document_background_tick",
     "background_draft_rejected_retry_enabled",
     "minute_alarm_existing_tab_only",
-    "background_stop_and_multi_tab_refusal"
+    "background_stop_and_multi_tab_refusal",
+    "numbered_inventory_draft_candidates",
+    "relative_date_not_guessed",
+    "manual_td_review_validation",
+    "repeat_extraction_preserves_edits",
+    "concurrent_extraction_serialized",
+    "draft_expected_version_conflict",
+    "vietnam_daily_slots_and_same_day_catchup",
+    "scheduled_scan_continuous_off",
+    "schedule_only_completes_after_success",
+    "draft_ui_390px_raw_text_xss"
   ],
   "native_extension_install_cloud": {
     "confirmed": false,
@@ -73,5 +84,9 @@
   "user_reported_v05_timeout_after_group_switch": true,
   "live_zalo_v06_automatic_navigation_tested": false,
   "live_zalo_v07_picker_tested": false,
-  "live_zalo_v08_background_tested": false
+  "live_zalo_v08_background_tested": false,
+  "live_zalo_v09_tested": false,
+  "stock_catalog_connected": false,
+  "draft_status_is_stock_posting": false,
+  "daily_schedule_available_opt_in": true
 }

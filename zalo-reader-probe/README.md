@@ -1,6 +1,28 @@
-# Thử đọc hai nhóm Zalo — bản 0.8
+# Thử đọc hai nhóm Zalo — bản 0.9
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.9 — lịch quét và phiếu nháp cục bộ
+
+### Cập nhật và dùng
+
+1. Xuất dữ liệu cũ để dự phòng. Giải nén đè đúng thư mục tiện ích cũ → chrome://extensions → Tải lại → F5 Zalo. Giữ cấu hình và bản đọc cũ, không gỡ tiện ích. Không thêm quyền so với 0.8.
+2. Bấm **Phiếu nháp và lịch quét** trong tiện ích. Đây là trang quản lý riêng của tiện ích, dữ liệu nằm trên chính hồ sơ Chrome này; chưa đồng bộ sang máy khác.
+3. Nếu chỉ muốn ba lượt mỗi ngày, bấm **Dừng mọi chế độ quét** trước, rồi bật **Bật lịch quét ba lần mỗi ngày**. Giữ một tab Zalo đăng nhập, máy thức và Chrome đang chạy. Lịch độc lập với nút Tự quét liên tục.
+4. Lịch 11:55, 15:55, 18:55 theo Asia/Ho_Chi_Minh. Alarm kiểm tra mỗi phút nên có thể chạy trễ. Chỉ tính mốc sau lúc bật lịch. Nếu bỏ lỡ vì mạng/ngủ, thử quét bù một lượt nội dung hiện tại trong cùng ngày; không phục hồi lịch sử tại đúng giờ đã bỏ lỡ và không bù các ngày trước.
+5. Có thể **Quét hai nhóm một lần** trong popup bất cứ lúc nào, rồi bấm **Tạo nháp từ các bản đọc đã lưu** trên trang nháp. Quét nền/lịch thành công cũng tự tạo gợi ý nháp.
+6. Mở từng phiếu để đối chiếu nguyên văn, nhập ngày, sửa kho/loại, bỏ các đoạn người nhận hoặc ghi chú bị tách nhầm thành hàng, thêm/sửa từng hàng và số lượng. Gõ mã TD sau khi tự kiểm tra với app Kho. Chưa có kết nối để tìm mã TD/tồn kho, không được hiểu mã gõ vào là đã được Kho xác minh.
+7. Phiếu điều chuyển: xác nhận kho đi/kho đến bằng tay. Nếu hai nhóm cùng có tin về một điều chuyển, chọn một nháp để đối chiếu và **Bỏ qua** nháp còn lại. Chưa tự ghép hai đầu.
+8. Tích đã đối chiếu → **Đánh dấu đã đối chiếu**. Đây chỉ là nhãn, **không ghi kho**. Dùng **Lưu nháp** nếu chưa đủ thông tin. Có thể lọc Cần kiểm tra/Đã đối chiếu/Bỏ qua và xuất JSON dự phòng. Chưa có nhập lại file JSON hoặc công cụ khôi phục tự động.
+
+### Giới hạn cần biết
+
+- Nhận diện gợi ý các dòng có “nhập kho / xuất kho / điều chuyển”, ưu tiên dạng đánh số hoặc có dấu hai chấm. Nội dung khác có thể chưa thành nháp; luôn so bản đọc gốc. Chưa đọc ảnh/OCR, chưa quản lý từng ID tin thật.
+- Chỉ tự nhận ngày viết rõ dd/mm/yyyy hoặc dd/mm/yy từ dòng ngày. “Hôm qua/Hôm nay” để trống, không đoán từ giờ chụp. Người thực hiện/nhận và hướng chuyển chưa tự suy luận, phải kiểm tra nguyên văn và ghi chú.
+- Chống tạo lại nháp bằng kho + ngày trong ngữ cảnh bản đọc + nội dung chuẩn hóa. Không tạo lại khi quét lại cùng khung, giữ sửa tay; không bảo đảm hai tin giống hệt là hai giao dịch khác nhau. Tin sửa hoặc mất ngữ cảnh ngày có thể tạo nháp khác. Nháp ở hai kho không tự gộp.
+- Nháp lưu tách khỏi bản đọc, tối đa khoảng 2 triệu ký tự; báo đầy thay vì xóa tự động. Xóa bản đọc ở popup không xóa nháp đã tạo. Không có thao tác xóa nháp, chỉ Bỏ qua. Xuất file chứa nội dung nội bộ: lưu ở nơi riêng.
+- Worker là nơi ghi nháp, xếp hàng các lệnh và kiểm tra version khi hai cửa sổ cùng sửa. Tin gốc trong nháp giữ nguyên. Không phải sổ kho hay chứng từ đã duyệt nghiệp vụ.
+- Quét thành công nghĩa là đọc được DOM đã tải, không bảo đảm Zalo đồng bộ đủ tin khi chạy nền. Tab đóng/ngủ/Chrome tắt có thể bỏ lỡ. Chủ đã báo 0.8 chạy nền ổn; 0.9 vẫn cần thử trên máy chủ.
 
 ## Bản 0.8 — thử quét nền mỗi phút
 
