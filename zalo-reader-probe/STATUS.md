@@ -51,3 +51,9 @@ Chủ xác nhận có chuyển nhóm trước khi v0.5 báo SWITCH_TIMEOUT. Chư
 Chỉ so chữ cũ từ khung đang hiển thị. Chấp nhận việc khung ẩn trở nên hiển thị hoặc thay node sau mở, vẫn đòi tên đích khớp và khung/chữ ổn định 700ms. Kiểm display/visibility/opacity, aria-hidden và viewport, từ chối sidebar. Lưu primary ID và đường dẫn cấu trúc của đúng vùng đã chọn; chỉ fallback đường dẫn này nếu đúng tag/header và vùng an toàn, không dò nội dung toàn trang. Chọn vùng/đọc thủ công tự học cấu hình thêm, không xóa snapshot hay bắt gán lại nút mở. Timeout mới nêu kho và phân biệt thiếu header, pane hoặc chưa thấy thay đổi ổn định.
 
 35/35 test mô phỏng đạt (6 core + 29 browser), gồm dynamic IDs hai lần quét liên tiếp, pane mới cùng chữ, nâng config cũ, sai tiêu đề vẫn chặn, cache display:none và cache đẩy ngoài viewport. Node syntax và git diff check đạt. Chưa thử v0.6 trên Zalo thật/Windows; không coi việc vượt test giả lập là đã sửa xong trên máy chủ. Không ghi kho hoặc gửi tin.
+
+## Bản 0.7 — bước 4 có viền, bấm dòng nhưng không lưu
+
+Chủ xác nhận picker mở được nhưng click không lưu. Đã tái hiện trên fixture tình huống handler mousedown của trang dựng lại dòng trước khi lưu. Picker chặn pointerdown/mousedown khi chọn; entry chỉ đóng sau khi save thành công. Lựa chọn sai giữ viền và hiện lý do, cho chọn lại; Esc hủy. Mở picker dừng autoScan/watch và hủy lượt chuyển nhóm đang chờ. Giữ nguyên quyền storage, dữ liệu cũ và phạm vi chỉ đọc.
+
+38/38 test đạt (6 core + 32 browser), thêm mousedown rerender, chọn sai rồi chọn lại, dừng watcher khi cấu hình. Chưa thử v0.7 trên Zalo thật/Windows; nguyên nhân trên máy chủ chưa được xác minh trực tiếp. Không ghi kho/gửi tin.

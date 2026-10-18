@@ -50,25 +50,26 @@
     banner.style.cssText = 'position:fixed;bottom:12px;right:12px;max-width:360px;padding:16px;background:#15374b;color:white;font:16px sans-serif;z-index:2147483647;pointer-events:none;';
     outline.style.cssText = 'position:fixed;border:3px solid #e36a16;background:#ff990018;pointer-events:none;z-index:2147483646;box-sizing:border-box;';
     document.body.append(banner, outline);
-    let base = null, candidate = null, depth = 0;
+    let base = null, candidate = null, depth = 0, closed = false, pending = false;
     function draw() {candidate = base; for (let i=0; i<depth && candidate?.parentElement; i++) candidate=candidate.parentElement; if (!candidate) return; const r=candidate.getBoundingClientRect();Object.assign(outline.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
     function move(e) {if (e.target === banner || e.target === outline) return; base=e.target;draw();}
-    function close() {selecting=false;banner.remove();outline.remove();window.removeEventListener('mousemove',move,true);window.removeEventListener('click',click,true);window.removeEventListener('keydown',key,true);}
+    function close() {closed=true;selecting=false;banner.remove();outline.remove();window.removeEventListener('mousemove',move,true);window.removeEventListener('click',click,true);window.removeEventListener('keydown',key,true);window.removeEventListener('pointerdown',preventNative,true);window.removeEventListener('mousedown',preventNative,true);}
     function key(e) {if (!['Escape','ArrowUp','ArrowDown'].includes(e.key)) return; e.preventDefault();e.stopImmediatePropagation();if(e.key==='Escape'){close();void serial(()=>status(group,errors.PICK_CANCELLED)).catch(()=>{});}else{depth=Math.max(0,depth+(e.key==='ArrowUp'?1:-1));draw();}}
+    function preventNative(e){e.preventDefault();e.stopImmediatePropagation();if(!pending){base=e.target;draw();}}
     function click(e) {
-      e.preventDefault();e.stopImmediatePropagation();const el=candidate||e.target;close();
+      e.preventDefault();e.stopImmediatePropagation();if(pending)return;const el=candidate||e.target;pending=true;if(kind!=='entry')close();
       void serial(async()=>{
         try {
           if (!el || [document.body,document.documentElement].includes(el)) throw Error('SELECTOR_CHANGED');
-          const s=await load(),config=s.groups[group]||{};
+          const s=await load(),config=s.groups[group]||{};if(kind==='entry'&&closed)return;
           if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.headerFallback=path(el,true);config.headerTag=el.tagName;config.name=name;}
           else if(kind==='entry'){const label=bindEntry(el,config);config.entry=path(label);config.entryScope=path(entryRegion(label,config));}
           else {safePane(el);config.pane=path(el);config.paneFallback=path(el,true);config.paneTag=el.tagName;}
-          config.watch=false;s.autoScan=false;if(kind==='entry')s.scanStatus='Đã chọn nút mở nhóm. Có thể quét thử hai nhóm khi đã chọn đủ hai kho.';s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
-        } catch(err) {await status(group,errors[err.message]||err.message);}
+          config.watch=false;s.autoScan=false;if(kind==='entry')s.scanStatus='Đã chọn nút mở nhóm. Có thể quét thử hai nhóm khi đã chọn đủ hai kho.';s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};if(kind==='entry'&&closed)return;await save(s);if(kind==='entry')close();
+        } catch(err) {const message=errors[err.message]||err.message;if(kind==='entry'&&!closed)banner.textContent='Chưa lưu: '+message+' Chọn lại dòng nhóm hoặc bấm Esc để hủy.';await status(group,message);}finally{pending=false;}
       }).catch(()=>{});
     }
-    window.addEventListener('mousemove',move,true);window.addEventListener('click',click,true);window.addEventListener('keydown',key,true);
+    window.addEventListener('mousemove',move,true);window.addEventListener('click',click,true);window.addEventListener('keydown',key,true);window.addEventListener('pointerdown',preventNative,true);window.addEventListener('mousedown',preventNative,true);
   }
   function excludedEntry(el,config) {
     if(!el||[document.body,document.documentElement].includes(el)||el.closest('button,a,input,textarea,form,[contenteditable="true"]')||el.querySelector('input,textarea,[contenteditable="true"]')||!el.getClientRects().length)return true;
@@ -185,9 +186,9 @@
   chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
     if(!msg||msg.app!=='TD_ZALO_PROBE')return;
     if(!['58','145'].includes(msg.group)){reply({ok:false,error:'Nhóm không hợp lệ.'});return;}
-    if(msg.action==='stop-all')interactionEpoch++;
+    if(msg.action==='stop-all'||msg.action?.startsWith('pick-'))interactionEpoch++;
     serial(async()=>{
-      if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}
+      if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){const s=await load();s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;await save(s);pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}
       if(msg.action==='scan-both'||msg.action==='watch-both'){
         try{await scanBoth();const s=await load();s.autoScan=msg.action==='watch-both';for(const g of ['58','145'])s.groups[g].watch=false;await save(s);return {};}
         catch(e){const s=await load();s.autoScan=false;s.scanStatus=errors[e.message]||e.message||'Quét đã dừng.';await save(s);throw e;}

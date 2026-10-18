@@ -1,6 +1,14 @@
-# Thử đọc hai nhóm Zalo — bản 0.6
+# Thử đọc hai nhóm Zalo — bản 0.7
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.7: bước 4 có viền nhưng bấm không lưu
+
+Chép đè file vào đúng thư mục tiện ích cũ → chrome://extensions → Tải lại tiện ích → F5 Zalo. Không gỡ tiện ích, không cần xóa dữ liệu đã đọc.
+
+Chọn Kho 58 → bước 4 → bấm dòng nhóm 58 bên trái; chờ xác nhận **Mở nhóm ✓**. Làm tương tự Kho 145 rồi **Quét hai nhóm một lần**. Trong lúc chọn, cú bấm không mở nhóm để tránh dòng bị dựng lại trước khi lưu. Nếu chưa hợp lệ, viền giữ lại và hiện “Chưa lưu: …”; chọn lại dòng hoặc Esc để hủy. Mở chế độ chọn sẽ dừng tự quét/theo dõi; bật lại sau khi kiểm tra quét một lần thành công.
+
+38/38 kiểm thử mô phỏng đạt. Chưa xác nhận bản 0.7 trên Zalo thật của chủ.
 
 ## Bản 0.6: nhóm đã chuyển nhưng báo chưa xác minh khung
 
