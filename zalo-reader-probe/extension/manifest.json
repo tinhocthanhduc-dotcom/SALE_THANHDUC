@@ -1,10 +1,33 @@
 {
   "manifest_version": 3,
   "name": "Thành Đức · Thử đọc Zalo",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Thử đọc phần tin đã tải của nhóm đang mở. Chỉ lưu cục bộ, không gửi tin hoặc ghi kho.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://chat.zalo.me/*"],
-  "action": {"default_popup": "popup.html", "default_title": "Thành Đức · Thử đọc Zalo"},
-  "content_scripts": [{"matches": ["https://chat.zalo.me/*"], "js": ["core.js", "content.js"], "run_at": "document_idle", "all_frames": false}]
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://chat.zalo.me/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Thành Đức · Thử đọc Zalo"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.zalo.me/*"
+      ],
+      "js": [
+        "core.js",
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

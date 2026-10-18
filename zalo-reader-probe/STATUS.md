@@ -57,3 +57,11 @@ Chỉ so chữ cũ từ khung đang hiển thị. Chấp nhận việc khung ẩ
 Chủ xác nhận picker mở được nhưng click không lưu. Đã tái hiện trên fixture tình huống handler mousedown của trang dựng lại dòng trước khi lưu. Picker chặn pointerdown/mousedown khi chọn; entry chỉ đóng sau khi save thành công. Lựa chọn sai giữ viền và hiện lý do, cho chọn lại; Esc hủy. Mở picker dừng autoScan/watch và hủy lượt chuyển nhóm đang chờ. Giữ nguyên quyền storage, dữ liệu cũ và phạm vi chỉ đọc.
 
 38/38 test đạt (6 core + 32 browser), thêm mousedown rerender, chọn sai rồi chọn lại, dừng watcher khi cấu hình. Chưa thử v0.7 trên Zalo thật/Windows; nguyên nhân trên máy chủ chưa được xác minh trực tiếp. Không ghi kho/gửi tin.
+
+## Bản 0.8 — quét nền thử nghiệm
+
+MV3 service worker dùng chrome.alarms mỗi phút, gửi background-tick tới đúng một tab chat.zalo.me đã mở, không kích hoạt cửa sổ. Chỉ bật khi autoScan đã bật. Background context cho phép document.hidden nhưng giữ kiểm tra tên nhóm, frame CSS đang hiển thị trong trang, nội dung ổn định, vùng đã gán và draft. Dừng tất cả vẫn có hiệu lực; lỗi nền ghi trạng thái rồi thử lại ở alarm sau. Không tự mở, reload hoặc đưa cửa sổ lên trước. Thêm quyền alarms; không thêm quyền đọc host ngoài Zalo.
+
+Chưa thử native Chrome Windows hay Zalo thật bản 0.8. Thời điểm DOM đọc thành công không chứng minh tin Zalo mới nhất đã đồng bộ khi thu nhỏ. Máy ngủ, Chrome tắt hoặc tab bị đóng băng vẫn ngăn quét; chưa có lịch ba mốc hằng ngày. Cần chủ thu nhỏ 3 phút và đối chiếu tin mới với bản đọc.
+
+Kiểm thử: 34 browser fixture đạt; 6 core + 2 worker đạt sau cập nhật kiểm tra manifest cho quyền alarms/service worker mới, tổng 42 test. Node syntax và ZIP integrity đạt. Không có kiểm thử native cài tiện ích trong cloud (policy chặn unpacked extension).

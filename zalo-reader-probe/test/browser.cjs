@@ -115,3 +115,13 @@ test('invalid entry keeps picker and reason visible, can retry without reopening
 test('opening picker stops automatic and per-group watchers before selection',async t=>{
  const p=await navigationFixture(t);await p.evaluate(()=>{testStore['td-zalo-probe-v1'].autoScan=true;testStore['td-zalo-probe-v1'].groups['58'].watch=true;});await send(p,'pick-entry');const s=await state(p);assert.equal(s.autoScan,false);assert.equal(s.groups['58'].watch,false);await p.keyboard.press('Escape');
 });
+test('background tick scans hidden document and keeps raw capture checks',async t=>{
+ const p=await navigationFixture(t);await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});testStore['td-zalo-probe-v1'].autoScan=true;});
+ assert.equal((await send(p,'capture')).ok,false);
+ assert((await send(p,'background-tick')).ok);const s=await state(p);assert.equal(s.snapshots.length,2);assert(s.backgroundSuccessAt);assert.match(s.scanStatus,/chưa xác minh/);
+ assert((await send(p,'stop-all')).ok);await p.locator('#messages').evaluate(e=>e.textContent='TEST NEW');await send(p,'background-tick');assert.equal((await state(p)).snapshots.length,2);
+});
+test('background draft failure stays enabled for later retry and never records success',async t=>{
+ const p=await navigationFixture(t);await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});testStore['td-zalo-probe-v1'].autoScan=true;document.getElementById('composer').textContent='TEST DRAFT';});
+ await send(p,'background-tick');const s=await state(p);assert.equal(s.autoScan,true);assert.equal(s.snapshots.length,0);assert(!s.backgroundSuccessAt);assert.match(s.scanStatus,/chưa thành công/);
+});

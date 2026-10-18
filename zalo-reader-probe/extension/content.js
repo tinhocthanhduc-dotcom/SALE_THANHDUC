@@ -131,8 +131,9 @@
     }
     return null;
   }
+  let backgroundScan=false,backgroundPending=false;
   function frame(config) {
-    if(document.hidden)throw Error('PAGE_HIDDEN');
+    if(document.hidden&&!backgroundScan)throw Error('PAGE_HIDDEN');
     if(!config?.header||!config?.pane)throw Error('SELECTOR_CHANGED');
     const header=selectedElement(config,'header',el=>C.title(el.innerText)===config.name);
     if(!header)throw Error('GROUP_CHANGED');
@@ -145,7 +146,7 @@
   function idle(epoch) {
     if(epoch!==interactionEpoch||document.activeElement?.matches('input')&&C.clean(document.activeElement.value))throw Error('USER_BUSY');
     for(const el of document.querySelectorAll('textarea,[contenteditable="true"]'))if(el.getClientRects().length&&C.clean(el.value||el.innerText))throw Error('USER_BUSY');
-    if(document.hidden)throw Error('PAGE_HIDDEN');
+    if(document.hidden&&!backgroundScan)throw Error('PAGE_HIDDEN');
   }
   async function openGroup(config,epoch) {
     idle(epoch);
@@ -186,6 +187,18 @@
   chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
     if(!msg||msg.app!=='TD_ZALO_PROBE')return;
     if(!['58','145'].includes(msg.group)){reply({ok:false,error:'Nhóm không hợp lệ.'});return;}
+    if(msg.action==='background-tick'){
+      if(selecting||backgroundPending){reply({ok:true,skipped:true});return;}
+      backgroundPending=true;
+      serial(async()=>{
+        const s=await load();if(!s.autoScan||Date.now()-lastScan<30000)return;
+        backgroundScan=true;
+        try{await scanBoth();const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.backgroundSuccessAt=fresh.backgroundAttemptAt;fresh.scanStatus+=' · đọc DOM nền, chưa xác minh Zalo đã tải đủ tin mới';await save(fresh);}
+        catch(e){const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.scanStatus='Quét nền chưa thành công: '+(errors[e.message]||e.message)+'. Sẽ thử lại; mở Zalo để kiểm tra.';await save(fresh);}
+        finally{backgroundScan=false;}
+      }).then(()=>reply({ok:true})).catch(()=>reply({ok:false})).finally(()=>{backgroundPending=false;});
+      return true;
+    }
     if(msg.action==='stop-all'||msg.action?.startsWith('pick-'))interactionEpoch++;
     serial(async()=>{
       if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){const s=await load();s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;await save(s);pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}

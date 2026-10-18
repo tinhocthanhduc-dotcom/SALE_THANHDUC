@@ -1,12 +1,13 @@
 {
-  "version": "0.7.0",
+  "version": "0.8.0",
   "checked_date_vietnam": "2026-10-18",
   "scope": "read_only_loaded_dom_probe",
   "tests": {
     "core": 6,
-    "browser_fixture": 32,
-    "passed": 38,
-    "failed": 0
+    "browser_fixture": 34,
+    "passed": 42,
+    "failed": 0,
+    "background_worker": 2
   },
   "tested": [
     "user_selected_header_and_pane",
@@ -45,7 +46,11 @@
     "cached_offscreen_target_frame",
     "picker_prevents_native_mousedown_rerender",
     "invalid_entry_retry_keeps_picker_visible",
-    "picker_stops_watchers"
+    "picker_stops_watchers",
+    "hidden_document_background_tick",
+    "background_draft_rejected_retry_enabled",
+    "minute_alarm_existing_tab_only",
+    "background_stop_and_multi_tab_refusal"
   ],
   "native_extension_install_cloud": {
     "confirmed": false,
@@ -67,5 +72,6 @@
   "live_zalo_v05_automatic_navigation_tested": false,
   "user_reported_v05_timeout_after_group_switch": true,
   "live_zalo_v06_automatic_navigation_tested": false,
-  "live_zalo_v07_picker_tested": false
+  "live_zalo_v07_picker_tested": false,
+  "live_zalo_v08_background_tested": false
 }

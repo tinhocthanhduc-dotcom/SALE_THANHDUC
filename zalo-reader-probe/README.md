@@ -1,6 +1,16 @@
-# Thử đọc hai nhóm Zalo — bản 0.7
+# Thử đọc hai nhóm Zalo — bản 0.8
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.8 — thử quét nền mỗi phút
+
+Thay file trong đúng thư mục cũ, tải lại tiện ích ở chrome://extensions (chấp nhận quyền alarms nếu Chrome hỏi), F5 Zalo rồi bấm **Tự quét hai nhóm**. Chỉ giữ một tab/cửa sổ Zalo. Sau đó có thể thử thu nhỏ và làm việc ở tab khác. Không cần gỡ tiện ích hay xóa dữ liệu.
+
+Bộ hẹn giờ Chrome gọi quét khoảng mỗi phút, kể cả tab không được chọn; không kích hoạt cửa sổ hay gửi tin. Khi tab hiển thị, vòng quét cũ vẫn hoạt động. Dừng tất cả tắt cả quét nền. Tin đang soạn vẫn chặn chuyển nhóm. Lỗi nền không tự tắt chế độ, lần sau thử lại. Mở nhiều tab Zalo thì báo tạm dừng để tránh đọc nhầm tab. Không tự mở lại tab bị đóng hay đăng nhập hộ.
+
+**Chưa phải lịch 11:55/15:55/18:55.** Máy ngủ/tắt hoặc Chrome đóng thì không quét; Chrome có thể trì hoãn alarm hoặc đóng băng tab. Đọc DOM thành công không chứng minh Zalo đã đồng bộ đủ tin mới. Không tự khôi phục/đưa cửa sổ lên trước, không tự tải lại trang. Quyền mới chỉ là alarms, host vẫn chỉ chat.zalo.me; không có API riêng, cookie hoặc tải dữ liệu ra ngoài.
+
+**Thử trên máy chủ:** quét một lần trước; thu nhỏ Zalo 3 phút, mở lại kiểm tra giờ quét tăng. Đối chiếu một tin mới do người trong nhóm gửi trong thời gian thu nhỏ với bản đọc. Nếu giờ tăng nhưng thiếu tin mới, Zalo chưa cập nhật DOM nền: giữ cửa sổ hiển thị và báo lại. Không coi trạng thái “nội dung giống” là bằng chứng không có tin mới.
 
 ## Bản 0.7: bước 4 có viền nhưng bấm không lưu
 
