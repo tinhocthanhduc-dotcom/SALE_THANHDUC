@@ -43,3 +43,11 @@ Chủ xác nhận đọc thủ công cả hai nhóm nhưng tự quét báo NAV_U
 Binding cho phép click dòng/preview/avatar, đi lên trong phạm vi an toàn để tìm nhãn đúng duy nhất, lưu vùng sidebar. Khi quét tìm đúng nhãn trong vùng này, tránh lệ thuộc vị trí dòng/nth selector; tên trùng hoặc thiếu nhãn thì dừng. Nhận pointer/mousedown/up/click trên đúng nhãn để hỗ trợ handler mousedown; không giả trusted input, không mở rộng quyền extension. Gán bước 4 lại để có scope mới; giữ toàn bộ snapshot và config header/pane cũ. Popup hiện tình trạng cấu hình từng phần và lỗi nêu kho/bước thiếu.
 
 29/29 test mô phỏng đạt (6 core + 23 browser), thêm chọn preview cả dòng, sidebar reorder, mousedown-only, nhãn trùng và thiếu entry Kho 145. Bản v0.5 tự chuyển vẫn chưa thử Zalo thật/Windows; cần chủ thử lại sau gán bước 4. Không ghi kho/gửi tin, không thay chế độ chỉ đọc DOM đã tải.
+
+## Bản 0.6 — đã chuyển nhóm nhưng timeout kiểm khung
+
+Chủ xác nhận có chuyển nhóm trước khi v0.5 báo SWITCH_TIMEOUT. Chưa xác minh DOM thực của máy chủ; đã tìm thấy và sửa các trường hợp lỗi có thể tái hiện trong code: pane đích được cache ẩn, bật lại chữ không đổi; pane/header đổi ID; pane được thay node nhưng chữ giống nhau. Bản cũ lấy oldText ngay cả từ khung đích đang ẩn rồi đòi chữ phải khác, gây timeout giả.
+
+Chỉ so chữ cũ từ khung đang hiển thị. Chấp nhận việc khung ẩn trở nên hiển thị hoặc thay node sau mở, vẫn đòi tên đích khớp và khung/chữ ổn định 700ms. Kiểm display/visibility/opacity, aria-hidden và viewport, từ chối sidebar. Lưu primary ID và đường dẫn cấu trúc của đúng vùng đã chọn; chỉ fallback đường dẫn này nếu đúng tag/header và vùng an toàn, không dò nội dung toàn trang. Chọn vùng/đọc thủ công tự học cấu hình thêm, không xóa snapshot hay bắt gán lại nút mở. Timeout mới nêu kho và phân biệt thiếu header, pane hoặc chưa thấy thay đổi ổn định.
+
+35/35 test mô phỏng đạt (6 core + 29 browser), gồm dynamic IDs hai lần quét liên tiếp, pane mới cùng chữ, nâng config cũ, sai tiêu đề vẫn chặn, cache display:none và cache đẩy ngoài viewport. Node syntax và git diff check đạt. Chưa thử v0.6 trên Zalo thật/Windows; không coi việc vượt test giả lập là đã sửa xong trên máy chủ. Không ghi kho hoặc gửi tin.

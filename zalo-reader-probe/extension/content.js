@@ -10,7 +10,9 @@
     ENTRY_NOT_FOUND: 'Không tìm thấy dòng nhóm đã gán. Ghim/đưa cả hai nhóm vào danh sách bên trái rồi chọn lại bước 4.',
     ENTRY_AMBIGUOUS: 'Có nhiều dòng cùng tên nhóm trong vùng đã chọn. Không tự đoán; cần phân biệt tên nhóm.',
     USER_BUSY: 'Đã dừng chuyển nhóm vì anh đang thao tác hoặc có nội dung đang soạn.',
-    SWITCH_TIMEOUT: 'Chưa xác minh khung tin đã tải đúng nhóm. Không lưu nội dung; chọn lại vùng hoặc thử lại.',
+    SWITCH_TIMEOUT: 'Tên nhóm đã đúng nhưng chưa xác minh được khung tin đổi xong. Không lưu nội dung.',
+    SWITCH_HEADER: 'Đã nhấn mở nhưng chưa nhận diện đúng khung tên nhóm. Mở nhóm đó, chọn lại bước 1 và đọc thử.',
+    SWITCH_PANE: 'Tên nhóm đã đúng nhưng khung tin đã đổi đường dẫn. Mở nhóm đó, chọn lại bước 2 và đọc thử.',
     GROUP_CHANGED: 'Nhóm đang mở khác nhóm đã chọn. Dừng đọc nhóm này; mở đúng nhóm hoặc chọn lại.',
     SELECTOR_CHANGED: 'Không tìm thấy đúng vùng đã chọn. Hãy chọn lại tên nhóm và khung tin.',
     COMPOSER_SELECTED: 'Vùng chọn có ô soạn tin. Hãy chọn khung chứa tin nhắn, không chọn cả trang.',
@@ -26,10 +28,10 @@
   async function save(state) {try {await chrome.storage.local.set({[KEY]: state});} catch {throw Error('STORAGE_ERROR');}}
   async function status(group, text) {const s = await load(); s.status[group] = {at: new Date().toISOString(), text}; await save(s);}
   function unique(selector) {let els; try {els = document.querySelectorAll(selector);} catch {throw Error('SELECTOR_CHANGED');} if (els.length !== 1) throw Error('SELECTOR_CHANGED'); return els[0];}
-  function path(el) {
+  function path(el, structural=false) {
     const parts = [];
     for (let node = el; node && node !== document.documentElement; node = node.parentElement) {
-      if (node.id && document.querySelectorAll('#' + CSS.escape(node.id)).length === 1) {parts.unshift('#' + CSS.escape(node.id)); break;}
+      if (!structural && node.id && document.querySelectorAll('#' + CSS.escape(node.id)).length === 1) {parts.unshift('#' + CSS.escape(node.id)); break;}
       const tag = node.tagName.toLowerCase(), peers = [...node.parentElement.children].filter(x => x.tagName === node.tagName);
       parts.unshift(tag + ':nth-of-type(' + (peers.indexOf(node) + 1) + ')');
     }
@@ -59,9 +61,9 @@
         try {
           if (!el || [document.body,document.documentElement].includes(el)) throw Error('SELECTOR_CHANGED');
           const s=await load(),config=s.groups[group]||{};
-          if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.name=name;}
+          if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.headerFallback=path(el,true);config.headerTag=el.tagName;config.name=name;}
           else if(kind==='entry'){const label=bindEntry(el,config);config.entry=path(label);config.entryScope=path(entryRegion(label,config));}
-          else {safePane(el);config.pane=path(el);}
+          else {safePane(el);config.pane=path(el);config.paneFallback=path(el,true);config.paneTag=el.tagName;}
           config.watch=false;s.autoScan=false;if(kind==='entry')s.scanStatus='Đã chọn nút mở nhóm. Có thể quét thử hai nhóm khi đã chọn đủ hai kho.';s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
         } catch(err) {await status(group,errors[err.message]||err.message);}
       }).catch(()=>{});
@@ -111,13 +113,33 @@
       label.dispatchEvent(pointer?new PointerEvent(type,{...common,pointerType:'mouse',isPrimary:true,buttons:type==='pointerdown'?1:0}):new MouseEvent(type,{...common,buttons:type==='mousedown'?1:0}));
     }
   }
+  function visibleFrame(el){
+    if(!el||!el.getClientRects().length||el.closest('[aria-hidden="true"]'))return false;
+    const r=el.getBoundingClientRect();
+    return r.width>0&&r.height>0&&r.bottom>0&&r.right>0&&r.top<innerHeight&&r.left<innerWidth&&(!el.checkVisibility||el.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}));
+  }
+  function boundCandidate(config,part,el){
+    if(!visibleFrame(el))return false;
+    if(config[part+'Tag']&&el.tagName!==config[part+'Tag'])return false;
+    let sidebar;try{sidebar=config.entryScope?document.querySelector(config.entryScope):null;}catch{return false;}
+    return !sidebar?.contains(el);
+  }
+  function selectedElement(config,part,accept){
+    for(const selector of [...new Set([config[part],config[part+'Fallback']].filter(Boolean))]){
+      try{const el=unique(selector);if(boundCandidate(config,part,el)&&accept(el))return el;}catch{/* Try only the other path explicitly learned from a selected frame. */}
+    }
+    return null;
+  }
   function frame(config) {
     if(document.hidden)throw Error('PAGE_HIDDEN');
     if(!config?.header||!config?.pane)throw Error('SELECTOR_CHANGED');
-    const header=unique(config.header);if(!header.getClientRects().length||C.title(header.innerText)!==config.name)throw Error('GROUP_CHANGED');
-    const pane=safePane(unique(config.pane)),text=C.clean(pane.innerText);
-    if(!text)throw Error('EMPTY_PANE');if(text.length>50000)throw Error('TOO_LARGE');
-    return {pane,text};
+    const header=selectedElement(config,'header',el=>C.title(el.innerText)===config.name);
+    if(!header)throw Error('GROUP_CHANGED');
+    const pane=selectedElement(config,'pane',el=>{safePane(el);return !el.contains(header)&&!header.contains(el);});
+    if(!pane)throw Error('SELECTOR_CHANGED');
+    if(pane.matches('[aria-busy="true"]')||[...pane.querySelectorAll('[aria-busy="true"],[role="progressbar"]')].some(el=>el.getClientRects().length))throw Error('EMPTY_PANE');
+    const text=C.clean(pane.innerText);if(!text)throw Error('EMPTY_PANE');if(text.length>50000)throw Error('TOO_LARGE');
+    return {header,pane,text};
   }
   function idle(epoch) {
     if(epoch!==interactionEpoch||document.activeElement?.matches('input')&&C.clean(document.activeElement.value))throw Error('USER_BUSY');
@@ -127,16 +149,16 @@
   async function openGroup(config,epoch) {
     idle(epoch);
     try{frame(config);return;}catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;}
-    let oldText;try{oldText=C.clean(unique(config.pane).innerText);}catch{/* Target pane may only mount after opening its group. */}
+    let oldText,oldPane;try{oldPane=unique(config.pane);const rect=oldPane.getBoundingClientRect();if(visibleFrame(oldPane)&&rect.width>=40&&rect.height>=20)oldText=C.clean(oldPane.innerText);else oldPane=null;}catch{/* Target pane may only mount after opening its group. */}
     activateEntry(resolveEntry(config)); // Only user-bound sidebar navigation, never message/send controls.
-    const end=Date.now()+8000;let stable='',since=0;
+    const end=Date.now()+8000;let stable='',since=0,lastError='GROUP_CHANGED',previousPane=null;
     while(Date.now()<end){
       idle(epoch);
-      try{const next=frame(config);if(next.text!==oldText){if(next.text!==stable){stable=next.text;since=Date.now();}else if(Date.now()-since>=700)return;}else{stable='';since=0;}}
-      catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;stable='';since=0;}
+      try{const next=frame(config);lastError='SWITCH_TIMEOUT';if(next.text!==oldText||oldPane&&next.pane!==oldPane){if(next.text!==stable||next.pane!==previousPane){stable=next.text;previousPane=next.pane;since=Date.now();}else if(Date.now()-since>=700)return;}else{stable='';since=0;}}
+      catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;lastError=e.message;stable='';since=0;}
       await new Promise(resolve=>setTimeout(resolve,100));
     }
-    throw Error('SWITCH_TIMEOUT');
+    throw Error(lastError==='GROUP_CHANGED'?'SWITCH_HEADER':lastError==='SELECTOR_CHANGED'?'SWITCH_PANE':'SWITCH_TIMEOUT');
   }
   async function scanBoth(){
     const epoch=interactionEpoch,s=await load();
@@ -144,7 +166,7 @@
     if(s.groups['58'].name===s.groups['145'].name)throw Error('NAV_UNSAFE');
     for(const group of ['58','145']){
       try{await openGroup(s.groups[group],epoch);idle(epoch);await safelyCapture(group);}
-      catch(e){await status(group,errors[e.message]||'Không mở/đọc được đúng nhóm.');throw e;}
+      catch(e){const message='Kho '+group+': '+(errors[e.message]||e.message);await status(group,message);throw Error(message);}
     }
     const fresh=await load();fresh.scanStatus='Đã quét hai nhóm lúc '+new Date().toLocaleTimeString('vi-VN');await save(fresh);lastScan=Date.now();
   }
@@ -156,7 +178,7 @@
     const digest=[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');
     const after=frame(config);if(after.pane!==before.pane||after.text!==text)throw Error('GROUP_CHANGED');
     const item={kind:'loaded_dom_snapshot',group,name:config.name,captured_at:new Date().toISOString(),digest,text};
-    const out=C.append(s,item);out.state.status[group]={at:item.captured_at,text:out.added?'Đã lưu bản đọc thử.':'Nội dung giống bản đã lưu; không lưu trùng.'};await save(out.state);
+    const out=C.append(s,item);out.state.groups[group]={...config,header:path(before.header),headerFallback:path(before.header,true),headerTag:before.header.tagName,pane:path(before.pane),paneFallback:path(before.pane,true),paneTag:before.pane.tagName};out.state.status[group]={at:item.captured_at,text:out.added?'Đã lưu bản đọc thử.':'Nội dung giống bản đã lưu; không lưu trùng.'};await save(out.state);
     return {added:out.added,characters:text.length};
   }
   async function safelyCapture(group) {try{return await capture(group);}catch(err){await status(group,errors[err.message]||'Không đọc được vùng đã chọn. Chọn lại vùng và thử lại.');throw err;}}

@@ -1,6 +1,14 @@
-# Thử đọc hai nhóm Zalo — bản 0.5
+# Thử đọc hai nhóm Zalo — bản 0.6
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.6: nhóm đã chuyển nhưng báo chưa xác minh khung
+
+Chủ xác nhận v0.5 đã chuyển nhóm rồi báo timeout. Đã xử lý hai trường hợp trong code: khung được giữ trong DOM nhưng đang ẩn (mở lại cùng chữ, không cần đợi chữ đổi); khung bị tạo lại với ID khác sau chuyển. Lưu đường dẫn cấu trúc từ đúng header/pane do chủ chọn, chỉ dùng lại khi tên nhóm khớp chính xác và khung thực sự hiển thị, không nằm trong sidebar. Không tìm nội dung toàn trang hay bỏ bước kiểm tên nhóm.
+
+Cập nhật: chép đè v0.6 vào thư mục cũ → tải lại tiện ích → F5 Zalo → thử Quét hai nhóm một lần. Không cần chọn lại bước 4 vì nút mở nhóm đã hoạt động. Đọc thử thủ công sẽ tự học thêm đường dẫn cho cấu hình cũ. Nếu thông báo mới chỉ rõ khung tên hoặc khung tin đổi đường dẫn, mở đúng kho đó chọn lại bước 1/2 tương ứng, bấm Đọc thử rồi quét lại.
+
+Khung hiển thị được kiểm tra cả display/visibility/opacity, aria-hidden và vị trí ngoài màn hình. Lỗi timeout mới nêu Kho 58/145 và phân biệt tên nhóm chưa đúng, mất khung tin hoặc chữ chưa ổn định. Không lưu khi không xác minh được. Vẫn chưa xác nhận v0.6 trên Zalo thật.
 
 ## Bản 0.5: sửa gán dòng mở nhóm và tự chuyển hai nhóm
 
