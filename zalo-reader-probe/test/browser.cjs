@@ -31,3 +31,24 @@ test('popup displays local snapshots as text, not executable HTML, and sends onl
 test('picker ArrowUp selects enclosing message pane and Escape cancels cleanly',async t=>{
  const p=await pageFor(t);await pick(p,'pick-header','#group-name');await send(p,'pick-pane');await p.locator('#m1').hover();await p.keyboard.press('ArrowUp');await p.locator('#m1').click();await p.waitForFunction(()=>testStore['td-zalo-probe-v1']?.groups['58']?.pane==='#messages');assert((await send(p,'capture')).ok);assert((await state(p)).snapshots[0].text.includes('Đã nhận hàng'));await send(p,'pick-pane');await p.keyboard.press('Escape');assert((await send(p,'capture')).ok);
 });
+async function navigationFixture(t){
+ const p=await pageFor(t);await p.locator('#composer').evaluate(e=>e.textContent='');
+ await p.evaluate(()=>{const side=document.querySelector('aside');side.innerHTML='<div id="entry58">TEST KHO 58</div><div id="entry145">TEST KHO 145</div>';for(const id of ['58','145'])document.getElementById('entry'+id).addEventListener('click',()=>{document.getElementById('group-name').textContent='TEST KHO '+id;setTimeout(()=>{document.getElementById('messages').innerHTML='<p>TEST CONTENT '+id+'</p>';},180);});});
+ for(const g of ['58','145']){await p.evaluate(g=>{document.getElementById('group-name').textContent='TEST KHO '+g;document.getElementById('messages').innerHTML='<p>TEST CONTENT '+g+'</p>';},g);await config(p,g);await send(p,'pick-entry',g);await p.locator('#entry'+g).hover();await p.locator('#entry'+g).click();await p.waitForFunction(g=>!!testStore['td-zalo-probe-v1'].groups[g].entry,g);}
+ return p;
+}
+test('scan opens both selected sidebar labels and waits for matching message content',async t=>{
+ const p=await navigationFixture(t);const r=await send(p,'scan-both');assert(r.ok,r.error);const s=await state(p);assert.equal(s.snapshots.length,2);assert.equal(s.snapshots.find(x=>x.group==='58').text,'TEST CONTENT 58');assert.equal(s.snapshots.find(x=>x.group==='145').text,'TEST CONTENT 145');assert.equal(s.autoScan,false);
+});
+test('draft text blocks all automated navigation; stop-all clears both watchers',async t=>{
+ const p=await navigationFixture(t);await p.locator('#composer').evaluate(e=>e.textContent='TEST UNSENT');const clicks=await p.evaluate(()=>appClicks);const r=await send(p,'watch-both');assert.equal(r.ok,false);assert(r.error.includes('đang soạn'));assert.equal((await state(p)).snapshots.length,0);assert.equal(await p.evaluate(()=>appClicks),clicks);assert((await send(p,'stop-all')).ok);assert.equal((await state(p)).autoScan,false);
+});
+test('moved sidebar target with wrong label is rejected without clicking it',async t=>{
+ const p=await navigationFixture(t);await p.locator('#entry58').evaluate(e=>e.textContent='OTHER CHAT');const clicks=await p.evaluate(()=>appClicks),r=await send(p,'scan-both');assert.equal(r.ok,false);assert.equal(await p.evaluate(()=>appClicks),clicks);assert.equal((await state(p)).snapshots.length,0);
+});
+test('user interaction interrupts navigation before any snapshot is saved',async t=>{
+ const p=await navigationFixture(t);const pending=send(p,'scan-both');await p.waitForFunction(()=>document.getElementById('group-name').textContent==='TEST KHO 58');await p.locator('#messages').click();const r=await pending;assert.equal(r.ok,false);assert(r.error.includes('đang thao tác'));assert.equal((await state(p)).snapshots.length,0);
+});
+test('watch-both enables alternating mode and stop-all stops it',async t=>{
+ const p=await navigationFixture(t);assert((await send(p,'watch-both')).ok);assert.equal((await state(p)).autoScan,true);assert.equal((await state(p)).snapshots.length,2);assert((await send(p,'stop-all')).ok);assert.equal((await state(p)).autoScan,false);
+});

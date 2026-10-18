@@ -3,8 +3,12 @@
   if (location.origin !== 'https://chat.zalo.me' || window !== window.top || globalThis.__tdZaloProbe) return;
   globalThis.__tdZaloProbe = true;
   const C = globalThis.ZaloProbeCore, KEY = 'td-zalo-probe-v1';
-  let chain = Promise.resolve(), selecting = false;
+  let chain = Promise.resolve(), selecting = false, interactionEpoch = 0, lastScan = 0;
+  for (const event of ['pointerdown','keydown']) window.addEventListener(event,e=>{if(e.isTrusted)interactionEpoch++;},true);
   const errors = {
+    NAV_UNSAFE: 'Chưa chọn đúng tên nhóm trong danh sách bên trái. Hãy chọn lại nút mở nhóm.',
+    USER_BUSY: 'Đã dừng chuyển nhóm vì anh đang thao tác hoặc có nội dung đang soạn.',
+    SWITCH_TIMEOUT: 'Chưa xác minh khung tin đã tải đúng nhóm. Không lưu nội dung; chọn lại vùng hoặc thử lại.',
     GROUP_CHANGED: 'Nhóm đang mở khác nhóm đã chọn. Dừng đọc nhóm này; mở đúng nhóm hoặc chọn lại.',
     SELECTOR_CHANGED: 'Không tìm thấy đúng vùng đã chọn. Hãy chọn lại tên nhóm và khung tin.',
     COMPOSER_SELECTED: 'Vùng chọn có ô soạn tin. Hãy chọn khung chứa tin nhắn, không chọn cả trang.',
@@ -38,7 +42,7 @@
     if (selecting) throw Error('Đang chọn vùng. Bấm Esc để hủy trước.');
     selecting = true;
     const banner = document.createElement('div'), outline = document.createElement('div');
-    banner.textContent = (kind === 'header' ? 'Chọn đúng tên nhóm ở đầu cuộc trò chuyện.' : 'Chọn khung tin nhắn. ↑ mở rộng vùng, ↓ thu nhỏ.') + ' Bấm chuột để chốt · Esc hủy.';
+    banner.textContent = (kind === 'header' ? 'Chọn đúng tên nhóm ở đầu cuộc trò chuyện.' : kind === 'entry' ? 'Chọn riêng tên nhóm trong danh sách chat bên trái (không chọn cả dòng có tin xem trước).' : 'Chọn khung tin nhắn. ↑ mở rộng vùng, ↓ thu nhỏ.') + ' Bấm chuột để chốt · Esc hủy.';
     banner.style.cssText = 'position:fixed;bottom:12px;right:12px;max-width:360px;padding:16px;background:#15374b;color:white;font:16px sans-serif;z-index:2147483647;pointer-events:none;';
     outline.style.cssText = 'position:fixed;border:3px solid #e36a16;background:#ff990018;pointer-events:none;z-index:2147483646;box-sizing:border-box;';
     document.body.append(banner, outline);
@@ -54,24 +58,64 @@
           if (!el || [document.body,document.documentElement].includes(el)) throw Error('SELECTOR_CHANGED');
           const s=await load(),config=s.groups[group]||{};
           if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.name=name;}
+          else if(kind==='entry'){safeEntry(el,config);config.entry=path(el);}
           else {safePane(el);config.pane=path(el);}
-          config.watch=false;s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':'Đã chọn khung tin.'};await save(s);
+          config.watch=false;s.autoScan=false;s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
         } catch(err) {await status(group,errors[err.message]||err.message);}
       }).catch(()=>{});
     }
     window.addEventListener('mousemove',move,true);window.addEventListener('click',click,true);window.addEventListener('keydown',key,true);
   }
-  async function capture(group) {
-    const s=await load(),config=s.groups[group];
+  function safeEntry(el,config) {
+    if(!config?.name||!el||el===document.body||el===document.documentElement||C.title(el.innerText)!==config.name||el.closest('button,a,input,textarea,form,[contenteditable="true"]'))throw Error('NAV_UNSAFE');
+    const header=config.header?document.querySelector(config.header):null,pane=config.pane?document.querySelector(config.pane):null;
+    if(header?.contains(el)||pane?.contains(el)||!el.getClientRects().length)throw Error('NAV_UNSAFE');
+    return el;
+  }
+  function frame(config) {
     if(document.hidden)throw Error('PAGE_HIDDEN');
     if(!config?.header||!config?.pane)throw Error('SELECTOR_CHANGED');
     const header=unique(config.header);if(!header.getClientRects().length||C.title(header.innerText)!==config.name)throw Error('GROUP_CHANGED');
-    const pane=safePane(unique(config.pane));
-    // Read rendered text of this selected pane only; do not access cookies,
-    // private Zalo endpoints, input contents, images, or the rest of the page.
-    const text=C.clean(pane.innerText);if(!text)throw Error('EMPTY_PANE');if(text.length>50000)throw Error('TOO_LARGE');
+    const pane=safePane(unique(config.pane)),text=C.clean(pane.innerText);
+    if(!text)throw Error('EMPTY_PANE');if(text.length>50000)throw Error('TOO_LARGE');
+    return {pane,text};
+  }
+  function idle(epoch) {
+    if(epoch!==interactionEpoch||document.activeElement?.matches('input')&&C.clean(document.activeElement.value))throw Error('USER_BUSY');
+    for(const el of document.querySelectorAll('textarea,[contenteditable="true"]'))if(el.getClientRects().length&&C.clean(el.value||el.innerText))throw Error('USER_BUSY');
+    if(document.hidden)throw Error('PAGE_HIDDEN');
+  }
+  async function openGroup(config,epoch) {
+    idle(epoch);
+    try{frame(config);return;}catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;}
+    let oldText;try{oldText=C.clean(unique(config.pane).innerText);}catch{/* Target pane may only mount after opening its group. */}
+    safeEntry(unique(config.entry),config).click(); // Only the user-bound sidebar label; never a message/send control.
+    const end=Date.now()+8000;let stable='',since=0;
+    while(Date.now()<end){
+      idle(epoch);
+      try{const next=frame(config);if(next.text!==oldText){if(next.text!==stable){stable=next.text;since=Date.now();}else if(Date.now()-since>=700)return;}else{stable='';since=0;}}
+      catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;stable='';since=0;}
+      await new Promise(resolve=>setTimeout(resolve,100));
+    }
+    throw Error('SWITCH_TIMEOUT');
+  }
+  async function scanBoth(){
+    const epoch=interactionEpoch,s=await load();
+    for(const group of ['58','145'])if(!s.groups[group]?.entry||!s.groups[group]?.header||!s.groups[group]?.pane)throw Error('NAV_UNSAFE');
+    if(s.groups['58'].name===s.groups['145'].name)throw Error('NAV_UNSAFE');
+    for(const group of ['58','145']){
+      try{await openGroup(s.groups[group],epoch);idle(epoch);await safelyCapture(group);}
+      catch(e){await status(group,errors[e.message]||'Không mở/đọc được đúng nhóm.');throw e;}
+    }
+    const fresh=await load();fresh.scanStatus='Đã quét hai nhóm lúc '+new Date().toLocaleTimeString('vi-VN');await save(fresh);lastScan=Date.now();
+  }
+  async function capture(group) {
+    const s=await load(),config=s.groups[group];
+    const before=frame(config),text=before.text;
+    // Only the selected, loaded DOM text; no cookies, private API or input values.
     const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(group+'\n'+config.name+'\n'+text));
     const digest=[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');
+    const after=frame(config);if(after.pane!==before.pane||after.text!==text)throw Error('GROUP_CHANGED');
     const item={kind:'loaded_dom_snapshot',group,name:config.name,captured_at:new Date().toISOString(),digest,text};
     const out=C.append(s,item);out.state.status[group]={at:item.captured_at,text:out.added?'Đã lưu bản đọc thử.':'Nội dung giống bản đã lưu; không lưu trùng.'};await save(out.state);
     return {added:out.added,characters:text.length};
@@ -80,8 +124,15 @@
   chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
     if(!msg||msg.app!=='TD_ZALO_PROBE')return;
     if(!['58','145'].includes(msg.group)){reply({ok:false,error:'Nhóm không hợp lệ.'});return;}
+    if(msg.action==='stop-all')interactionEpoch++;
     serial(async()=>{
-      if(msg.action==='pick-header'||msg.action==='pick-pane'){pick(msg.group,msg.action==='pick-header'?'header':'pane');return {};}
+      if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}
+      if(msg.action==='scan-both'||msg.action==='watch-both'){
+        try{await scanBoth();const s=await load();s.autoScan=msg.action==='watch-both';for(const g of ['58','145'])s.groups[g].watch=false;await save(s);return {};}
+        catch(e){const s=await load();s.autoScan=false;s.scanStatus=errors[e.message]||'Quét đã dừng.';await save(s);throw e;}
+      }
+      if(msg.action==='stop-all'){const s=await load();s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;s.scanStatus='Đã dừng theo dõi.';await save(s);return {};}
+
       if(msg.action==='capture')return safelyCapture(msg.group);
       if(msg.action==='watch'){const s=await load();if(!s.groups[msg.group]?.header||!s.groups[msg.group]?.pane)throw Error('SELECTOR_CHANGED');await safelyCapture(msg.group);const fresh=await load();fresh.groups[msg.group].watch=true;await save(fresh);return {};}
       if(msg.action==='stop'){const s=await load();if(s.groups[msg.group])s.groups[msg.group].watch=false;await save(s);return {};}
@@ -93,7 +144,7 @@
   setInterval(()=>{
     if(selecting||document.hidden)return;
     void serial(async()=>{
-      const s=await load();for(const group of ['58','145'])if(s.groups[group]?.watch){try{await safelyCapture(group);}catch{/* Local status already explains pause; never send/retry writes. */}}
+      const s=await load();if(s.autoScan){if(Date.now()-lastScan>=30000){try{await scanBoth();}catch(e){const fresh=await load();fresh.autoScan=false;fresh.scanStatus=errors[e.message]||'Quét đã dừng.';await save(fresh);}}return;}for(const group of ['58','145'])if(s.groups[group]?.watch){try{await safelyCapture(group);}catch{/* Local status already explains pause; never send/retry writes. */}}
     }).catch(()=>{});
   },15000);
 })();

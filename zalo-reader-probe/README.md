@@ -1,6 +1,20 @@
-# Thử đọc hai nhóm Zalo — bản 0.1
+# Thử đọc hai nhóm Zalo — bản 0.2
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Cập nhật từ bản 0.1
+
+Giải nén ZIP v0.2 vào thư mục cố định, vào chrome://extensions gỡ bản cũ rồi tải tiện ích đã giải nén từ thư mục mới. Nếu muốn giữ bộ nhớ/cấu hình cũ, thay các file của bản cũ bằng file v0.2 trong đúng thư mục đã cài rồi bấm nút tải lại tiện ích; không cần gỡ. Sau đó F5 Zalo Web. Xuất dữ liệu cũ trước khi gỡ vì bộ nhớ tiện ích gỡ ra sẽ mất.
+
+Để không phải tự mở từng nhóm mỗi lượt:
+
+1. Giữ cấu hình tên nhóm + khung tin hiện có cho từng kho (nếu đổi giao diện thì chọn lại).
+2. Với từng lựa chọn Kho 58/Kho 145, bấm **4. Chọn tên nhóm ở danh sách trái**, rồi bấm riêng tên nhóm tương ứng ở danh sách chat bên trái. Chọn tên, không chọn cả dòng có xem trước tin. Lúc chọn, tiện ích chỉ lưu nút mở nhóm, không mở hay gửi tin.
+3. Bấm **Quét hai nhóm một lần**. Tiện ích tự mở 58 rồi 145, chờ tên và khung chữ phù hợp, rồi lưu bản đọc. Nếu nhóm không nằm trong phần danh sách đang tải hoặc vị trí đổi thì cần chọn lại; không tự tìm gần đúng.
+4. Đối chiếu hai bản đọc trước khi bật **Tự quét hai nhóm (khoảng 30 giây)**. Giữ tab Zalo hiển thị, không thu nhỏ Chrome/cho máy ngủ. Chỉ dùng một tab để thử. **Dừng tất cả** để tắt.
+5. Chuyển nhóm có thể đánh dấu tin đã đọc trong Zalo. Không dùng chế độ này trên tab đang chat công việc. Tiện ích dừng nếu anh thao tác trong lúc chuyển nhóm hoặc có chữ đang soạn; không tự gửi hoặc xóa chữ đó.
+
+Quét hai nhóm vẫn chỉ lấy phần DOM đã tải, không chứng minh có đủ tin giữa các lượt. Cần đối chiếu thực tế; chưa dùng để ghi sổ. Nhóm trùng tên cần phân biệt/đổi tên trước vì bản thử chưa xác minh ID nhóm.
 
 ## Cài trên Windows (không cần Node/Python)
 
@@ -12,7 +26,7 @@
 6. Mở tiện ích lần nữa → **2. Chọn khung tin**. Di chuột vào vùng chứa tin. Dùng phím ↑ để mở rộng tới khung chứa nhiều tin, ↓ để thu nhỏ; viền cam chỉ vùng sẽ đọc. Bấm chuột để chốt, Esc để hủy. Không chọn cả trang, thanh danh sách chat hoặc ô soạn tin.
 7. Bấm **3. Đọc thử**. Xem tên nhóm và đoạn xem trước: phải khớp nhóm đang mở, không lẫn nội dung nhóm khác. Bấm lại không tăng số bản lưu nếu nội dung giữ nguyên.
 8. Chọn **Theo dõi nhóm đang mở mỗi 15 giây**, chờ một tin chữ mới thực tế xuất hiện; kiểm tra bản mới có phần chữ đó. Không cần gửi tin bằng công cụ này. Đổi qua cuộc trò chuyện khác phải hiện dừng/sai nhóm, không lưu nội dung chat khác dưới tên Kho 58.
-9. Mở nhóm Kho 145 và làm lại bước 5–8 với lựa chọn **Kho 145**. Bản thử không tự chuyển nhóm; chỉ đọc nhóm đang mở trong tab đang hiển thị. Máy ngủ, Chrome đóng hoặc tab ẩn thì không được coi là đang thu nhận.
+9. Mở nhóm Kho 145 và làm lại bước 5–8 với lựa chọn **Kho 145**. Chế độ theo dõi nhóm đang mở không tự chuyển nhóm; chế độ quét hai nhóm phải cấu hình nút mở theo phần cập nhật ở trên. Máy ngủ, Chrome đóng hoặc tab ẩn thì không được coi là đang thu nhận.
 10. F5 Zalo rồi thử lại với nhóm đã cấu hình. Nếu Zalo đổi DOM/selector thì chọn vùng lại; chưa được coi là quét bù đầy đủ. Có thể xuất JSON bằng **Xuất kết quả ra máy**, nhưng file có nội dung nhóm thật, chỉ giữ trên máy. Chỉ cần báo lại số bản/đọc đúng hay sai, không cần gửi tin kho thật.
 
 ## Điều kiện đạt thử nghiệm trên Zalo thật
@@ -25,7 +39,7 @@
 
 ## Giới hạn và bộ nhớ
 
-Chỉ đọc chữ trong khung DOM Zalo đã tải. Không có API riêng, không đọc cookie, không OCR ảnh/file/ghi âm, không tự cuộn/quét toàn bộ lịch sử, không xác minh người gửi hoặc ID tin, không theo dõi đồng thời hai nhóm khi chỉ một nhóm đang mở. Snapshot thay đổi có thể do cuộn/tải thêm chứ không phải có tin mới. Phải đối chiếu thủ công; chưa dùng dữ liệu này để tự ghi sổ.
+Chỉ đọc chữ trong khung DOM Zalo đã tải. Không có API riêng, không đọc cookie, không OCR ảnh/file/ghi âm, không tự cuộn/quét toàn bộ lịch sử, không xác minh người gửi hoặc ID tin, không nhận thông báo trực tiếp đồng thời từ hai nhóm: chế độ mới mở tuần tự hai nhóm; tab phải hiển thị. Snapshot thay đổi có thể do cuộn/tải thêm chứ không phải có tin mới. Phải đối chiếu thủ công; chưa dùng dữ liệu này để tự ghi sổ.
 
 Dữ liệu/config chỉ lưu trong chrome.storage.local của tiện ích, tối đa 100 bản hoặc khoảng 900.000 ký tự JSON, đầy thì dừng lưu thay vì xóa bản cũ. Không gửi dữ liệu sang server/AI. Một tab Zalo để thử; chưa hỗ trợ ghi đồng thời từ nhiều tab. Nút xóa chỉ xóa dữ liệu thử của nhóm đã chọn, không xóa tin Zalo. Gỡ tiện ích sẽ mất bộ nhớ cục bộ nếu chưa xuất.
 

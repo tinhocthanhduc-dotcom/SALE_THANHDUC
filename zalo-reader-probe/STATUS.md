@@ -11,3 +11,13 @@ Chưa test Zalo thật/Windows/phiên của chủ. Thử nạp extension thật 
 ZIP chỉ gồm allowlist 6 file tiện ích + hướng dẫn + VERIFICATION.json, không có profile/cookie/tin nhắn. README/HUONG_DAN.html ghi đầy đủ bước chủ thử trên máy Windows. Cần chủ xác nhận đúng chữ hai nhóm, tin mới, chuyển nhóm và F5 trước khi kết luận đọc được trên Zalo.
 
 Giới hạn: chỉ snapshot DOM đã tải, chưa tách từng tin/người gửi/ID; cuộn hoặc tải thêm cũng làm snapshot đổi. Chưa đọc ảnh/file, chưa quét bù lịch sử, chưa tự chuyển hai nhóm, chưa chống trùng nghiệp vụ. Chưa cài lịch 11:55/15:55/18:55 và chưa dùng để tự ghi kho. Tiếp theo chỉ mở rộng sau khi có kết quả thử thật.
+
+## Bản 0.2 — tự mở hai nhóm (18/10/2026)
+
+Chủ đã báo bản 0.1 hiện được chữ khi mở đúng khung nhóm; chưa coi đây là xác nhận đọc đủ hai nhóm/lịch sử. Bổ sung chọn riêng tên nhóm ở danh sách bên trái, quét hai nhóm một lần và lặp khoảng 30–45 giây khi tab hiển thị. Người dùng phải chọn nút mở của cả hai nhóm; không tự tìm/đoán nhóm theo tên gần giống.
+
+Chỉ nhấn nhãn nhóm đã gán có chữ khớp tên; từ chối control gửi tin, khung tin hoặc ô nhập. Sau chuyển nhóm phải thấy header đúng và chữ đã đổi/ổn định ít nhất 700ms; không suy ra điều này là chứng minh đọc hết lịch sử. Dừng nếu người dùng thao tác lúc đang chuyển hoặc có draft; có Dừng tất cả. Đọc kiểm tra lại header/khung sau SHA256 để tránh lưu khi vừa đổi nhóm. Không xóa draft, không gửi tin. Mở nhóm có thể đánh dấu đã đọc trên Zalo.
+
+18/18 test mô phỏng đạt (4 core + 14 browser), gồm trễ render khung sau header, chọn sai nhãn sidebar, draft, thao tác xen vào và bật/dừng quét hai nhóm. Chưa thử tự chuyển trên Zalo thật/Windows; cloud vẫn bị chặn nạp extension native như ghi ở trên. Không đổi quyền extension hoặc app khác. Chưa bật lịch ghi kho hay ghi sổ.
+
+Cập nhật giữ dữ liệu: giải nén v0.2, chép đè file vào đúng thư mục tiện ích cũ, chrome://extensions bấm tải lại tiện ích, F5 Zalo. Sau đó chọn thêm nút mở nhóm ở sidebar cho mỗi kho. Có thể cần chọn lại header/pane nếu DOM đã thay đổi.
