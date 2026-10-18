@@ -69,3 +69,18 @@ test('viewer hides emoji-only lines by default, raw toggle restores original tex
  const p=await browser.newPage();t.after(()=>p.close());await p.setContent(require('node:fs').readFileSync(path.join(__dirname,'../extension/viewer.html'),'utf8').split('<script')[0]+'</body></html>');const original='TEST xuất 20 hộp\n/-strong\n/-heart\n:>\n:o\n:-((\n:-h\nTEST nhận 3 :>';
  await p.evaluate(text=>{globalThis.originalState={snapshots:[{group:'58',text}]};globalThis.chrome={storage:{local:{get:async k=>({[k]:originalState})}}};},original);for(const file of ['core.js','viewer.js'])await p.addScriptTag({path:path.join(__dirname,'../extension',file)});await p.waitForFunction(()=>document.getElementById('text').textContent.includes('TEST xuất'));assert.equal(await p.locator('#text').textContent(),'TEST xuất 20 hộp\nTEST nhận 3 :>');assert((await p.locator('#meta').textContent()).includes('đã ẩn 6'));await p.locator('#raw').check();assert.equal(await p.locator('#text').textContent(),original);assert.equal((await p.evaluate(()=>originalState.snapshots[0])).text,original);
 });
+test('binding accepts row preview/avatar and finds the exact group label inside its row',async t=>{
+ const p=await navigationFixture(t);await p.locator('#entry58').evaluate(e=>e.innerHTML='<span class="name">TEST KHO 58</span><div id="row-preview">TEST preview of last message</div>');await send(p,'pick-entry','58');await p.locator('#row-preview').hover();await p.locator('#row-preview').click();await p.waitForFunction(()=>testStore['td-zalo-probe-v1'].groups['58'].entry.includes('span'));assert((await send(p,'scan-both')).ok);
+});
+test('sidebar reordering resolves exact name in bound region, not the old nth row',async t=>{
+ const p=await navigationFixture(t);await p.evaluate(()=>{const a=document.getElementById('entry58'),b=document.getElementById('entry145');a.removeAttribute('id');b.removeAttribute('id');a.parentElement.prepend(b);});assert((await send(p,'scan-both')).ok);const s=await state(p);assert.equal(s.snapshots.find(x=>x.group==='58').text,'TEST CONTENT 58');assert.equal(s.snapshots.find(x=>x.group==='145').text,'TEST CONTENT 145');
+});
+test('row that only opens on mousedown is supported without trusted-input privileges',async t=>{
+ const p=await navigationFixture(t);await p.evaluate(()=>{for(const [i,el] of [...document.querySelectorAll('aside > div')].entries()){const g=i===0?'58':'145',copy=el.cloneNode(true);el.replaceWith(copy);copy.addEventListener('mousedown',()=>{document.getElementById('group-name').textContent='TEST KHO '+g;setTimeout(()=>{document.getElementById('messages').innerHTML='<p>TEST DOWN '+g+'</p>';},180);});}});const r=await send(p,'scan-both');assert(r.ok,r.error);assert.equal((await state(p)).snapshots.find(x=>x.group==='58').text,'TEST DOWN 58');
+});
+test('duplicate exact titles in bound sidebar are rejected, no chat clicked',async t=>{
+ const p=await navigationFixture(t);await p.locator('aside').evaluate(e=>{const duplicate=document.createElement('div');duplicate.textContent='TEST KHO 58';e.append(duplicate);});const clicks=await p.evaluate(()=>appClicks),r=await send(p,'scan-both');assert.equal(r.ok,false);assert(r.error.includes('nhiều dòng'));assert.equal(await p.evaluate(()=>appClicks),clicks);
+});
+test('missing entry reports the exact warehouse and setup step before any navigation',async t=>{
+ const p=await navigationFixture(t);await p.evaluate(()=>delete testStore['td-zalo-probe-v1'].groups['145'].entry);const r=await send(p,'scan-both');assert.equal(r.ok,false);assert(r.error.includes('Kho 145'));assert(r.error.includes('bước 4'));assert.equal((await state(p)).snapshots.length,0);
+});

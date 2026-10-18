@@ -6,7 +6,9 @@
   let chain = Promise.resolve(), selecting = false, interactionEpoch = 0, lastScan = 0;
   for (const event of ['pointerdown','keydown']) window.addEventListener(event,e=>{if(e.isTrusted)interactionEpoch++;},true);
   const errors = {
-    NAV_UNSAFE: 'Chưa chọn đúng tên nhóm trong danh sách bên trái. Hãy chọn lại nút mở nhóm.',
+    NAV_UNSAFE: 'Vùng chọn không phải dòng mở nhóm an toàn. Chọn dòng nhóm trong danh sách chat bên trái.',
+    ENTRY_NOT_FOUND: 'Không tìm thấy dòng nhóm đã gán. Ghim/đưa cả hai nhóm vào danh sách bên trái rồi chọn lại bước 4.',
+    ENTRY_AMBIGUOUS: 'Có nhiều dòng cùng tên nhóm trong vùng đã chọn. Không tự đoán; cần phân biệt tên nhóm.',
     USER_BUSY: 'Đã dừng chuyển nhóm vì anh đang thao tác hoặc có nội dung đang soạn.',
     SWITCH_TIMEOUT: 'Chưa xác minh khung tin đã tải đúng nhóm. Không lưu nội dung; chọn lại vùng hoặc thử lại.',
     GROUP_CHANGED: 'Nhóm đang mở khác nhóm đã chọn. Dừng đọc nhóm này; mở đúng nhóm hoặc chọn lại.',
@@ -42,7 +44,7 @@
     if (selecting) throw Error('Đang chọn vùng. Bấm Esc để hủy trước.');
     selecting = true;
     const banner = document.createElement('div'), outline = document.createElement('div');
-    banner.textContent = (kind === 'header' ? 'Chọn đúng tên nhóm ở đầu cuộc trò chuyện.' : kind === 'entry' ? 'Chọn riêng tên nhóm trong danh sách chat bên trái (không chọn cả dòng có tin xem trước).' : 'Chọn khung tin nhắn. ↑ mở rộng vùng, ↓ thu nhỏ.') + ' Bấm chuột để chốt · Esc hủy.';
+    banner.textContent = (kind === 'header' ? 'Chọn đúng tên nhóm ở đầu cuộc trò chuyện.' : kind === 'entry' ? 'Chọn dòng nhóm ở danh sách chat bên trái; có thể chọn tên hoặc cả dòng có tin xem trước.' : 'Chọn khung tin nhắn. ↑ mở rộng vùng, ↓ thu nhỏ.') + ' Bấm chuột để chốt · Esc hủy.';
     banner.style.cssText = 'position:fixed;bottom:12px;right:12px;max-width:360px;padding:16px;background:#15374b;color:white;font:16px sans-serif;z-index:2147483647;pointer-events:none;';
     outline.style.cssText = 'position:fixed;border:3px solid #e36a16;background:#ff990018;pointer-events:none;z-index:2147483646;box-sizing:border-box;';
     document.body.append(banner, outline);
@@ -58,7 +60,7 @@
           if (!el || [document.body,document.documentElement].includes(el)) throw Error('SELECTOR_CHANGED');
           const s=await load(),config=s.groups[group]||{};
           if(kind==='header') {const name=C.title(el.innerText);if(!name||name.length>160)throw Error('Hãy chọn riêng dòng tên nhóm.');config.header=path(el);config.name=name;}
-          else if(kind==='entry'){safeEntry(el,config);config.entry=path(el);}
+          else if(kind==='entry'){const label=bindEntry(el,config);config.entry=path(label);config.entryScope=path(entryRegion(label,config));}
           else {safePane(el);config.pane=path(el);}
           config.watch=false;s.autoScan=false;if(kind==='entry')s.scanStatus='Đã chọn nút mở nhóm. Có thể quét thử hai nhóm khi đã chọn đủ hai kho.';s.groups[group]=config;s.status[group]={at:new Date().toISOString(),text:kind==='header'?'Đã chọn tên nhóm.':kind==='entry'?'Đã chọn nút mở nhóm.':'Đã chọn khung tin.'};await save(s);
         } catch(err) {await status(group,errors[err.message]||err.message);}
@@ -66,11 +68,48 @@
     }
     window.addEventListener('mousemove',move,true);window.addEventListener('click',click,true);window.addEventListener('keydown',key,true);
   }
-  function safeEntry(el,config) {
-    if(!config?.name||!el||el===document.body||el===document.documentElement||C.title(el.innerText)!==config.name||el.closest('button,a,input,textarea,form,[contenteditable="true"]'))throw Error('NAV_UNSAFE');
+  function excludedEntry(el,config) {
+    if(!el||[document.body,document.documentElement].includes(el)||el.closest('button,a,input,textarea,form,[contenteditable="true"]')||el.querySelector('input,textarea,[contenteditable="true"]')||!el.getClientRects().length)return true;
     const header=config.header?document.querySelector(config.header):null,pane=config.pane?document.querySelector(config.pane):null;
-    if(header?.contains(el)||pane?.contains(el)||!el.getClientRects().length)throw Error('NAV_UNSAFE');
-    return el;
+    return !!(header&&(header.contains(el)||el.contains(header))||pane&&(pane.contains(el)||el.contains(pane)));
+  }
+  function entryLabels(root,name){
+    return [root,...root.querySelectorAll('*')].filter(el=>el.getClientRects().length&&C.title(el.innerText)===name&&![...el.children].some(child=>C.title(child.innerText)===name));
+  }
+  function safeEntry(el,config) {
+    if(!config?.name||excludedEntry(el,config))throw Error('NAV_UNSAFE');
+    const labels=entryLabels(el,config.name).filter(label=>!excludedEntry(label,config));
+    if(labels.length!==1)throw Error(labels.length?'ENTRY_AMBIGUOUS':'ENTRY_NOT_FOUND');
+    return labels[0];
+  }
+  function bindEntry(el,config){
+    for(let node=el;node&&!excludedEntry(node,config);node=node.parentElement){
+      const labels=entryLabels(node,config.name).filter(label=>!excludedEntry(label,config));
+      if(labels.length>1)throw Error('ENTRY_AMBIGUOUS');
+      if(labels.length===1)return labels[0];
+    }
+    throw Error('NAV_UNSAFE');
+  }
+  function entryRegion(label,config){
+    let region=label;
+    for(let parent=label.parentElement;parent&&!excludedEntry(parent,config);parent=parent.parentElement)region=parent;
+    return region;
+  }
+  function resolveEntry(config){
+    if(config.entryScope){
+      let scope;try{scope=unique(config.entryScope);}catch{throw Error('ENTRY_NOT_FOUND');}
+      return safeEntry(scope,config); // Exact title within the user-bound sidebar only; no page-wide/fuzzy search.
+    }
+    return safeEntry(unique(config.entry),config);
+  }
+  function activateEntry(label){
+    const r=label.getBoundingClientRect(),common={bubbles:true,cancelable:true,view:window,clientX:r.left+r.width/2,clientY:r.top+r.height/2,button:0};
+    // Some Zalo layouts open rows on mousedown rather than click. Do not elevate
+    // privileges or fake trusted input; only dispatch to the explicitly bound label.
+    for(const [type,pointer] of [['pointerdown',true],['mousedown',false],['pointerup',true],['mouseup',false],['click',false]]){
+      if(!label.isConnected)break;
+      label.dispatchEvent(pointer?new PointerEvent(type,{...common,pointerType:'mouse',isPrimary:true,buttons:type==='pointerdown'?1:0}):new MouseEvent(type,{...common,buttons:type==='mousedown'?1:0}));
+    }
   }
   function frame(config) {
     if(document.hidden)throw Error('PAGE_HIDDEN');
@@ -89,7 +128,7 @@
     idle(epoch);
     try{frame(config);return;}catch(e){if(!['GROUP_CHANGED','EMPTY_PANE','SELECTOR_CHANGED'].includes(e.message))throw e;}
     let oldText;try{oldText=C.clean(unique(config.pane).innerText);}catch{/* Target pane may only mount after opening its group. */}
-    safeEntry(unique(config.entry),config).click(); // Only the user-bound sidebar label; never a message/send control.
+    activateEntry(resolveEntry(config)); // Only user-bound sidebar navigation, never message/send controls.
     const end=Date.now()+8000;let stable='',since=0;
     while(Date.now()<end){
       idle(epoch);
@@ -101,7 +140,7 @@
   }
   async function scanBoth(){
     const epoch=interactionEpoch,s=await load();
-    for(const group of ['58','145'])if(!s.groups[group]?.entry||!s.groups[group]?.header||!s.groups[group]?.pane)throw Error('NAV_UNSAFE');
+    for(const group of ['58','145']){const c=s.groups[group];if(!c?.name||!c.header)throw Error('Kho '+group+': chưa chọn tên nhóm ở bước 1.');if(!c.pane)throw Error('Kho '+group+': chưa chọn khung tin ở bước 2.');if(!c.entry)throw Error('Kho '+group+': chưa chọn dòng mở nhóm ở bước 4.');}
     if(s.groups['58'].name===s.groups['145'].name)throw Error('NAV_UNSAFE');
     for(const group of ['58','145']){
       try{await openGroup(s.groups[group],epoch);idle(epoch);await safelyCapture(group);}
@@ -129,7 +168,7 @@
       if(['pick-header','pick-pane','pick-entry'].includes(msg.action)){pick(msg.group,msg.action==='pick-header'?'header':msg.action==='pick-entry'?'entry':'pane');return {};}
       if(msg.action==='scan-both'||msg.action==='watch-both'){
         try{await scanBoth();const s=await load();s.autoScan=msg.action==='watch-both';for(const g of ['58','145'])s.groups[g].watch=false;await save(s);return {};}
-        catch(e){const s=await load();s.autoScan=false;s.scanStatus=errors[e.message]||'Quét đã dừng.';await save(s);throw e;}
+        catch(e){const s=await load();s.autoScan=false;s.scanStatus=errors[e.message]||e.message||'Quét đã dừng.';await save(s);throw e;}
       }
       if(msg.action==='stop-all'){const s=await load();s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;s.scanStatus='Đã dừng theo dõi.';await save(s);return {};}
 
@@ -144,7 +183,7 @@
   setInterval(()=>{
     if(selecting||document.hidden)return;
     void serial(async()=>{
-      const s=await load();if(s.autoScan){if(Date.now()-lastScan>=30000){try{await scanBoth();}catch(e){const fresh=await load();fresh.autoScan=false;fresh.scanStatus=errors[e.message]||'Quét đã dừng.';await save(fresh);}}return;}for(const group of ['58','145'])if(s.groups[group]?.watch){try{await safelyCapture(group);}catch{/* Local status already explains pause; never send/retry writes. */}}
+      const s=await load();if(s.autoScan){if(Date.now()-lastScan>=30000){try{await scanBoth();}catch(e){const fresh=await load();fresh.autoScan=false;fresh.scanStatus=errors[e.message]||e.message||'Quét đã dừng.';await save(fresh);}}return;}for(const group of ['58','145'])if(s.groups[group]?.watch){try{await safelyCapture(group);}catch{/* Local status already explains pause; never send/retry writes. */}}
     }).catch(()=>{});
   },15000);
 })();

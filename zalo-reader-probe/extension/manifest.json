@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Thành Đức · Thử đọc Zalo",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Thử đọc phần tin đã tải của nhóm đang mở. Chỉ lưu cục bộ, không gửi tin hoặc ghi kho.",
   "permissions": ["storage"],
   "host_permissions": ["https://chat.zalo.me/*"],

@@ -1,6 +1,16 @@
-# Thử đọc hai nhóm Zalo — bản 0.4
+# Thử đọc hai nhóm Zalo — bản 0.5
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.5: sửa gán dòng mở nhóm và tự chuyển hai nhóm
+
+Lỗi chủ báo: “Chưa chọn đúng tên nhóm trong danh sách bên trái”. Bản trước dùng chung một lỗi cho thiếu bước 4, chọn cả dòng có preview và nút mở không hợp lệ; đồng thời chỉ nhấn click nên có thể không mở layout dùng mousedown.
+
+Sau cập nhật, giữ tên nhóm/khung tin đã đọc tốt. Với Kho 58 rồi Kho 145, bấm **4. Chọn dòng nhóm ở danh sách trái** và bấm dòng nhóm đó (có thể bấm cả phần xem trước/ảnh đại diện). Công cụ tìm nhãn khớp chính xác tên đã gán trong vùng sidebar được chọn; không tìm gần đúng. Mỗi kho phải hiện **Mở nhóm ✓**. Sau đó thử **Quét hai nhóm một lần**, đối chiếu kết quả, rồi mới bật tự quét.
+
+Có lưu phạm vi danh sách bên trái để tìm lại nhãn đúng khi thứ tự chat đổi; không tìm toàn trang, không tự đoán khi có nhiều nhãn trùng tên. Phát chuỗi pointer/mouse xuống/lên/click đến đúng nhãn, không cấp quyền debugger hay giả isTrusted. Zalo có thể yêu cầu thao tác native mà DOM event không đáp ứng; trường hợp đó sẽ timeout rõ thay vì coi là đã mở. Chưa xác nhận v0.5 trên Zalo thật.
+
+Thông báo mới chỉ rõ Kho 58/145 thiếu bước nào; popup hiển thị tình trạng tên nhóm/khung tin/nút mở. Cập nhật vẫn bằng chép đè cùng thư mục → tải lại tiện ích → F5 Zalo. Bước 4 cần chọn lại cả hai nhóm để lưu vùng danh sách mới.
 
 ## Bản 0.4: ẩn mã biểu tượng Zalo
 
@@ -23,7 +33,7 @@ Giải nén ZIP v0.2 vào thư mục cố định, vào chrome://extensions gỡ
 Để không phải tự mở từng nhóm mỗi lượt:
 
 1. Giữ cấu hình tên nhóm + khung tin hiện có cho từng kho (nếu đổi giao diện thì chọn lại).
-2. Với từng lựa chọn Kho 58/Kho 145, bấm **4. Chọn tên nhóm ở danh sách trái**, rồi bấm riêng tên nhóm tương ứng ở danh sách chat bên trái. Chọn tên, không chọn cả dòng có xem trước tin. Lúc chọn, tiện ích chỉ lưu nút mở nhóm, không mở hay gửi tin.
+2. Với từng lựa chọn Kho 58/Kho 145, bấm **4. Chọn dòng nhóm ở danh sách trái**, rồi bấm dòng nhóm tương ứng ở danh sách chat bên trái. Có thể chọn tên hoặc phần xem trước của dòng. Lúc chọn, tiện ích chỉ lưu nút mở nhóm, không mở hay gửi tin.
 3. Bấm **Quét hai nhóm một lần**. Tiện ích tự mở 58 rồi 145, chờ tên và khung chữ phù hợp, rồi lưu bản đọc. Nếu nhóm không nằm trong phần danh sách đang tải hoặc vị trí đổi thì cần chọn lại; không tự tìm gần đúng.
 4. Đối chiếu hai bản đọc trước khi bật **Tự quét hai nhóm (khoảng 30 giây)**. Giữ tab Zalo hiển thị, không thu nhỏ Chrome/cho máy ngủ. Chỉ dùng một tab để thử. **Dừng tất cả** để tắt.
 5. Chuyển nhóm có thể đánh dấu tin đã đọc trong Zalo. Không dùng chế độ này trên tab đang chat công việc. Tiện ích dừng nếu anh thao tác trong lúc chuyển nhóm hoặc có chữ đang soạn; không tự gửi hoặc xóa chữ đó.

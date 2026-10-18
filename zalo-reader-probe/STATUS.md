@@ -35,3 +35,11 @@ Tách nhãn trạng thái quét hai nhóm, xóa thông báo lỗi chọn nút c�
 Dùng chung core.readable trong popup, viewer và trường cleaned_text khi xuất JSON. Bỏ dòng chỉ gồm các mã do chủ chỉ ra: /-strong, /-heart, :>, :o, :-((, :-h, kể cả tổ hợp/whitespace. Giữ nguyên dòng có nội dung hàng hóa, số lượng, ký hiệu lạ và mã chen trong câu; không tự xóa số đếm hoặc suy đoán phản ứng. Text gốc, digest và receipt snapshot không đổi; dữ liệu cũ được lọc lúc xem. Viewer mặc định bản sạch, có checkbox hiện gốc.
 
 24/24 test mô phỏng đạt (6 core + 18 browser), gồm mã riêng dòng/tổ hợp, không mất dòng hàng/số lượng, toggle bản gốc và không ghi đè storage. Không đổi quyền Chrome hoặc cách đọc nhóm, không ghi kho/gửi tin, chưa test v0.4 trên Zalo thật/Windows.
+
+## Bản 0.5 — lỗi gán nút mở nhóm
+
+Chủ xác nhận đọc thủ công cả hai nhóm nhưng tự quét báo NAV_UNSAFE. Code cũ yêu cầu target.innerText bằng nguyên tên nhóm; click phần preview/avatar hoặc thiếu config một kho đều trả cùng lỗi. Chưa xác định trên máy chủ là ca nào; bản vá xử lý và phân biệt các ca này.
+
+Binding cho phép click dòng/preview/avatar, đi lên trong phạm vi an toàn để tìm nhãn đúng duy nhất, lưu vùng sidebar. Khi quét tìm đúng nhãn trong vùng này, tránh lệ thuộc vị trí dòng/nth selector; tên trùng hoặc thiếu nhãn thì dừng. Nhận pointer/mousedown/up/click trên đúng nhãn để hỗ trợ handler mousedown; không giả trusted input, không mở rộng quyền extension. Gán bước 4 lại để có scope mới; giữ toàn bộ snapshot và config header/pane cũ. Popup hiện tình trạng cấu hình từng phần và lỗi nêu kho/bước thiếu.
+
+29/29 test mô phỏng đạt (6 core + 23 browser), thêm chọn preview cả dòng, sidebar reorder, mousedown-only, nhãn trùng và thiếu entry Kho 145. Bản v0.5 tự chuyển vẫn chưa thử Zalo thật/Windows; cần chủ thử lại sau gán bước 4. Không ghi kho/gửi tin, không thay chế độ chỉ đọc DOM đã tải.
