@@ -1,6 +1,17 @@
-# Thử đọc hai nhóm Zalo — bản 0.9
+# Thử đọc hai nhóm Zalo — bản 0.10
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.10 — mỗi giờ 09:00–19:00, tạm mở cửa sổ để tải tin
+
+1. Xuất dữ liệu dự phòng; chép đè file đúng thư mục cũ → chrome://extensions → Tải lại tiện ích → F5 Zalo. Không thêm quyền so với 0.9. Cấu hình và nháp giữ nguyên.
+2. Mở **Phiếu nháp và lịch quét**, bật **Bật lịch mỗi giờ 09:00–19:00 · tạm mở cửa sổ Zalo**. Lịch cũ ba mốc không tự chạy theo chế độ mới; cần bật lại ô này một lần. Bản mới tắt quét liên tục cũ khi trang Zalo tải lần đầu, và ẩn các nút bật quét liên tục.
+3. Lịch cố định giờ Việt Nam: **09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00, 19:00**, mỗi ngày. Bắt đầu từ mốc tiếp theo sau lúc bật. Chỉ thử một lượt/mốc; không chạy lịch ngoài khung này, không quét bù mốc trước/ngày trước. Alarm kiểm tra mỗi phút nên không bảo đảm đúng giây; nếu máy ngủ/Chrome bị treo qua phút đầu giờ thì bỏ lỡ mốc, chờ giờ kế hoặc quét thủ công.
+4. Giữ Chrome đang chạy, máy thức, đăng nhập và chỉ một tab Zalo. Nên dùng cửa sổ/app Zalo riêng. Không tự tạo tab khi tab đã đóng hoặc tự đăng nhập. Không có cửa sổ hợp lệ sẽ báo lỗi trong màn lịch.
+5. Đến lịch, kiểm tra có tin đang soạn trước. Nếu an toàn, khôi phục cửa sổ đang thu nhỏ, chọn tab Zalo, đưa lên trước, chờ khoảng 3 giây cho Zalo tải tin rồi quét hai nhóm. Có thể gián đoạn màn hình vài giây. Việc hiện cửa sổ không chứng minh Zalo đã đồng bộ đủ tin; cần đối chiếu thực tế.
+6. Quét xong trả tab trước và cửa sổ làm việc trước. **Chỉ thu nhỏ lại khi trước đó cửa sổ Zalo đã thu nhỏ**; cửa sổ đang mở bình thường không bị tự thu nhỏ. Nếu có bấm/gõ/cuộn/chạm vào Zalo, chuyển tab/cửa sổ hoặc không xác định được trạng thái, để nguyên cửa sổ, không giành lại tiêu điểm. Quét lỗi vẫn cố trả trạng thái cũ nếu an toàn. Chrome/worker bị dừng giữa chừng có thể để cửa sổ mở; không hứa khôi phục trong trường hợp đó.
+7. Muốn thử ngay: dùng Quét hai nhóm một lần khi Zalo đang hiện. Để thử tự mở/thu nhỏ: bật lịch trước mốc đầu giờ tiếp theo, thu nhỏ cửa sổ Zalo và kiểm tra lượt đó. Không bấm vào cửa sổ trong lúc nó quét. Kiểm tra tin mới nhất trên Zalo so với bản đọc/nháp.
+8. **Dừng tất cả/Dừng mọi chế độ quét** tắt lịch. Các thao tác chọn lại cấu hình cũng tắt lịch, cần bật lại sau khi cấu hình xong. Phiếu nháp vẫn chỉ lưu trên máy, chưa ghi kho.
 
 ## Bản 0.9 — lịch quét và phiếu nháp cục bộ
 

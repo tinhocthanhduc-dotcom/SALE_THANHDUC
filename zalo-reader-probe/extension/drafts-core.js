@@ -1,9 +1,9 @@
 (() => {
  'use strict';
  const fold=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
- const slots=['11:55','15:55','18:55'];
+ const slots=Array.from({length:11},(_,i)=>String(i+9).padStart(2,'0')+':00');
  function clock(now){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(now));const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return {day:p.year+'-'+p.month+'-'+p.day,time:p.hour+':'+p.minute};}
- function due(settings,now){if(!settings?.enabled)return [];const c=clock(now);return slots.filter(t=>{const key=c.day+'T'+t;return t<=c.time&&new Date(key+':00+07:00').getTime()>=Date.parse(settings.enabledAt)&&!settings.done?.[key];}).map(t=>c.day+'T'+t);}
+ function due(settings,now){if(!settings?.enabled)return [];const c=clock(now);if(c.time<'09:00'||c.time>'19:00')return [];return slots.filter(t=>{const key=c.day+'T'+t;return t===c.time&&new Date(key+':00+07:00').getTime()>=Date.parse(settings.enabledAt)&&!settings.done?.[key]&&!settings.attempted?.[key];}).map(t=>c.day+'T'+t);}
  function validDate(s){return /^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(Date.parse(s))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;}
  function sourceDate(text){const m=text.match(/(?:ngày\s*)?(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);if(!m)return '';const s=(m[3].length===2?'20'+m[3]:m[3])+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');return validDate(s)?s:'';}
  function candidates(snapshot){

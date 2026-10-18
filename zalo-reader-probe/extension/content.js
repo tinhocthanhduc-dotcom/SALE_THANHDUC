@@ -4,7 +4,7 @@
   globalThis.__tdZaloProbe = true;
   const C = globalThis.ZaloProbeCore, KEY = 'td-zalo-probe-v1';
   let chain = Promise.resolve(), selecting = false, interactionEpoch = 0, lastScan = 0;
-  for (const event of ['pointerdown','keydown']) window.addEventListener(event,e=>{if(e.isTrusted)interactionEpoch++;},true);
+  for (const event of ['pointerdown','keydown','wheel','touchstart']) window.addEventListener(event,e=>{if(e.isTrusted)interactionEpoch++;},true);
   const errors = {
     NAV_UNSAFE: 'Vùng chọn không phải dòng mở nhóm an toàn. Chọn dòng nhóm trong danh sách chat bên trái.',
     ENTRY_NOT_FOUND: 'Không tìm thấy dòng nhóm đã gán. Ghim/đưa cả hai nhóm vào danh sách bên trái rồi chọn lại bước 4.',
@@ -131,7 +131,7 @@
     }
     return null;
   }
-  let backgroundScan=false,backgroundPending=false;
+  let backgroundScan=false,backgroundPending=false,windowScanEpoch=null;
   function frame(config) {
     if(document.hidden&&!backgroundScan)throw Error('PAGE_HIDDEN');
     if(!config?.header||!config?.pane)throw Error('SELECTOR_CHANGED');
@@ -187,10 +187,16 @@
   chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
     if(!msg||msg.app!=='TD_ZALO_PROBE')return;
     if(!['58','145'].includes(msg.group)){reply({ok:false,error:'Nhóm không hợp lệ.'});return;}
+    if(msg.action==='prepare-window-scan'){
+      try{if(selecting||backgroundPending)throw Error('USER_BUSY');backgroundScan=true;idle(interactionEpoch);windowScanEpoch=interactionEpoch;reply({ok:true});}catch(e){reply({ok:false,error:errors[e.message]||e.message});}finally{backgroundScan=false;}return;
+    }
+    if(msg.action==='finish-window-scan'){reply({ok:true,interacted:windowScanEpoch===null||windowScanEpoch!==interactionEpoch});windowScanEpoch=null;return;}
     if(msg.action==='background-tick'){
       if(selecting||backgroundPending){reply({ok:true,skipped:true});return;}
       backgroundPending=true;
       serial(async()=>{
+        if(msg.foreground&&document.hidden)return {ok:false,error:'Cửa sổ Zalo chưa hiển thị; không đọc nền để tránh lưu tin cũ.'};
+        if(msg.foreground&&windowScanEpoch!==interactionEpoch)return {ok:false,error:errors.USER_BUSY};
         const s=await load();if((!s.autoScan&&!msg.scheduled)||(!msg.scheduled&&Date.now()-lastScan<30000))return {skipped:true};
         backgroundScan=true;
         try{await scanBoth();const fresh=await load();fresh.backgroundAttemptAt=new Date().toISOString();fresh.backgroundSuccessAt=fresh.backgroundAttemptAt;fresh.scanStatus+=' · đọc DOM nền, chưa xác minh Zalo đã tải đủ tin mới';await save(fresh);return {ok:true};}
@@ -216,6 +222,7 @@
     }).then(value=>reply({ok:true,...value})).catch(err=>reply({ok:false,error:errors[err.message]||err.message}));
     return true;
   });
+  void serial(async()=>{const s=await load();if(!s.hourlyPolicy){s.hourlyPolicy=true;s.autoScan=false;for(const g of ['58','145'])if(s.groups[g])s.groups[g].watch=false;await save(s);}}).catch(()=>{});
   setInterval(()=>{
     if(selecting||document.hidden)return;
     void serial(async()=>{

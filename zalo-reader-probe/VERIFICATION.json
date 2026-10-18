@@ -1,14 +1,14 @@
 {
-  "version": "0.9.0",
+  "version": "0.10.0",
   "checked_date_vietnam": "2026-10-18",
   "scope": "read_only_loaded_dom_probe",
   "tests": {
     "core": 6,
-    "browser_fixture": 36,
-    "passed": 50,
+    "browser_fixture": 38,
+    "passed": 55,
     "failed": 0,
-    "background_worker": 2,
-    "drafts_and_schedule": 6
+    "background_worker": 6,
+    "drafts_and_schedule": 5
   },
   "tested": [
     "user_selected_header_and_pane",
@@ -61,7 +61,15 @@
     "vietnam_daily_slots_and_same_day_catchup",
     "scheduled_scan_continuous_off",
     "schedule_only_completes_after_success",
-    "draft_ui_390px_raw_text_xss"
+    "draft_ui_390px_raw_text_xss",
+    "hourly_vietnam_09_through_19_only",
+    "foreground_restore_minimized_window",
+    "restore_previous_tab_and_window_focus",
+    "never_minimize_original_normal_window",
+    "user_interaction_prevents_window_restore",
+    "failed_slot_attempted_once",
+    "foreground_hidden_window_rejected",
+    "draft_preflight_before_window_activation"
   ],
   "native_extension_install_cloud": {
     "confirmed": false,
@@ -88,5 +96,6 @@
   "live_zalo_v09_tested": false,
   "stock_catalog_connected": false,
   "draft_status_is_stock_posting": false,
-  "daily_schedule_available_opt_in": true
+  "daily_schedule_available_opt_in": "hourly_foreground_09_19",
+  "live_zalo_v010_foreground_tested": false
 }

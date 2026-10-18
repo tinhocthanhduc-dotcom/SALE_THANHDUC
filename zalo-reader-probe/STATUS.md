@@ -73,3 +73,11 @@ Thêm trang drafts.html từ popup: xem nguyên văn, sửa ngày/loại/kho, d�
 Lịch quét opt-in ba mốc giờ Việt Nam dùng alarm mỗi phút, độc lập autoScan. Chỉ đánh dấu mốc xong khi content script thực sự quét thành công, lỗi thử lại; một lượt bù nội dung hiện tại có thể đánh dấu nhiều mốc trễ cùng ngày, không phục hồi lịch sử. Không bù ngày trước hoặc mốc trước lúc bật. Dừng tất cả/chọn cấu hình tắt lịch. Không thêm quyền mới. Chưa thử 0.9 native/Zalo thật; chủ đã xác nhận 0.8 quét nền ổn.
 
 50/50 test đạt (36 browser, 6 core, 2 worker, 6 draft/lịch). Browser 390px kiểm tra không tràn ngang, nhập sửa/đối chiếu và raw không thực thi HTML. Ảnh dữ liệu giả lưu artifact Zalo-phieu-nhap-390.png. Syntax/diff và ZIP integrity đạt; chưa chứng nhận lịch đúng giờ trên Windows/Zalo thật.
+
+## Bản 0.10 — hourly foreground 09:00–19:00
+
+Chủ báo Zalo không tải tin khi thu nhỏ và yêu cầu tạm mở rồi thu nhỏ, chỉ mỗi giờ 09–19. Thêm policy hourly-foreground opt-in (bật lại sau nâng cấp), tắt autoScan/watch cũ một lần trong content và ẩn nút bật liên tục. Alarm chỉ kiểm tra phút đầu từng giờ, 11 mốc; receipt attempted ngăn mở lặp cùng mốc cả khi lỗi. Không bù mốc ngoài giờ hoặc ngày trước. Không thêm permission.
+
+Worker preflight draft/picker, nhớ window state/focus/tab trước, restore minimized → active tab → focus, chờ 3s → scan. Chặn đọc nếu foreground nhưng document vẫn hidden; không coi DOM là đã đồng bộ đủ. Finally trả trạng thái nếu không tương tác; không minimize cửa sổ vốn normal, không giành focus khi user chuyển tab/cửa sổ (kể cả ứng dụng ngoài Chrome). Content theo dõi bấm/gõ/cuộn/chạm, preflight epoch; không restore nếu không xác minh được interaction. Cửa sổ đóng/máy ngủ/worker dừng có thể để trạng thái mở, không tự tái tạo tab. Chưa thử native Windows/Zalo thật bản 0.10.
+
+Kiểm thử 55/55 đạt: 38 browser fixture, 6 core, 6 window/worker mock, 5 draft/lịch. Bao gồm 09:00/19:00, ngoài giờ không bật cửa sổ, lỗi không mở lặp, restore minimized/normal/active tab/focus, input và focus sang ứng dụng khác chặn restore. Syntax, diff và ZIP integrity đạt. Các mock window API không thay cho kiểm thử native Chrome Windows; chủ cần thử mốc đầu giờ sau cập nhật.

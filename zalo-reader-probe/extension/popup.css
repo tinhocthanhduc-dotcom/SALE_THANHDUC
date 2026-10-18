@@ -1,3 +1,5 @@
 *{box-sizing:border-box}body{width:370px;margin:0;padding:16px;font:15px/1.45 system-ui,sans-serif;color:#15374b;background:#f4f7fa}h1{font-size:20px;margin:0 0 6px}p{font-size:13px;color:#526475}button,select{width:100%;min-height:44px;font:inherit;margin:4px 0;padding:8px;border:1px solid #bdcbd7;border-radius:7px;background:white;color:#15374b}button{cursor:pointer}button[data-action=capture]{background:#15374b;color:white}button:disabled{opacity:.55}#status{padding:10px 0;min-height:45px}#name{font-weight:600;margin-top:8px}#preview{white-space:pre-wrap;max-height:160px;overflow:auto;background:#fff;padding:8px;font:13px/1.5 system-ui}#count{font-size:13px}
 
 #preview-info{font-size:13px;color:#526475}#scan-state{font-size:13px;border-left:3px solid #bdcbd7;padding:6px;margin:6px 0}
+
+[hidden]{display:none!important}
