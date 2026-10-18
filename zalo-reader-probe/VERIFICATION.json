@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "checked_date_vietnam": "2026-10-18",
+  "scope": "read_only_loaded_dom_probe",
+  "tests": {"core": 4, "browser_fixture": 9, "passed": 13, "failed": 0},
+  "tested": ["user_selected_header_and_pane", "no_other_chat_or_draft_in_snapshot", "snapshot_repeat_suppression", "changed_group_rejected", "new_loaded_text_polled", "two_group_storage_separation", "composer_rejected", "dom_change_fails_closed", "storage_failure", "popup_text_not_html", "local_json_export", "picker_keyboard_and_cancel"],
+  "native_extension_install_cloud": {"confirmed": false, "reason": "Chromium administrator policy disables loading unpacked extensions"},
+  "chrome_windows_install_tested": false,
+  "live_zalo_account_tested": false,
+  "complete_history_verified": false,
+  "per_message_idempotency_verified": false,
+  "warehouse_writes": 0,
+  "messages_sent": 0,
+  "external_data_uploads": 0,
+  "daily_schedule_installed": false
+}

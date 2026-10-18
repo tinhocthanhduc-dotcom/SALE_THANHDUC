@@ -1,0 +1,7 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const context=vm.createContext({});vm.runInContext(fs.readFileSync(path.join(__dirname,'../extension/core.js'),'utf8'),context);const C=context.ZaloProbeCore;
+test('normalize without losing line breaks',()=>{assert.equal(C.clean('  A\r\nB  '),'A\nB');assert.equal(C.title(' KHO  \n 58 '),'KHO 58');});
+test('same snapshot same group not appended twice, other group separate',()=>{const item={group:'58',text:'TEST',digest:'digest'};const a=C.append(C.initial(),item);assert(a.added);assert.equal(C.append(a.state,item).added,false);assert.equal(C.append(a.state,{...item,group:'145'}).state.snapshots.length,2);});
+test('cap stops without dropping saved content',()=>{const s=C.initial();s.snapshots=Array.from({length:100},(_,i)=>({group:'58',digest:String(i),text:'T'}));assert.throws(()=>C.append(s,{group:'58',digest:'new',text:'NEW'}),/LOCAL_LIMIT/);assert.equal(s.snapshots.length,100);});
+test('manifest only grants storage and Zalo host, no cookies/debugger/download access',()=>{const m=JSON.parse(fs.readFileSync(path.join(__dirname,'../extension/manifest.json')));assert.deepEqual(m.permissions,['storage']);assert.deepEqual(m.host_permissions,['https://chat.zalo.me/*']);assert.equal(m.content_scripts[0].all_frames,false);assert.equal(m.background,undefined);});
