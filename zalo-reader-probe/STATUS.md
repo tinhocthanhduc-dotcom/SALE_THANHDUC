@@ -29,3 +29,9 @@ Cập nhật giữ dữ liệu: giải nén v0.2, chép đè file vào đúng th
 Tách nhãn trạng thái quét hai nhóm, xóa thông báo lỗi chọn nút cũ khi đã gán lại nút. Không thay cách thu nhận, không tự cuộn Zalo/đồng bộ lịch sử, không tăng quyền tiện ích. Không coi việc có đủ chữ trong snapshot là chứng minh đủ tin từ Zalo.
 
 21/21 test mô phỏng đạt (4 core + 17 browser), thêm bản chữ dài có dòng 16/17 sau mốc 1.400 ký tự, popup hiện đủ và ở cuối, mở viewer local và xem bản cũ theo kho, không thực thi HTML trong tin. Chưa kiểm chứng bản 0.3 trên Zalo thật/Windows. Cập nhật ZIP bằng cách chép đè cùng thư mục, tải lại tiện ích và F5 Zalo; không cần gỡ/xóa bộ nhớ.
+
+## Bản 0.4 — lọc mã biểu tượng riêng dòng
+
+Dùng chung core.readable trong popup, viewer và trường cleaned_text khi xuất JSON. Bỏ dòng chỉ gồm các mã do chủ chỉ ra: /-strong, /-heart, :>, :o, :-((, :-h, kể cả tổ hợp/whitespace. Giữ nguyên dòng có nội dung hàng hóa, số lượng, ký hiệu lạ và mã chen trong câu; không tự xóa số đếm hoặc suy đoán phản ứng. Text gốc, digest và receipt snapshot không đổi; dữ liệu cũ được lọc lúc xem. Viewer mặc định bản sạch, có checkbox hiện gốc.
+
+24/24 test mô phỏng đạt (6 core + 18 browser), gồm mã riêng dòng/tổ hợp, không mất dòng hàng/số lượng, toggle bản gốc và không ghi đè storage. Không đổi quyền Chrome hoặc cách đọc nhóm, không ghi kho/gửi tin, chưa test v0.4 trên Zalo thật/Windows.

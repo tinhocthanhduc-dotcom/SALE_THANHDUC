@@ -1,6 +1,12 @@
-# Thử đọc hai nhóm Zalo — bản 0.3
+# Thử đọc hai nhóm Zalo — bản 0.4
 
 Đây là tiện ích Chrome thử khả năng đọc DOM của Zalo Web trên máy chủ tài khoản. Không phải bot đã vận hành. Không kết nối Kho, không gửi tin, không chốt phiếu và chưa cài lịch 11:55/15:55/18:55.
+
+## Bản 0.4: ẩn mã biểu tượng Zalo
+
+Mặc định bỏ các dòng chỉ chứa /-strong, /-heart, :>, :o, :-((, :-h (kể cả nhiều mã cùng dòng). Không xóa dòng có chữ hàng hóa hoặc số lượng; mã lạ không tự đoán. Popup và màn hình đầy đủ đều dùng chung bộ lọc. Màn đầy đủ có **Hiện bản gốc (cả mã biểu tượng)** để đối chiếu.
+
+Bộ nhớ vẫn giữ text gốc và khóa snapshot như cũ. File xuất thêm cleaned_text đã lọc cho mỗi bản; text gốc không bị sửa. Cập nhật bằng cách chép đè v0.4 vào đúng thư mục tiện ích đã cài, bấm tải lại tiện ích và F5 Zalo. Các bản cũ đã lưu cũng được lọc khi xem, không cần đọc lại.
 
 ## Bản 0.3: sửa thiếu tin cuối trong phần xem trước
 
