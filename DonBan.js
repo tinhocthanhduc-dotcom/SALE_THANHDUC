@@ -1,4 +1,4 @@
-/** Đơn bán: chỉ ghi sổ Sales container-bound; Finance chỉ đọc KQ_SALES. */
+/** Đơn bán và thu tiền trực tiếp tại Sales. */
 const DB_HEADERS_ = {
   DON_BAN: 'MaDon,SoBaoGia,NgayChot,MaKhachHang,TenKhach,DienThoai,MaSoThue,MaKhachChung,TienHang,ChietKhau,VAT,TongTien,CheDoVAT,TrangThaiDon,NguoiChot,GhiChu,LyDoHuy,RequestId,TaoLuc,CapNhatLuc'.split(','),
   CHI_TIET_DON_BAN: 'MaDon,STT,NguonHang,MaHang,TenHang,DVT,SoLuong,DonGia,CKDong,VATDong,ThanhTien,GiaDaGomVAT,DaQuaSuDung'.split(','),
@@ -176,49 +176,16 @@ function donBanAssertQuoteEditable_(no) {
 function dbEmployees_() {
   return [...new Set(dbText_(cfg_().NHAN_VIEN_BAN_HANG).split(',').map(dbText_).filter(Boolean))];
 }
-function dbFinance_(fresh) {
-  const id = dbText_(PropertiesService.getScriptProperties().getProperty('FINANCE_DB_ID'));
-  if (!id) return {connected: false, message: 'Chưa kết nối Finance', rows: []};
-  if (id === ss_().getId()) throw new Error('FINANCE_DB_ID phải là file Finance riêng.');
-  const cache = CacheService.getScriptCache(), key = 'DON_BAN_FINANCE_' + dbHash_(id);
-  if (!fresh) {
-    const cached = cache.get(key);
-    if (cached) { try { return JSON.parse(cached); } catch (ignore) {} }
-  }
-  try {
-    const sh = SpreadsheetApp.openById(id).getSheetByName('KQ_SALES');
-    if (!sh) throw new Error('Thiếu KQ_SALES');
-    const values = sh.getDataRange().getValues(), headers = values.shift() || [];
-    const needed = 'MA_BAO_THU,MA_DON,KET_QUA,SO_TIEN,ID_GIAO_DICH,MA_PHIEU,LY_DO,NGUOI_XU_LY,XU_LY_LUC'.split(',');
-    if (needed.some(h => !headers.includes(h))) throw new Error('Sai header KQ_SALES');
-    const seen = new Set();
-    const rows = values.filter(r => dbText_(r[headers.indexOf('MA_BAO_THU')])).map(r => {
-      const o = {}; needed.forEach(h => { const v = r[headers.indexOf(h)]; o[h] = v instanceof Date ? v.toISOString() : v; });
-      if (seen.has(o.MA_BAO_THU) || !['DA_XAC_NHAN', 'TU_CHOI'].includes(o.KET_QUA) ||
-          !Number.isSafeInteger(Number(o.SO_TIEN)) || Number(o.SO_TIEN) < 0) throw new Error('Kết quả Finance trùng/không hợp lệ');
-      seen.add(o.MA_BAO_THU); return o;
-    });
-    const result = {connected: true, message: '', rows};
-    const encoded = JSON.stringify(result);
-    if (Utilities.newBlob(encoded).getBytes().length < 95000) cache.put(key, encoded, 60);
-    return result;
-  } catch (error) { throw new Error('Không đọc được Finance. Hãy kiểm tra FINANCE_DB_ID, quyền và KQ_SALES rồi bấm Làm mới.'); }
-}
-function dbPaymentState_(order, receipts, finance) {
-  const results = finance.rows.filter(x => x.MA_DON === order.MaDon);
-  const byReceipt = Object.fromEntries(results.map(x => [x.MA_BAO_THU, x]));
-  receipts.forEach(r => {
-    const other = finance.rows.find(x => x.MA_BAO_THU === r.MaBaoThu);
-    if (other && (other.MA_DON !== order.MaDon || (other.KET_QUA === 'DA_XAC_NHAN' && Number(other.SO_TIEN) !== Number(r.SoTien))))
-      throw new Error('Kết quả Finance không khớp báo thu ' + r.MaBaoThu);
-  });
-  const confirmed = results.filter(x => x.KET_QUA === 'DA_XAC_NHAN').reduce((n, r) => n + Number(r.SO_TIEN), 0);
-  const pending = receipts.filter(x => x.TrangThai === 'CHỜ XÁC NHẬN' && !byReceipt[x.MaBaoThu]).reduce((n, r) => n + Number(r.SoTien), 0);
-  const warnings = receipts.filter(x => x.TrangThai === 'ĐÃ HỦY' && byReceipt[x.MaBaoThu]?.KET_QUA === 'DA_XAC_NHAN')
-    .map(x => x.MaBaoThu + ': Đã hủy nhưng Finance đã ghi thu, cần kế toán xử lý');
-  return {DaThuXacNhan: confirmed, DangCho: pending, ConPhaiThu: Number(order.TongTien) - confirmed,
-    MucThanhToan: confirmed >= Number(order.TongTien) ? 'ĐÃ THU ĐỦ' : confirmed > 0 ? 'THU MỘT PHẦN' : 'CHƯA THU', warnings,
-    baoThu: receipts.map(r => ({...r, finance: byReceipt[r.MaBaoThu] || null}))};
+// Sales records collections locally. Historical pending reports remain reserved until cancelled.
+function dbPaymentState_(order, receipts) {
+  const confirmed = receipts.filter(r => r.TrangThai === 'Đã Thu Tiền').reduce((n,r) => n + Number(r.SoTien), 0);
+  const pending = receipts.filter(r => r.TrangThai === 'CHỜ XÁC NHẬN').reduce((n,r) => n + Number(r.SoTien), 0);
+  const remaining = Number(order.TongTien) - confirmed;
+  return {DaThuXacNhan: confirmed, DangCho: pending, ConPhaiThu: remaining,
+    TrangThaiDon: order.TrangThaiDon === 'ĐÃ HỦY' ? 'ĐÃ HỦY' : remaining <= 0 ? 'Đơn thành công' : 'ĐÃ CHỐT',
+    MucThanhToan: remaining <= 0 ? 'Đã Thu Tiền' : confirmed > 0 ? 'THU MỘT PHẦN' : 'CHƯA THU',
+    warnings: pending ? ['Có báo thu cũ chưa ghi nhận. Kiểm tra và hủy báo thu cũ trước khi thu lại để tránh ghi trùng.'] : [],
+    baoThu: receipts};
 }
 function dbJson_(value) { return JSON.parse(JSON.stringify(value)); }
 function dbRead_(fn) {
@@ -236,19 +203,17 @@ function dbRead_(fn) {
 }
 function listDonBan(forceRefresh) {
   return dbRead_(() => {
-    const finance = dbFinance_(forceRefresh === true), receipts = dbTable_('BAO_THU').map(x => x.data);
-    return {finance: {connected: finance.connected, message: finance.message}, employees: dbEmployees_(),
-      orders: dbTable_('DON_BAN').map(x => ({...x.data, ...dbPaymentState_(x.data, receipts.filter(r => r.MaDon === x.data.MaDon), finance)}))
+    const receipts = dbTable_('BAO_THU').map(x => x.data);
+    return {employees: dbEmployees_(),
+      orders: dbTable_('DON_BAN').map(x => ({...x.data, ...dbPaymentState_(x.data, receipts.filter(r => r.MaDon === x.data.MaDon))}))
         .sort((a, b) => String(b.NgayChot).localeCompare(String(a.NgayChot)))};
   });
 }
 function getDonBan(maDon, forceRefresh) {
   return dbRead_(() => {
     const found = dbFind_('DON_BAN', 'MaDon', maDon); if (!found) throw new Error('Không tìm thấy đơn bán.');
-    const finance = dbFinance_(forceRefresh === true);
-    return {order: {...found.data, ...dbPaymentState_(found.data, dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === maDon), finance)},
-      items: dbTable_('CHI_TIET_DON_BAN').map(x => x.data).filter(x => x.MaDon === maDon), employees: dbEmployees_(),
-      finance: {connected: finance.connected, message: finance.message}};
+    return {order: {...found.data, ...dbPaymentState_(found.data, dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === maDon))},
+      items: dbTable_('CHI_TIET_DON_BAN').map(x => x.data).filter(x => x.MaDon === maDon), employees: dbEmployees_()};
   });
 }
 /** Một journal delta bền vững trong Script Properties; hoàn tất trước lệnh tiếp theo.
@@ -335,9 +300,9 @@ function huyDon(maDon, lyDo, requestId) {
     if (!reason) throw new Error('Bắt buộc nhập lý do hủy.');
     const order = dbFind_('DON_BAN', 'MaDon', id)?.data;
     if (!order || order.TrangThaiDon === 'ĐÃ HỦY') throw new Error('Đơn không tồn tại hoặc đã hủy.');
-    const finance = dbFinance_(true), receipts = dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === id);
-    const state = dbPaymentState_(order, receipts, finance);
-    if (state.DaThuXacNhan > 0 || state.DangCho > 0) throw new Error('Đơn có báo thu đang chờ hoặc đã xác nhận, không thể hủy.');
+    const receipts = dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === id);
+    const state = dbPaymentState_(order, receipts);
+    if (state.DaThuXacNhan > 0 || state.DangCho > 0) throw new Error('Đơn đã thu tiền hoặc có báo thu cũ đang chờ, không thể hủy.');
     const now = new Date().toISOString();
     return {steps: [dbStep_('DON_BAN', ['MaDon'], {MaDon: id, TrangThaiDon: 'ĐÃ HỦY', LyDoHuy: reason, CapNhatLuc: now}),
       dbStep_(APP.SHEETS.QUOTES, ['SoBaoGia'], {SoBaoGia: order.SoBaoGia, TrangThai: 'ĐÃ CẬP NHẬT'})], result: {success: true, maDon: id}};
@@ -350,15 +315,16 @@ function baoThu(input) {
   return dbRun_('baoThu', input.requestId, p, () => {
     if (typeof p.soTien !== 'number' || !Number.isSafeInteger(p.soTien) || p.soTien <= 0) throw new Error('Số tiền phải là số nguyên lớn hơn 0.');
     if (!['TIEN_MAT', 'CK_ACB', 'CK_TCB'].includes(p.hinhThuc)) throw new Error('Hình thức không hợp lệ.');
-    if (!dbEmployees_().includes(p.nguoiBao)) throw new Error('Chọn người báo trong NHAN_VIEN_BAN_HANG của CAU_HINH.');
+    if (!dbEmployees_().includes(p.nguoiBao)) throw new Error('Chọn người thu trong NHAN_VIEN_BAN_HANG của CAU_HINH.');
     const order = dbFind_('DON_BAN', 'MaDon', p.maDon)?.data;
     if (!order || order.TrangThaiDon === 'ĐÃ HỦY') throw new Error('Đơn không tồn tại hoặc đã hủy.');
-    const state = dbPaymentState_(order, dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === p.maDon), dbFinance_(true));
-    if (p.soTien > state.ConPhaiThu - state.DangCho) throw new Error('Số báo thu vượt số còn được báo (đã trừ khoản chờ).');
+    const state = dbPaymentState_(order, dbTable_('BAO_THU').map(x => x.data).filter(r => r.MaDon === p.maDon));
+    if (p.soTien > state.ConPhaiThu - state.DangCho) throw new Error('Số thu tiền vượt số còn được thu (đã trừ báo thu cũ đang chờ).');
     const no = nextNo_('BT'), now = new Date().toISOString();
     return {steps: [dbStep_('BAO_THU', ['MaBaoThu'], {MaBaoThu: no, MaDon: order.MaDon, MaKhachHang: order.MaKhachHang,
       TenKhach: order.TenKhach, SoTien: p.soTien, HinhThuc: p.hinhThuc, MaGiaoDichNH: p.hinhThuc === 'TIEN_MAT' ? '' : p.maGiaoDichNH,
-      NguoiBao: p.nguoiBao, TrangThai: 'CHỜ XÁC NHẬN', GhiChu: p.ghiChu, LyDoHuy: '', RequestId: input.requestId, TaoLuc: now, CapNhatLuc: now})],
+      NguoiBao: p.nguoiBao, TrangThai: 'Đã Thu Tiền', GhiChu: p.ghiChu, LyDoHuy: '', RequestId: input.requestId, TaoLuc: now, CapNhatLuc: now}),
+      dbStep_('DON_BAN', ['MaDon'], {MaDon: order.MaDon, TrangThaiDon: state.ConPhaiThu === p.soTien ? 'Đơn thành công' : 'ĐÃ CHỐT', CapNhatLuc: now})],
       result: {success: true, maBaoThu: no, maDon: order.MaDon}};
   });
 }
@@ -368,7 +334,9 @@ function huyBaoThu(maBaoThu, lyDo, requestId) {
     if (!reason) throw new Error('Bắt buộc nhập lý do hủy.');
     const receipt = dbFind_('BAO_THU', 'MaBaoThu', id)?.data;
     if (!receipt || receipt.TrangThai !== 'CHỜ XÁC NHẬN') throw new Error('Chỉ hủy báo thu đang chờ xác nhận.');
-    if (dbFinance_(true).rows.some(r => r.MA_BAO_THU === id)) throw new Error('Finance đã có kết quả, không thể hủy báo thu.');
     return {steps: [dbStep_('BAO_THU', ['MaBaoThu'], {MaBaoThu: id, TrangThai: 'ĐÃ HỦY', LyDoHuy: reason, CapNhatLuc: new Date().toISOString()})], result: {success: true, maBaoThu: id}};
   });
 }
+
+// Keep the historical RPC for compatibility and request replay.
+function thuTien(input) { return baoThu(input); }
