@@ -1,0 +1,15 @@
+{
+  "http_status": 200,
+  "client_payload_matches": true,
+  "payload_sha256": "72c95f5e338954cb4e3a119c0812ea79f9a7aaabf2457ab7b29b516eaff2c517",
+  "public_shell_only": true,
+  "wrapper_unescape_passes": 1,
+  "deployment_version": 66,
+  "code_commit": "7e32afa",
+  "deployment_request_commit": "586515c",
+  "workflow_run": 38845535663,
+  "storage_migration_run": false,
+  "authenticated_uat_run": false,
+  "execution_api_measured": false,
+  "execution_api_error": "NOT_FOUND"
+}

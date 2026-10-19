@@ -1,0 +1,107 @@
+{
+  "scope": "UI only; local fixtures, not Google UAT",
+  "node": {
+    "pass": 138,
+    "fail": 0
+  },
+  "browser_suites": [
+    {
+      "suite": "choice",
+      "exit_code": 0
+    },
+    {
+      "suite": "terms",
+      "exit_code": 0
+    },
+    {
+      "suite": "cash-corrections",
+      "exit_code": 0
+    },
+    {
+      "suite": "desktop-operations",
+      "exit_code": 0
+    },
+    {
+      "suite": "desktop-administration",
+      "exit_code": 0
+    },
+    {
+      "suite": "desktop-dispatch",
+      "exit_code": 0
+    },
+    {
+      "suite": "browser",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-complete",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-pickup",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-detail",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-shell",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-board",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-cash",
+      "exit_code": 0
+    },
+    {
+      "suite": "technician-payment",
+      "exit_code": 0
+    },
+    {
+      "suite": "money",
+      "exit_code": 0
+    },
+    {
+      "suite": "customer-machines",
+      "exit_code": 0
+    },
+    {
+      "suite": "delivery",
+      "exit_code": 0
+    },
+    {
+      "suite": "integration",
+      "exit_code": 0
+    },
+    {
+      "suite": "photo",
+      "exit_code": 0
+    },
+    {
+      "suite": "gas-ui",
+      "exit_code": 0
+    },
+    {
+      "suite": "live",
+      "exit_code": 0
+    }
+  ],
+  "choice_scenarios": [
+    "one customer input, 20-row cap and screen reader status at 390px",
+    "accented/accentless/case-insensitive name, phone substring and address select the same validated customer ID",
+    "machine model/serial search and switching customers refreshes machines, auto-selects a sole machine",
+    "clear removes ID; free text without selection cannot save, Escape closes only the list",
+    "keyboard Tab/Enter creates customer with phone prefilled; cancelling restores query and draft",
+    "no-match creates customer with typed name prefilled, selects new ID and preserves order draft",
+    "TD combo shows code/name/unit/warehouse/stock; warehouse refresh, clear, invalid text and explicit outside-catalogue choice",
+    "short lists are 48px quick buttons with keyboard navigation; no horizontal overflow at 390px",
+    "Finance source and target share the same component, searchable by name or exact ID"
+  ],
+  "choice_page_errors": [],
+  "code_gs_matches_v53": true,
+  "code_gs_sha256": "655880e5a5d14212f36db141a911109ca9a5cf2ad4a09668d234e85594f85c20"
+}

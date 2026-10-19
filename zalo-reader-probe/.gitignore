@@ -1,0 +1,6 @@
+node_modules/
+profile/
+captures/
+*.jsonl
+*.log
+zalo-doc-thu-*.json

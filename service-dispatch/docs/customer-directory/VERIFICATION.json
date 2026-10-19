@@ -1,0 +1,78 @@
+{
+  "node": {
+    "passed": 321,
+    "failed": 0
+  },
+  "dispatch_browser_suites": {
+    "passed": 23,
+    "failed": 0
+  },
+  "directory_browser_scenarios": {
+    "passed": 11,
+    "failed": 0
+  },
+  "new_browser_scenarios": 11,
+  "gas_builds": [
+    "service-dispatch",
+    "customer-directory"
+  ],
+  "native_hmac_connection": "pending owner-run check; existing secret/mapping retained; native unsigned/bad-signature rejection verified",
+  "network_timeout": "8s client wait budget; GAS UrlFetchApp cannot enforce network timeout",
+  "deployment": {
+    "dispatch_native_version": 63,
+    "dispatch_workflow": 38776299484,
+    "directory_copy_native_version": 8,
+    "directory_workflow": 38768136190,
+    "same_urls": true,
+    "dispatch_http_status": 200,
+    "dispatch_served_client_matches_local_build": true,
+    "client_config_provisioned": "owner-managed; preserved, not inspected",
+    "connection_enabled": "preserved; not changed by deployment",
+    "native_hmac_uat": "owner reruns check/enable; no re-entry of configuration",
+    "owner_setup_and_uat_skipped": true,
+    "directory_copy_api_native_version": 9,
+    "directory_api_workflow": 38772111587
+  },
+  "snapshot_example": "synthetic fixtures only; KTD-000201 not inserted on Google",
+  "directory_setup_workflow_note": "Existing workflow attempted setup via Execution API on COPY deployment v7; completion unconfirmed (NOT_FOUND). Future setup/UAT now requires explicit run_setup=true; default is skip. No source rescan requested.",
+  "ci_notes": [
+    "Initial CI browser run timed out preserving inner scroll; local recheck passed and subsequent CI passed that suite.",
+    "CI exposed LocalRepository marker publication race in preexisting multi-process tests; marker now published atomically. This local runner is not bundled into GAS. Full local Node suite re-passed 316/316 after fix."
+  ],
+  "commits": {
+    "feature": "2010a35",
+    "picker_history": "907e29a",
+    "owner_exports": "0dff8d6"
+  },
+  "ci_node_job": {
+    "run": 38768135834,
+    "result": "success"
+  },
+  "api_native_smoke": "customer-directory/API_NATIVE_VERIFICATION.json",
+  "transport_followup": {
+    "commit": "e2ccf52",
+    "node_passed": 321,
+    "node_failed": 0,
+    "approved_copy_api_pinned": true,
+    "explicit_contentservice_get_redirect": true,
+    "sanitized_diagnostic_property": "DISPATCH_CD_TRANSPORT_CHECK",
+    "owner_signed_check": "pending"
+  },
+  "native_scope_probe": {
+    "commit": "30e4700",
+    "node_passed": 321,
+    "node_failed": 0,
+    "owner_signed_check": "pending",
+    "native_platform_exceptions": "visible on owner unsigned probe; no secret/customer payload",
+    "scope": "script.external_request"
+  },
+  "per_hop_probe": {
+    "commit": "3cafb15",
+    "node_passed": 321,
+    "node_failed": 0,
+    "fresh_external_api_get": "HTTP200 HMAC_REQUIRED",
+    "native_owner_check": "pending",
+    "escaping": false,
+    "diagnostic_property": "DISPATCH_CD_TRANSPORT_PROBE"
+  }
+}

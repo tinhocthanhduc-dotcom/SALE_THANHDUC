@@ -1,0 +1,151 @@
+/** All public endpoints are disabled until a separate staging project is verified. */
+function dispatchRuntime_(){
+ var props=PropertiesService.getScriptProperties();
+ if(props.getProperty('DISPATCH_ENV')!=='STAGING'||props.getProperty('DISPATCH_ENABLE_WRITES')!=='true')throw new Error('STAGING_WRITES_DISABLED');
+ var actual=ScriptApp.getScriptId(),expected=props.getProperty('DISPATCH_SCRIPT_ID');
+ var legacy=['1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql','1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu','1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6','16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N','1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN'];
+ if(!expected||actual!==expected||legacy.indexOf(actual)>=0)throw new Error('STAGING_PROJECT_MISMATCH');
+ return props;
+}
+/** Visible in the editor; web callers must also be the effective Google user. */
+function setupDispatchStaging(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ return dispatchSetupStaging_();
+}
+function provisionDispatchUser(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ return dispatchProvisionUser_();
+}
+/** Measures a synthetic hash on GAS, without reading employee passwords or changing users. */
+function benchmarkDispatchPassword(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ var start=Date.now();
+ DispatchBundle.passwordHash('SyntheticBenchmarkOnly-2026','0123456789abcdef0123456789abcdef',600000);
+ var report={algorithm:'PBKDF2-SHA256',iterations:600000,hash_ms:Date.now()-start,shared_lock_held:false};
+ console.log(JSON.stringify(report));return report;
+}
+/** Owner-only health check. Logs booleans/codes, never credentials or customer rows. */
+function checkDispatchStaging(){
+ var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();
+ if(!active||!effective||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');
+ var report={configuration_ok:false,admin_account_present:false,storage_ok:false,step:'configuration'};
+ try{
+  var props=dispatchRuntime_();report.configuration_ok=true;report.step='account';
+  var users=dispatchAuth_(props).store.read().users;
+  report.admin_account_present=Object.keys(users).some(function(key){return users[key].username==='admin'&&users[key].active!==false;});
+  report.step='storage';
+  var sheetId=props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN');
+  var repo=new DispatchBundle.SheetsRepository({workbook:SpreadsheetApp.openById(sheetId),stagingId:sheetId,markerToken:marker,domain:DispatchBundle.Domain,timing:function(value){console.info('dispatch-command-timing',JSON.stringify(value));},id:function(){return Utilities.getUuid();},hash:DispatchBundle.digest,flush:function(){SpreadsheetApp.flush();},withLock:dispatchLock_});
+  repo.snapshot();report.storage_ok=true;report.step='complete';
+ }catch(error){var allowed=['TABLE_SCHEMA_MISMATCH','TABLE_RECORD_TOO_LARGE','TABLE_CELL_CAPACITY','STORAGE_MODE_CHANGED','APPEND_ONLY_CONFLICT','OVER_CREDIT','CREDIT_REQUEST_EXISTS','CUSTOMER_FINANCE_MAPPING_REQUIRED','UNKNOWN_DEBT','INTEGRATION_COPY_REQUIRED','INVALID_FINANCE_MAPPING','UNKNOWN_TD_CODE','UNKNOWN_SYNC_DOCUMENT','SYNC_ALREADY_RECORDED','SYNC_NOT_RECORDED','SYNC_FINANCE_PRICE_LOCKED','STALE_SYNC_RESULT','INTEGRATION_OUTBOX_REQUIRED','INTEGRATION_SECRET_REQUIRED','INTEGRATION_SIGNATURE_INVALID','INTEGRATION_PACKET_TOO_LARGE','INVALID_PRICES','INVALID_AMOUNT','PRICE_CONSENT_REQUIRED','PRICES_REQUIRED','INVALID_FREE_AMOUNT','FREE_REASON_REQUIRED','PAID_TOTAL_REQUIRED','FREE_CONFIRMATION_REQUIRED','FEE_LIMIT','PRICE_APPROVAL_REQUIRED','REFUND_REQUIRED','CREDIT_NO_COLLECTION','OVER_COLLECTION','COMPANY_ACCOUNT_REQUIRED','UNKNOWN_PAYMENT_METHOD','INVALID_PAYMENT_KIND','PAYMENT_KIND_LOCKED','DUPLICATE_TRANSACTION','INVALID_ALLOCATION','DEPOSIT_RESERVED','SELF_CONFIRMATION','CASH_HANDOVER_REQUIRED','CASH_REQUIRES_RECONCILIATION','UNKNOWN_PAYMENT','UNKNOWN_DEPOSIT','DOSSIER_CLOSED','WORK_NOT_ACCEPTED','OPEN_MATERIALS','PENDING_PAYMENTS','BALANCE_DUE','CASH_NOT_DEPOSITED','INVALID_MACHINES','UNKNOWN_MACHINE','MACHINE_INACTIVE','MACHINE_ALREADY_ATTACHED','UNKNOWN_CUSTOMER','INVALID_WAREHOUSE','INVALID_SERIAL','PICKUP_LOCKED','UNKNOWN_DELIVERY_ISSUE','STAGING_WRITES_DISABLED','STAGING_PROJECT_MISMATCH','STAGING_CONFIG_REQUIRED','STAGING_TARGET_REJECTED','STAGING_MARKER_REQUIRED','STAGING_MARKER_MISMATCH','SCHEMA_MISMATCH','RECOVERY_CONFLICT','STAGING_CAPACITY_EXCEEDED'];var code=error.code||error.message;report.error=allowed.indexOf(code)>=0?code:'UNEXPECTED_SERVER_FAILURE';}
+ console.log(JSON.stringify(report));return report;
+}
+/** One-time editor setup for a NEW project. Does not run through the web API. */
+function dispatchSetupStaging_(){
+ var props=PropertiesService.getScriptProperties(),actual=ScriptApp.getScriptId();
+ var legacyScripts=['1RKhkCNMCPB_0P2AWhNYGyhBgYtCor5Q9gb8QCkHnmaDnTT58h4Taq2ql','1CPEo4X0m7zcuIa-OKGW8LSv056QcwGdXku_DFXQEpvajyTJhtP5BEFzu','1yrLA1BaoJSCtF6RCFFF2-c_upUeReomxfJu3MdVSKPjxGe3owMN0LbP6','16A5vFbfWwf7HUXmE0yFTYqg2fMjcv84TOHh_Pr9JWjJszqQrDUPAOO6N','1plq9ZhVsyDe8q1_sf_X0_LUEyOLu5TaMU_BAqVV8I1BE1pplpitOQ1BN'];
+ if(legacyScripts.indexOf(actual)>=0||props.getProperty('DISPATCH_SCRIPT_ID')&&props.getProperty('DISPATCH_SCRIPT_ID')!==actual)throw new Error('STAGING_PROJECT_MISMATCH');
+ var legacySheets=['1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU','1ACsqTWveQR3ksIwE3bkQcN7RNI1a7MymtOOgJRp72yw','1tHd_ypY36P0cyFFcPoDjVuPobU2y4k1__nR4cLZdsYY','1-j45sURspD4PvrymNp8P2gLwrebFRVt9Rbo3AwEiDWw','1R5YaLosDq7fhUJuulfjXoJYEOA4tZief5Ge5qaL_jrs'];
+ if(legacySheets.indexOf(props.getProperty('DISPATCH_SHEET_ID'))>=0)throw new Error('STAGING_TARGET_REJECTED');
+ if(props.getProperty('DISPATCH_SHEET_ID')&&props.getProperty('DISPATCH_SETUP_SHEET_ID')!==props.getProperty('DISPATCH_SHEET_ID'))throw new Error('STAGING_SETUP_TARGET_UNVERIFIED');
+ return dispatchLock_(function(){
+  var existing=props.getProperty('DISPATCH_USER_admin'),password=props.getProperty('DISPATCH_INITIAL_PASSWORD'),user;
+  try{
+  if(!existing){if(!password)throw new Error('INITIAL_PASSWORD_REQUIRED');user=DispatchBundle.createUser({id:'admin',username:'admin',name:'Quản trị Điều phối',roles:['director','dispatcher'],password:password,iterations:dispatchPasswordIterations_(props),random:function(){return Utilities.getUuid().replace(/-/g,'');}});}
+   var sheetId=props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN')||Utilities.getUuid();
+   props.setProperty('DISPATCH_SCRIPT_ID',actual);props.setProperty('DISPATCH_MARKER_TOKEN',marker);
+   var workbook;
+   if(!sheetId){workbook=SpreadsheetApp.create('THANH_DUC_DIEU_PHOI_STAGING');sheetId=workbook.getId();props.setProperty('DISPATCH_SHEET_ID',sheetId);props.setProperty('DISPATCH_SETUP_SHEET_ID',sheetId);}else workbook=SpreadsheetApp.openById(sheetId);
+   var meta=workbook.getSheetByName('ERP_META');
+   if(!meta){var first=workbook.getSheets()[0];if(first&&first.getLastRow()===0)meta=first.setName('ERP_META');else meta=workbook.insertSheet('ERP_META');}
+   var markerValues=[['environment','token'],['STAGING',marker]];
+   if(meta.getLastRow()===0)meta.getRange(1,1,2,2).setValues(markerValues);else if(JSON.stringify(meta.getRange(1,1,2,2).getDisplayValues())!==JSON.stringify(markerValues))throw new Error('STAGING_MARKER_MISMATCH');
+   var headers=['attempt_id','kind','chunk_index','chunk_count','checksum','payload'];
+   ['ERP_STATE','ERP_JOURNAL'].forEach(function(name){var sheet=workbook.getSheetByName(name)||workbook.insertSheet(name);if(sheet.getLastRow()===0)sheet.getRange(1,1,1,6).setValues([headers]);else if(JSON.stringify(sheet.getRange(1,1,1,6).getDisplayValues()[0])!==JSON.stringify(headers))throw new Error('SCHEMA_MISMATCH');});
+   if(!props.getProperty('DISPATCH_IMAGE_FOLDER_ID'))props.setProperty('DISPATCH_IMAGE_FOLDER_ID',DriveApp.createFolder('THANH_DUC_DIEU_PHOI_STAGING_IMAGES').getId());
+   SpreadsheetApp.flush();if(user)props.setProperty('DISPATCH_USER_admin',JSON.stringify(user));
+   props.setProperty('DISPATCH_ENV','STAGING');props.setProperty('DISPATCH_ENABLE_WRITES','true');
+   return {configured:true,username:'admin',spreadsheetUrl:workbook.getUrl()};
+  }finally{props.deleteProperty('DISPATCH_INITIAL_PASSWORD');}
+ });
+}
+function dispatchLock_(fn){var lock=LockService.getScriptLock();lock.waitLock(10000);try{return fn();}finally{lock.releaseLock();}}
+function dispatchAuth_(props){
+ var store={lock:dispatchLock_,read:function(){
+  var all=props.getProperties(),state={users:{},sessions:{},login_rate:{global:{},leases:{},accounts:{},recent:[]}};
+  Object.keys(all).forEach(function(key){
+   if(key.indexOf('DISPATCH_USER_')===0)state.users[key.slice(14)]=JSON.parse(all[key]);
+   if(key.indexOf('DISPATCH_SESSION_')===0)state.sessions[key.slice(17)]=JSON.parse(all[key]);
+   if(key.indexOf('DISPATCH_LOGIN_ACCOUNT_')===0)state.login_rate.accounts[key.slice(23)]=JSON.parse(all[key]);
+  });
+  if(all.DISPATCH_LOGIN_GLOBAL){var g=JSON.parse(all.DISPATCH_LOGIN_GLOBAL);state.login_rate.global=g.global;state.login_rate.leases=g.leases;}
+  [0,1].forEach(function(i){state.login_rate.recent=state.login_rate.recent.concat(JSON.parse(all['DISPATCH_LOGIN_RECENT_'+i]||'[]'));});return state;
+ },write:function(state){
+  var all=props.getProperties(),desired={};
+  Object.keys(state.users).forEach(function(k){desired['DISPATCH_USER_'+k]=JSON.stringify(state.users[k]);});
+  Object.keys(state.sessions).forEach(function(k){desired['DISPATCH_SESSION_'+k]=JSON.stringify(state.sessions[k]);});
+  if(state.login_rate){var rate=state.login_rate;desired.DISPATCH_LOGIN_GLOBAL=JSON.stringify({global:rate.global,leases:rate.leases});Object.keys(rate.accounts).forEach(function(k){desired['DISPATCH_LOGIN_ACCOUNT_'+k]=JSON.stringify(rate.accounts[k]);});[0,1].forEach(function(i){desired['DISPATCH_LOGIN_RECENT_'+i]=JSON.stringify(rate.recent.slice(i*25,(i+1)*25));});}
+  Object.keys(all).forEach(function(k){if((k.indexOf('DISPATCH_USER_')===0||k.indexOf('DISPATCH_SESSION_')===0||k.indexOf('DISPATCH_LOGIN_ACCOUNT_')===0)&&!Object.prototype.hasOwnProperty.call(desired,k))props.deleteProperty(k);});
+  var changed={};Object.keys(desired).forEach(function(k){if(all[k]!==desired[k])changed[k]=desired[k];});if(Object.keys(changed).length)props.setProperties(changed,false);
+ }};
+ return new DispatchBundle.Auth({store:store,passwordIterations:dispatchPasswordIterations_(props),random:function(){return Utilities.getUuid().replace(/-/g,'');},now:function(){return Date.now();},onHashTiming:function(value){console.info('dispatch-login-hash',JSON.stringify(value));}});
+}
+/** Editor-only provisioning. Never call from the browser or keep passwords in source. */
+function dispatchProvisionUser_(){
+ var props=dispatchRuntime_(),raw=props.getProperty('DISPATCH_PROVISION_USER'),password=props.getProperty('DISPATCH_PROVISION_PASSWORD');
+ try{
+  if(!raw||!password)throw new Error('PROVISION_CONFIG_REQUIRED');
+  var config=JSON.parse(raw);config.password=password;config.iterations=dispatchPasswordIterations_(props);config.random=function(){return Utilities.getUuid().replace(/-/g,'');};
+  var user=DispatchBundle.createUser(config),auth=dispatchAuth_(props);
+  auth.store.lock(function(){var state=auth.store.read();if(state.users[user.id]||Object.keys(state.users).some(function(id){return state.users[id].username===user.username;}))throw new Error('DUPLICATE_USER');state.users[user.id]=user;auth.store.write(state);});
+  return {id:user.id,username:user.username,created:true};
+ }finally{props.deleteProperty('DISPATCH_PROVISION_PASSWORD');props.deleteProperty('DISPATCH_PROVISION_USER');}
+}
+function dispatchChanges_(props){var cached=null;try{cached=CacheService.getScriptCache().get('dispatch-version');}catch(ignore){}return {version:Math.max(Number(cached||0),Number(props.getProperty('DISPATCH_CHANGE_VERSION')||0)),pending:props.getProperty('DISPATCH_CHANGE_PENDING')==='true'};}
+function dispatchPublishChanges_(props,revision){var signature=(props.getProperty('DISPATCH_STORAGE_MODE')||'LEGACY')+':'+revision,version=Number(props.getProperty('DISPATCH_CHANGE_VERSION')||0);if(props.getProperty('DISPATCH_CHANGE_SIGNATURE')!==signature){version=Math.max(!props.getProperty('DISPATCH_CHANGE_SIGNATURE')&&signature.indexOf('LEGACY:')===0?version:version+1,Number(revision)||0);props.setProperties({DISPATCH_CHANGE_VERSION:String(version),DISPATCH_CHANGE_SIGNATURE:signature});}try{CacheService.getScriptCache().put('dispatch-version',String(version),21600);}catch(ignore){}props.deleteProperty('DISPATCH_CHANGE_PENDING');}
+/** Owner runs in editor: measures the real changes endpoint, no Sheets/Drive or employee credentials. */
+function benchmarkDispatchChanges(){var active=Session.getActiveUser().getEmail(),effective=Session.getEffectiveUser().getEmail();if(!active||active!==effective)throw new Error('OWNER_SETUP_REQUIRED');var props=dispatchRuntime_(),id='benchmark-'+Utilities.getUuid(),token=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,''),key=DispatchBundle.digest(token),samples=[];try{dispatchLock_(function(){props.setProperty('DISPATCH_USER_'+id,JSON.stringify({id:id,name:'Benchmark',roles:[],active:true,version:1}));props.setProperty('DISPATCH_SESSION_'+key,JSON.stringify({user_id:id,user_version:1,expires_at:Date.now()+60000}));});for(var i=0;i<5;i++){var start=Date.now(),result=dispatchApi({action:'changes',token:token});if(result.error)throw new Error(result.error);samples.push(Date.now()-start);}var report={action:'changes',samples_ms:samples,average_ms:samples.reduce(function(a,b){return a+b;},0)/samples.length,no_sheets:true};console.log(JSON.stringify(report));return report;}finally{dispatchLock_(function(){props.deleteProperty('DISPATCH_USER_'+id);props.deleteProperty('DISPATCH_SESSION_'+key);});}}
+function dispatchService_(requestAuth){
+ var props=dispatchRuntime_(),storageMode=props.getProperty('DISPATCH_STORAGE_MODE')||'LEGACY',sheetId=storageMode==='TABLES'?props.getProperty('DISPATCH_TABLES_COPY_ID'):props.getProperty('DISPATCH_SHEET_ID'),marker=props.getProperty('DISPATCH_MARKER_TOKEN');
+ if(!sheetId||!marker)throw new Error('STAGING_CONFIG_REQUIRED');
+ var mutating=false,committedRevision;
+ var requestLock=function(fn){return dispatchLock_(function(){if((props.getProperty('DISPATCH_STORAGE_MODE')||'LEGACY')!==storageMode)throw new Error('STORAGE_MODE_CHANGED');try{if(mutating)props.setProperty('DISPATCH_CHANGE_PENDING','true');var result=fn();var revision=result&&result.revision;if(result&&result.id)revision=committedRevision;if(revision!==undefined)dispatchPublishChanges_(props,revision);return result;}finally{SpreadsheetApp.flush();}});};
+ var repository;if(storageMode==='TABLES'){var copy=dispatchTablesCopy_(props);repository=new DispatchBundle.Tables.TableRepository({driver:new DispatchBundle.TableDriver.SheetsTableDriver(copy,{flush:function(){SpreadsheetApp.flush();}}),withLock:requestLock,hash:DispatchBundle.digest,id:function(){return Utilities.getUuid();},onTiming:function(value){console.info('dispatch-table-timing',JSON.stringify(value));}});}else{repository=new DispatchBundle.SheetsRepository({workbook:SpreadsheetApp.openById(sheetId),stagingId:sheetId,markerToken:marker,domain:DispatchBundle.Domain,timing:function(value){console.info('dispatch-command-timing',JSON.stringify(value));},id:function(){return Utilities.getUuid();},hash:DispatchBundle.digest,flush:function(){SpreadsheetApp.flush();},withLock:requestLock});}
+ var originalSubmit=repository.submit.bind(repository);repository.submit=function(command,context){mutating=true;committedRevision=undefined;var callback=context.onCommitted;context=Object.assign({},context,{onCommitted:function(snapshot){committedRevision=snapshot.revision;if(typeof dispatchExportOutbox_==='function'){var exportStarted=Date.now();try{dispatchExportOutbox_(snapshot);props.deleteProperty('DISPATCH_OUTBOX_PUBLISH_ERROR');}catch(exportError){props.setProperty('DISPATCH_OUTBOX_PUBLISH_ERROR','Chưa gửi được hàng chờ. Kiểm tra cấu hình/quyền bản sao; chứng từ vẫn được giữ để gửi lại.');}finally{console.info('dispatch-command-timing',JSON.stringify({phase:'export_outbox',ms:Date.now()-exportStarted}));}}if(callback)callback(snapshot);}});try{return originalSubmit(command,context);}finally{mutating=false;}};
+ var files={save:function(mime,base64){var folderId=props.getProperty('DISPATCH_IMAGE_FOLDER_ID');if(!folderId)throw new Error('IMAGE_STORAGE_REQUIRED');var bytes=Utilities.base64Decode(base64),positive=bytes.map(function(b){return (b+256)%256;});if(bytes.length<12||bytes.length>400000)throw new Error('INVALID_IMAGE');var valid=mime==='image/jpeg'?positive[0]===255&&positive[1]===216:mime==='image/png'?JSON.stringify(positive.slice(0,8))===JSON.stringify([137,80,78,71,13,10,26,10]):String.fromCharCode.apply(null,positive.slice(0,4))==='RIFF'&&String.fromCharCode.apply(null,positive.slice(8,12))==='WEBP';if(!valid)throw new Error('INVALID_IMAGE');var file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(bytes,mime,'evidence-'+Utilities.getUuid()));return file.getId();},remove:function(id){DriveApp.getFileById(id).setTrashed(true);},read:function(id){var blob=DriveApp.getFileById(id).getBlob();return {mime:blob.getContentType(),base64:Utilities.base64Encode(blob.getBytes())};}};
+ return DispatchBundle.createService({directoryClient:props.getProperty('DISPATCH_CD_ENABLED')==='true'?dispatchDirectoryClient_(props):null,auth:requestAuth||dispatchAuth_(props),repository:repository,files:files,catalogue:{read:dispatchCatalogue_},changes:{read:function(){return dispatchChanges_(props);}},now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();}});
+}
+function doGet(event){if(event&&event.parameter&&event.parameter.admin==='security')return dispatchSecurityPage_();try{dispatchRuntime_();}catch(error){if(error.message==='STAGING_WRITES_DISABLED')return HtmlService.createHtmlOutput('<h2>Thành Đức · Điều phối dịch vụ</h2><p>Project đã có mã ứng dụng, nhưng chưa khởi tạo dữ liệu và tài khoản.</p><p>Quản trị mở Project Settings, thêm Script Property DISPATCH_INITIAL_PASSWORD (mật khẩu riêng ít nhất 12 ký tự), rồi chạy setupDispatchStaging trong editor. Tài khoản đầu tiên là admin. Không gửi mật khẩu vào chat.</p>');throw error;}var order=event&&event.parameter&&event.parameter.order||'';if(!/^[A-Za-z0-9_-]{0,100}$/.test(order))order='';var html=HtmlService.createHtmlOutputFromFile('Index').getContent().replace('data-entry-order=""','data-entry-order="'+order+'"');return HtmlService.createHtmlOutput(html).setTitle('Thành Đức · Điều phối dịch vụ').addMetaTag('viewport','width=device-width, initial-scale=1');}
+function dispatchApi(input){
+ var requestStarted=Date.now();try{
+  dispatchRuntime_();if(!input||typeof input!=='object')throw new Error('INVALID_REQUEST');
+  // Login must not open Sheets or Drive. Tokens are returned only to the caller, never logged.
+  if(input.action==='login')return dispatchAuth_(PropertiesService.getScriptProperties()).login(input.username,input.password);
+  if(input.action==='resume')return dispatchAuth_(PropertiesService.getScriptProperties()).resume(input.resume_code);
+  if(input.action==='resume_ticket')return dispatchAuth_(PropertiesService.getScriptProperties()).resumeTicket(input.token);
+  if(input.action==='logout'){dispatchAuth_(PropertiesService.getScriptProperties()).logout(input.token);return {ok:true};}
+  var auth=dispatchAuth_(PropertiesService.getScriptProperties()),verified=auth.context(input.token);
+  // Reuse this request's single auth read; never cache across requests/login writes.
+  auth.context=function(){return verified;};auth.actor=function(){return verified.actor;};auth.directory=function(){return verified.directory;};
+  if(input.action==='changes')return dispatchChanges_(PropertiesService.getScriptProperties());
+  if(input.action==='directory_select'&&!(input.payload||{}).customer_id){var selectProps=PropertiesService.getScriptProperties();if(selectProps.getProperty('DISPATCH_CD_ENABLED')!=='true')throw new Error('DIRECTORY_NOT_CONFIGURED');var preview=DispatchBundle.CustomerDirectory.controller({client:dispatchDirectoryClient_(selectProps),auth:auth,repository:null,now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();},catalogue:{read:function(){return {};}}});return preview.action(input.token,input.action,input.payload||{});}
+  if(input.action==='directory_search'){var directoryProps=PropertiesService.getScriptProperties();if(directoryProps.getProperty('DISPATCH_CD_ENABLED')!=='true')throw new Error('DIRECTORY_NOT_CONFIGURED');return DispatchBundle.CustomerDirectory.search(dispatchDirectoryClient_(directoryProps),verified.actor,input.payload||{});}
+  var service=dispatchService_(auth);
+  if(input.action==='sync_refresh')return dispatchImportResults_(service,auth,input.token);
+  if(input.action==='query'){var projection=service.query(input.token,input.order_id,input.view,input.date);projection.integration.publish_error=PropertiesService.getScriptProperties().getProperty('DISPATCH_OUTBOX_PUBLISH_ERROR')||'';projection.app_url=ScriptApp.getService().getUrl();return projection;}
+  if(['directory_search','directory_select','directory_get'].indexOf(input.action)>=0)return service.directory(input.token,input.action,input.payload||{});
+  if(input.action==='command')return service.command(input.token,input.command);
+  if(input.action==='upload')return service.upload(input.token,input.payload);
+  if(input.action==='image')return service.image(input.token,input.order_id,input.evidence_id,input.variant);
+  return {error:'UNKNOWN_ACTION'};
+ }catch(error){var code=error.code||error.message;var allowed=['TABLE_SCHEMA_MISMATCH','TABLE_RECORD_TOO_LARGE','TABLE_CELL_CAPACITY','STORAGE_MODE_CHANGED','APPEND_ONLY_CONFLICT','OVER_CREDIT','CREDIT_REQUEST_EXISTS','CUSTOMER_FINANCE_MAPPING_REQUIRED','UNKNOWN_DEBT','INTEGRATION_COPY_REQUIRED','INVALID_FINANCE_MAPPING','UNKNOWN_TD_CODE','UNKNOWN_SYNC_DOCUMENT','SYNC_ALREADY_RECORDED','SYNC_NOT_RECORDED','SYNC_FINANCE_PRICE_LOCKED','STALE_SYNC_RESULT','INTEGRATION_OUTBOX_REQUIRED','INTEGRATION_SECRET_REQUIRED','INTEGRATION_SIGNATURE_INVALID','INTEGRATION_PACKET_TOO_LARGE','INVALID_PRICES','INVALID_AMOUNT','PRICE_CONSENT_REQUIRED','PRICES_REQUIRED','INVALID_FREE_AMOUNT','FREE_REASON_REQUIRED','PAID_TOTAL_REQUIRED','FREE_CONFIRMATION_REQUIRED','FEE_LIMIT','PRICE_APPROVAL_REQUIRED','REFUND_REQUIRED','CREDIT_NO_COLLECTION','OVER_COLLECTION','COMPANY_ACCOUNT_REQUIRED','UNKNOWN_PAYMENT_METHOD','INVALID_PAYMENT_KIND','PAYMENT_KIND_LOCKED','DUPLICATE_TRANSACTION','INVALID_ALLOCATION','DEPOSIT_RESERVED','SELF_CONFIRMATION','CASH_HANDOVER_REQUIRED','CASH_REQUIRES_RECONCILIATION','UNKNOWN_PAYMENT','UNKNOWN_DEPOSIT','DOSSIER_CLOSED','WORK_NOT_ACCEPTED','OPEN_MATERIALS','PENDING_PAYMENTS','BALANCE_DUE','CASH_NOT_DEPOSITED','INVALID_MACHINES','UNKNOWN_MACHINE','MACHINE_INACTIVE','MACHINE_ALREADY_ATTACHED','UNKNOWN_CUSTOMER','INVALID_WAREHOUSE','INVALID_SERIAL','PICKUP_LOCKED','UNKNOWN_DELIVERY_ISSUE','STAGING_WRITES_DISABLED','STAGING_PROJECT_MISMATCH','STAGING_CONFIG_REQUIRED','AUTH_REQUIRED','INVALID_LOGIN','LOGIN_RATE_LIMITED','FORBIDDEN','VERSION_CONFLICT','REQUIRED_FIELD','INVALID_TRANSITION','EVIDENCE_REQUIRED','INVALID_IMAGE','TRANSFER_PENDING','TRANSFER_STALE','UNKNOWN_TRANSFER','UNKNOWN_TECHNICIAN','MACHINE_CUSTOMER_MISMATCH','INVALID_APPOINTMENT','APPOINTMENT_REQUIRED','INVALID_DATE','INVALID_CATEGORY','INVALID_PHONE','INVALID_QUANTITY','IDEMPOTENCY_CONFLICT','OPEN_PARTS_REQUEST','WAREHOUSE_INTEGRATION_REQUIRED','PARTS_NOT_RECEIVED','UNKNOWN_PARTS_REQUEST','HANDOVER_REQUIRED','UNKNOWN_COLLECTED_MACHINE','DIRECTOR_APPROVAL_REQUIRED','MATERIAL_USAGE_REQUIRED','INVALID_USAGE_SET','INVALID_PARTS_LIST','DUPLICATE_PARTS_LINE','USAGE_CONFIRMATION_REQUIRED','INVALID_COMPLETION','IMAGE_STORAGE_REQUIRED','STAGING_CAPACITY_EXCEEDED','RECOVERY_CONFLICT','SCHEMA_MISMATCH','STAGING_MARKER_MISMATCH'];return {error:allowed.indexOf(code)>=0||/^DIRECTORY_[A-Z_]+$/.test(code)?code:'SERVER_ERROR',...(/^DIRECTORY_[A-Z_]+$/.test(code)&&error.details?{details:error.details}:{})};}finally{console.info('dispatch-command-timing',JSON.stringify({phase:'request',ms:Date.now()-requestStarted}));}
+}
+
+/** Owner-only read diagnostic. No customer records, secrets or tokens are printed. */
+function profileDispatchStorage(){dispatchBridgeOwner_();var p=dispatchRuntime_(),book=SpreadsheetApp.openById(p.getProperty('DISPATCH_SHEET_ID')),start=Date.now(),repo=new DispatchBundle.SheetsRepository({workbook:book,stagingId:book.getId(),markerToken:p.getProperty('DISPATCH_MARKER_TOKEN'),domain:DispatchBundle.Domain,id:function(){return Utilities.getUuid();},hash:DispatchBundle.digest,flush:function(){SpreadsheetApp.flush();},withLock:dispatchLock_,timing:function(v){console.info('dispatch-command-timing',JSON.stringify(v));}}),snapshot=repo.snapshot(),report=repo.capacity(snapshot);report.elapsed_ms=Date.now()-start;report.revision=snapshot.revision;report.checked_at=new Date().toISOString();console.log(JSON.stringify(report));return report;}
+/** Optional maintenance runs under the same project lock, with the 30 -> 20 threshold. */
+function compactDispatchSnapshots(){var p=dispatchRuntime_(),book=SpreadsheetApp.openById(p.getProperty('DISPATCH_SHEET_ID')),repo=new DispatchBundle.SheetsRepository({workbook:book,stagingId:book.getId(),markerToken:p.getProperty('DISPATCH_MARKER_TOKEN'),domain:DispatchBundle.Domain,id:function(){return Utilities.getUuid();},hash:DispatchBundle.digest,flush:function(){SpreadsheetApp.flush();},withLock:dispatchLock_,timing:function(v){console.info('dispatch-command-timing',JSON.stringify(v));}});return dispatchLock_(function(){repo.recoverLocked();return repo.compactLocked();});}
+function installDispatchSnapshotMaintenance(){dispatchBridgeOwner_();ScriptApp.getProjectTriggers().filter(function(t){return t.getHandlerFunction()==='compactDispatchSnapshots';}).forEach(function(t){ScriptApp.deleteTrigger(t);});ScriptApp.newTrigger('compactDispatchSnapshots').timeBased().everyMinutes(10).create();return {installed:true,minutes:10};}

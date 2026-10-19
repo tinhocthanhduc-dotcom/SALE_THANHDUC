@@ -1,0 +1,228 @@
+name: Create separate service dispatch Apps Script staging
+on:
+  pull_request:
+    paths:
+      - 'ops/service-staging-20261013-01.request.json'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: service-dispatch-staging-20261013-01
+  cancel-in-progress: false
+jobs:
+  request-change:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.guard.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: guard
+        name: Require a new explicit deployment request
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$BEFORE_SHA" ]; then
+            BEFORE_SHA="$(git rev-parse "$HEAD_SHA^" 2>/dev/null || true)"
+          fi
+          if [ -z "$BEFORE_SHA" ] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            if git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- ops/service-staging-20261013-01.request.json; then
+              echo 'changed=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+  create:
+    needs: request-change
+    if: github.event.pull_request.head.repo.full_name == github.repository && needs.request-change.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+      GH_TOKEN: ${{ github.token }}
+      PROJECT_REGISTRY: SERVICE_DISPATCH_PROJECT_20261013_01
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check existing Google authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo 'Google authorization CLASPRC_JSON is missing in this repository.'
+            exit 1
+          fi
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          npm install --prefix "$RUNNER_TEMP/clasp-tools" @google/clasp@3.4.1 --no-audit --no-fund
+          echo "$RUNNER_TEMP/clasp-tools/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Restore project registry or create a new isolated project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/project-registry" "$RUNNER_TEMP/dispatch-project"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts" --jq '.artifacts[] | select(.name == "SERVICE_DISPATCH_PROJECT_20261013_01") | [.workflow_run.id, .expired] | @tsv' > "$RUNNER_TEMP/registry-candidates.tsv"
+          if [ -f "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.project.json" ]; then
+            cp "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.project.json" "$RUNNER_TEMP/project-registry/project.json"
+            node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const project=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/project.json'),'utf8'));
+          if(project.request_id!=='20261013-01'||!project.script_id)throw Error('INVALID_PROJECT_REGISTRY');
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'dispatch-project/.clasp.json'),JSON.stringify({scriptId:project.script_id,rootDir:'.'}));
+          JS
+          elif [ -s "$RUNNER_TEMP/registry-candidates.tsv" ]; then
+            read -r registry_run registry_expired < "$RUNNER_TEMP/registry-candidates.tsv"
+            if [ "$registry_expired" = 'true' ]; then
+              echo 'Existing project registry expired; recover the original project ID instead of creating a duplicate.'
+              exit 1
+            fi
+            gh run download "$registry_run" --repo "$GITHUB_REPOSITORY" --name "$PROJECT_REGISTRY" --dir "$RUNNER_TEMP/project-registry"
+            node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const root=process.env.RUNNER_TEMP;
+          const project=JSON.parse(fs.readFileSync(path.join(root,'project-registry/project.json'),'utf8'));
+          if(project.request_id!=='20261013-01'||!project.script_id)throw Error('INVALID_PROJECT_REGISTRY');
+          fs.writeFileSync(path.join(root,'dispatch-project/.clasp.json'),JSON.stringify({scriptId:project.script_id,rootDir:'.'}));
+          JS
+          else
+            cd "$RUNNER_TEMP/dispatch-project"
+            clasp --json create-script --type standalone --title 'THANH_DUC_DIEU_PHOI_STAGING_20261013_01' --rootDir .
+            node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const config=JSON.parse(fs.readFileSync('.clasp.json','utf8'));
+          if(!config.scriptId)throw Error('PROJECT_CREATION_UNCONFIRMED');
+          const info={request_id:'20261013-01',script_id:config.scriptId,editor_url:'https://script.google.com/d/'+config.scriptId+'/edit',created_at:new Date().toISOString()};
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/project.json'),JSON.stringify(info,null,2));
+          JS
+          fi
+          cd "$GITHUB_WORKSPACE"
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const config=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/project.json'),'utf8'));
+          for(const name of ['SALE_THANHDUC','QL_KHO_THANH_DUC','AI_KHO_THANH_DUC','CARE_THANHDUC','FINANCE_THANHDUC']){
+            // Known project IDs are explicit in the staging source; never push into any of them.
+            const source=fs.readFileSync('service-dispatch/gas-entry.gs.txt','utf8');
+            if(source.includes("'"+config.script_id+"'"))throw Error('LEGACY_PROJECT_REJECTED');
+          }
+          JS
+      - name: Persist project identity before pushing source
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SERVICE_DISPATCH_PROJECT_20261013_01
+          path: ${{ runner.temp }}/project-registry/project.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Build and push only the new staging project
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix service-dispatch --ignore-scripts
+          node service-dispatch/build-gas.cjs "$RUNNER_TEMP/dispatch-project"
+          cd "$RUNNER_TEMP/dispatch-project"
+          clasp push --force
+          deployment_id="$(node -e 'const fs=require("node:fs"),path=require("node:path");console.log(JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"project-registry/project.json"),"utf8")).deployment_id||"")')"
+          if [ -n "$deployment_id" ]; then
+            clasp --json create-deployment --deploymentId "$deployment_id" --description 'Service dispatch staging first milestone' > "$RUNNER_TEMP/project-registry/deployment.json"
+          else
+            clasp --json create-deployment --description 'Service dispatch staging first milestone' > "$RUNNER_TEMP/project-registry/deployment.json"
+          fi
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const root=path.join(process.env.RUNNER_TEMP,'project-registry');
+          const project=JSON.parse(fs.readFileSync(path.join(root,'project.json'),'utf8'));
+          const deployment=JSON.parse(fs.readFileSync(path.join(root,'deployment.json'),'utf8'));
+          if(!deployment.deploymentId)throw Error('DEPLOYMENT_UNCONFIRMED');
+          project.deployment_id=deployment.deploymentId;
+          project.web_app_url='https://script.google.com/macros/s/'+deployment.deploymentId+'/exec';
+          fs.writeFileSync(path.join(root,'project.json'),JSON.stringify(project,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'### Separate service dispatch staging\n\nEditor: '+project.editor_url+'\n\nWeb app: '+project.web_app_url+'\n\nRequired: set DISPATCH_INITIAL_PASSWORD privately, then run setupDispatchStaging from the editor. No sample passwords are provisioned.\n');
+          JS
+      - name: Measure lightweight changes endpoint if Execution API is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          benchmark_exit=0
+          timeout 45s clasp --json run benchmarkDispatchChanges > "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" 2> "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" || benchmark_exit=$?
+          cp "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" "$RUNNER_TEMP/project-registry/changes-benchmark-dev.json"
+          cp "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" "$RUNNER_TEMP/project-registry/changes-benchmark-dev-error.txt"
+          # A deployed execution context can differ from devMode; try both without changing API access.
+          timeout 45s clasp --json run benchmarkDispatchChanges --nondev > "$RUNNER_TEMP/project-registry/changes-benchmark-raw.json" 2> "$RUNNER_TEMP/project-registry/changes-benchmark-error.txt" || benchmark_exit=$?
+          export DISPATCH_BENCHMARK_EXIT="$benchmark_exit"
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const root=path.join(process.env.RUNNER_TEMP,'project-registry');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(root,'changes-benchmark-raw.json'),'utf8'));}catch(ignore){}
+          let dev={};try{dev=JSON.parse(fs.readFileSync(path.join(root,'changes-benchmark-dev.json'),'utf8'));}catch(ignore){}
+          const report=dev.response&&Array.isArray(dev.response.samples_ms)?dev.response:(raw.response||raw.result||raw);
+          const measured=Array.isArray(report.samples_ms)&&Number.isFinite(report.average_ms);
+          fs.writeFileSync(path.join(root,'changes-benchmark-status.json'),JSON.stringify({measured,errors:[dev.error?.message,raw.error?.message].filter(Boolean),exit_code:Number(process.env.DISPATCH_BENCHMARK_EXIT),report:measured?report:undefined,reason:measured?undefined:'Execution API unavailable or did not return timing; owner can run benchmarkDispatchChanges in editor.'},null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nChanges timing: '+(measured?report.average_ms+' ms average (GAS)':'not measured; Execution API did not return timing. Owner can run benchmarkDispatchChanges in editor.')+'\n');
+          JS
+      - name: Try owner-only storage profiling without changing API access
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          profile_exit=0
+          timeout 45s clasp --json run profileDispatchStorage > "$RUNNER_TEMP/project-registry/storage-profile-raw.json" 2> "$RUNNER_TEMP/project-registry/storage-profile-error.txt" || profile_exit=$?
+          export DISPATCH_PROFILE_EXIT="$profile_exit"
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),root=path.join(process.env.RUNNER_TEMP,'project-registry');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(root,'storage-profile-raw.json'),'utf8'));}catch(ignore){}
+          const report=raw.response||raw.result||raw,measured=Number.isFinite(report.snapshot_chars)&&Array.isArray(report.tabs);
+          const status={measured,exit_code:Number(process.env.DISPATCH_PROFILE_EXIT),error:raw.error?.message,report:measured?report:undefined,reason:measured?undefined:'Execution API did not return storage metrics. No API access or scopes were widened. Owner can run profileDispatchStorage in editor.'};
+          fs.writeFileSync(path.join(root,'storage-profile-status.json'),JSON.stringify(status,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nStorage profile: '+(measured?report.snapshot_chars+' chars; '+report.tabs.map(t=>t.name+': '+t.rows+' rows').join(', '):status.reason)+'\n');
+          JS
+      - name: Measure synthetic password hash if owner Execution API is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dispatch-project"
+          timeout 90s clasp --json run benchmarkDispatchPasswordHash > "$RUNNER_TEMP/hash-benchmark-raw.json" 2> "$RUNNER_TEMP/hash-benchmark-error.txt" || true
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          let raw={};try{raw=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'hash-benchmark-raw.json'),'utf8'));}catch(ignore){}
+          const r=raw.response||raw.result||raw,measured=Array.isArray(r.samples)&&r.samples.length===3&&r.samples.every(x=>Number.isFinite(x.hash_ms)&&Number.isInteger(x.iterations));
+          const status={measured,error:raw.error?.message,policy_changed:false,...(measured?{samples:r.samples.map(x=>({iterations:x.iterations,hash_ms:x.hash_ms})),proposed_iterations:r.proposed_iterations}:{reason:'Execution API unavailable; owner can run benchmarkDispatchPasswordHash in editor. Default 600000 retained.'})};
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP,'project-registry/hash-benchmark-status.json'),JSON.stringify(status,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\nPassword hash: '+(measured?JSON.stringify(status.samples):status.reason)+'\n');
+          JS
+      - name: Benchmark staging to Directory COPY TEST_ create if authorized
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_directory_create_benchmark===true?0:1)' "$GITHUB_WORKSPACE/ops/service-staging-20261013-01.request.json"; then
+            cd "$RUNNER_TEMP/dispatch-project"
+            timeout 90s clasp --json run benchmarkDispatchDirectoryCreate > "$RUNNER_TEMP/directory-create-raw.json" 2> "$RUNNER_TEMP/directory-create-error.txt" || true
+            node "$GITHUB_WORKSPACE/customer-directory/create-timing-status.cjs" "$RUNNER_TEMP/directory-create-raw.json" "$RUNNER_TEMP/directory-create-error.txt" "$RUNNER_TEMP/project-registry/directory-create-timing.json"
+          fi
+      - name: Upload project links
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SERVICE_DISPATCH_DEPLOYMENT_20261013_01
+          path: ${{ runner.temp }}/project-registry/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Refresh project registry after successful deployment
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SERVICE_DISPATCH_PROJECT_20261013_01
+          path: ${{ runner.temp }}/project-registry/project.json
+          overwrite: true
+          if-no-files-found: error
+          retention-days: 90

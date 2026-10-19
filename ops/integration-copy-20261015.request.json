@@ -1,0 +1,12 @@
+{
+  "request_id": "20261015-01",
+  "copies": {
+    "KHO58": "1TOYhzL18eCa4_q_GeOJYxxfWxzyl6omUVxtUpesuI40",
+    "KHO145": "14KkcuihpriOlWVjWc7f3TwOlAGyFrwzZZ6PrY7UF3gg",
+    "FINANCE": "11KP6olMtDhuLziXTzo_gycoDWpswtAc98i0Bt5wbKlQ",
+    "OUTBOX": "1TwV5Le6umfpLOwTt0fPTOrX0DdP6jPatZpl6Y0vzRkk"
+  },
+  "purpose": "User-approved per-receipt CN and debt repayments on EXISTING COPY consumer projects only, with internal native allocation guard, exact debt amount/TD reference, durable replay and cancellation reversal. Preserve copy IDs/configuration/token/HMAC/enabled state. No real Finance/Kho/AI writes/deploy, no Finance main push, no reset/backfill.",
+  "restrictions": "Read native source only. Never push/deploy original Kho, Finance, AI_KHO or reset Dispatch. Never publish private Finance source, native packages, tokens or HMAC in GitHub artifacts/logs. Do not deploy a web app or install triggers remotely. Persist new project IDs before pushing only those new projects.",
+  "revision": 3
+}

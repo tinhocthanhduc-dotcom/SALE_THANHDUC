@@ -1,0 +1,12 @@
+{
+  "request_id": "customer-directory-copy-20261015-01",
+  "revision": 12,
+  "title": "THANH_DUC_CUSTOMER_DIRECTORY_COPY",
+  "scope": "Deploy customer-write performance fix to the SAME Directory COPY private UI and signed API; preserve marker, actors, secrets and imported data.",
+  "run_source_zero_rescan": false,
+  "update": "Light create/update/add_contact snapshots, incremental index, one request metadata read, append history, retain last 200 committed journal revisions. Run owner-only TEST_ create benchmark if authorized; do not setup/rescan/rotate/revoke or widen access.",
+  "run_setup": false,
+  "deploy_api_only": false,
+  "deploy_security_pair": true,
+  "run_create_benchmark": true
+}

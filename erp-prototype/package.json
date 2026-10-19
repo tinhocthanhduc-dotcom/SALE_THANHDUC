@@ -1,0 +1,12 @@
+{
+  "name": "thanhduc-erp-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "test:ui": "node test/ui-browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

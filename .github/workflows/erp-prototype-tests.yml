@@ -1,0 +1,100 @@
+name: ERP prototype tests (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'erp-prototype/**'
+      - 'service-dispatch/**'
+      - '.github/workflows/erp-prototype-tests.yml'
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test erp-prototype/test/*.test.cjs
+      - run: npm ci --prefix service-dispatch --ignore-scripts
+      - run: node --test service-dispatch/test/*.test.cjs
+      - name: Verify scoped table persistence against unchanged domain tests
+        run: node --require ./service-dispatch/test/table-domain-preload.cjs --test service-dispatch/test/domain.test.cjs service-dispatch/test/money.test.cjs service-dispatch/test/terms.test.cjs service-dispatch/test/cash-corrections.test.cjs service-dispatch/test/delivery.test.cjs service-dispatch/test/customer-machines.test.cjs service-dispatch/test/integration.test.cjs service-dispatch/test/customer-directory.test.cjs
+      - name: Simulate 9000 completed cash orders
+        run: node service-dispatch/test/table-year-load.cjs
+  browser-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --prefix erp-prototype --ignore-scripts
+      - run: npm ci --prefix service-dispatch --ignore-scripts
+      - run: erp-prototype/node_modules/.bin/playwright install --with-deps chromium
+      - run: node erp-prototype/test/ui-browser.cjs
+      - run: node service-dispatch/test/browser.cjs
+      - run: node service-dispatch/test/technician-shell-browser.cjs
+      - run: node service-dispatch/test/technician-board-browser.cjs
+      - run: node service-dispatch/test/technician-detail-browser.cjs
+      - run: node service-dispatch/test/technician-pickup-browser.cjs
+      - run: node service-dispatch/test/technician-complete-browser.cjs
+      - run: node service-dispatch/test/mobile-revision-browser.cjs
+      - run: node service-dispatch/test/slow-request-browser.cjs
+      - run: node service-dispatch/test/technician-payment-browser.cjs
+      - run: node service-dispatch/test/technician-cash-browser.cjs
+      - run: node service-dispatch/test/desktop-dispatch-browser.cjs
+      - run: node service-dispatch/test/desktop-operations-browser.cjs
+      - run: node service-dispatch/test/desktop-administration-browser.cjs
+      - run: node service-dispatch/test/choice-browser.cjs
+      - run: node service-dispatch/test/customer-directory-browser.cjs
+      - run: node service-dispatch/test/customer-machines-browser.cjs
+      - run: node service-dispatch/test/delivery-browser.cjs
+      - run: node service-dispatch/test/money-browser.cjs
+      - run: node service-dispatch/test/money-input-browser.cjs
+      - run: node service-dispatch/test/cash-corrections-browser.cjs
+      - run: node service-dispatch/test/terms-browser.cjs
+      - run: node service-dispatch/test/integration-browser.cjs
+      - run: node service-dispatch/test/photo-browser.cjs
+      - run: node service-dispatch/test/session-browser.cjs
+      - run: node service-dispatch/test/gas-ui-browser.cjs
+      - run: node service-dispatch/test/live-browser.cjs
+      - run: node service-dispatch/test/tables-browser.cjs
+      - run: node service-dispatch/test/security-browser.cjs
+      - name: Build service dispatch staging package
+        run: node service-dispatch/build-gas.cjs "${{ runner.temp }}/service-dispatch-gas"
+      - name: Upload service dispatch Apps Script package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SERVICE_DISPATCH_STAGING
+          path: ${{ runner.temp }}/service-dispatch-gas/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload service dispatch local runner source
+        uses: actions/upload-artifact@v4
+        with:
+          name: SERVICE_DISPATCH_LOCAL
+          path: |
+            service-dispatch/
+            !service-dispatch/node_modules/
+            erp-prototype/local-repository.cjs
+            erp-prototype/order-work.cjs
+            erp-prototype/field-operations.cjs
+            erp-prototype/sheets-repository.cjs
+          if-no-files-found: error
+          retention-days: 14
+      - name: Build downloadable offline demo
+        run: python3 erp-prototype/build-preview.py "${{ runner.temp }}/erp-demo/THANH_DUC_ERP_DEMO.html"
+      - name: Upload offline demo
+        uses: actions/upload-artifact@v4
+        with:
+          name: THANH_DUC_ERP_DEMO
+          path: ${{ runner.temp }}/erp-demo/THANH_DUC_ERP_DEMO.html
+          if-no-files-found: error
+          retention-days: 14

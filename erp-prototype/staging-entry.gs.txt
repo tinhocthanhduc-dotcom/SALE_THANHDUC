@@ -1,0 +1,75 @@
+/** No doGet/doPost, triggers, setup, storage writes or financial writes. */
+function erpReadStagingSource(tableKey, offset, limit) {
+  var properties = PropertiesService.getScriptProperties();
+  // Default disabled. Enable only in a separately verified staging project.
+  if (properties.getProperty('ERP_ENABLE_SOURCE_READS') !== 'true') {
+    throw new Error('SOURCE_READS_DISABLED');
+  }
+  var registry = {};
+  ['KHO58','KHO145','SALE','CARE','FINANCE'].forEach(function(source) {
+    registry[source] = properties.getProperty('ERP_SOURCE_' + source);
+  });
+  var reader = ErpReader.createReader({
+    registry: registry,
+    openById: function(id) { return SpreadsheetApp.openById(id); }
+  });
+  return reader(tableKey, {offset: offset || 0, limit: limit == null ? 50 : limit});
+}
+/** Developer-only fixture demonstration. In-memory, never writes Sheets. */
+function erpRunFixtureDemo() {
+  var state = ErpDomain.emptyState();
+  var masters = {
+    customers: {c1:{active:true}},
+    products: {p1:{active:true,approved:true,name:'Fixture printer',unit:'Cái'}},
+    employees: {t1:{active:true,role:'technician'}}
+  };
+  var sequence=0;
+  function run(type,payload,role,actorId) {
+    var command={type:type,payload:payload,idempotency_key:'demo-'+(++sequence)};
+    if(payload.order_id) command.expected_version=state.orders[payload.order_id].version;
+    var output=ErpDomain.execute(state,command,{
+      masters:masters, actor:{id:actorId||role,role:role},
+      now:function(){return new Date().toISOString();},
+      id:function(){return Utilities.getUuid();}
+    });
+    state=output.state;return output.result;
+  }
+  var order=run('create',{customer_id:'c1',lines:[{product_id:'p1',qty:1,unit_price_vnd:1000000}]},'sales');
+  var id=order.order_id;
+  run('confirm',{order_id:id},'sales');
+  run('assign',{order_id:id,assignee_id:'t1'},'manager');
+  run('start',{order_id:id},'technician','t1');
+  run('test',{order_id:id,test_result:'Fixture in thử đạt'},'technician','t1');
+  run('complete',{order_id:id,handover_evidence:'Fixture bàn giao'},'technician','t1');
+  run('request_revenue',{order_id:id},'sales');
+  return {order:state.orders[id],events:state.events};
+}
+
+/** Private developer helper; not exposed as a browser command API. */
+function erpStagingRepository_() {
+  var props=PropertiesService.getScriptProperties();
+  if(props.getProperty('ERP_ENV')!=='STAGING'||props.getProperty('ERP_ENABLE_STAGING_WRITES')!=='true')throw new Error('STAGING_WRITES_DISABLED');
+  var scriptId=props.getProperty('ERP_STAGING_SCRIPT_ID');
+  if(!scriptId||ScriptApp.getScriptId()!==scriptId)throw new Error('STAGING_PROJECT_MISMATCH');
+  var sheetId=props.getProperty('ERP_STAGING_SPREADSHEET_ID');
+  var token=props.getProperty('ERP_STAGING_MARKER_TOKEN');
+  var blocked=['1Nuwjjj2HpirYJA9YUppkQ_kSVpVo6LH4ShN14NkOMZU','1ACsqTWveQR3ksIwE3bkQcN7RNI1a7MymtOOgJRp72yw','1tHd_ypY36P0cyFFcPoDjVuPobU2y4k1__nR4cLZdsYY','1-j45sURspD4PvrymNp8P2gLwrebFRVt9Rbo3AwEiDWw','1R5YaLosDq7fhUJuulfjXoJYEOA4tZief5Ge5qaL_jrs'];
+  if(!sheetId||!token||blocked.indexOf(sheetId)>=0)throw new Error('STAGING_TARGET_REJECTED');
+  return new ErpSheets.SheetsRepository({
+    workbook:SpreadsheetApp.openById(sheetId),stagingId:sheetId,markerToken:token,
+    id:function(){return Utilities.getUuid();},
+    hash:function(text){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(text),Utilities.Charset.UTF_8).map(function(b){return ('0'+((b+256)%256).toString(16)).slice(-2);}).join('');},
+    flush:function(){SpreadsheetApp.flush();},
+    withLock:function(fn){var lock=LockService.getScriptLock();lock.waitLock(10000);try{return fn();}finally{try{SpreadsheetApp.flush();}finally{lock.releaseLock();}}}
+  });
+}
+/** Writes synthetic data ONLY when independently configured staging gates permit it. */
+function erpRunPersistentFixtureDemo_() {
+  var repository=erpStagingRepository_();
+  return repository.submit({type:'create',idempotency_key:'fixture-demo-v1',payload:{customer_id:'fixture-customer',lines:[{product_id:'fixture-product',qty:1,unit_price_vnd:1000000}]}},{
+    actor:{id:'fixture-sales',role:'sales'},
+    masters:{customers:{'fixture-customer':{active:true}},products:{'fixture-product':{active:true,approved:true,name:'FIXTURE — KHÔNG PHẢI ĐƠN THỰC',unit:'Cái'}}},
+    now:function(){return new Date().toISOString();},id:function(){return Utilities.getUuid();}
+  });
+}
+function erpRecoverStaging_(){return erpStagingRepository_().recover();}

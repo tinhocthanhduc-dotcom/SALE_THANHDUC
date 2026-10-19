@@ -1,0 +1,121 @@
+'use strict';
+// VND ledger: immutable source receipts, reserved deposit allocations and separate reconciliation.
+const Corrections=require('./cash-corrections.cjs'),Debt=require('./debt.cjs');
+const clone=v=>JSON.parse(JSON.stringify(v));
+function fail(code){const e=new Error(code);e.code=code;throw e;}
+function text(v){if(typeof v!=='string'||!v.trim())fail('REQUIRED_FIELD');return v.trim();}
+function amount(v,zero=true){if(!Number.isSafeInteger(v)||v<(zero?0:1))fail('INVALID_AMOUNT');return v;}
+function sum(values){const n=values.reduce((a,b)=>a+amount(b),0);return amount(n);}
+const day=at=>new Date(Date.parse(at)+25200000).toISOString().slice(0,10);
+const defaults=()=>({cash:{id:'cash',name:'Tiền mặt',kind:'cash',active:true,version:1},acb:{id:'acb',name:'Chuyển khoản ACB',kind:'transfer',active:true,version:1},tcb:{id:'tcb',name:'Chuyển khoản TCB',kind:'transfer',active:true,version:1}});
+function methods(s){const result={...defaults(),...(s.payment_methods||{})};for(const id of ['vcb','other_bank'])if(result[id])result[id]={...result[id],active:false};return result;}
+
+function payments(s,o){return Object.values(s.payments||{}).filter(p=>!o||p.order_id===o.id);}
+function held(p){return p.kind==='cash'&&!['rejected','replaced','awaiting_correction'].includes(p.status)?p.amount-(p.deposited_amount||0):0;}
+function available(s,p){if(Corrections.syncing(s,p.order_id))return 0;return held(p)-sum(Object.values(s.deposits||{}).filter(d=>d.status==='pending').flatMap(d=>d.allocations.filter(a=>a.payment_id===p.id).map(a=>a.amount)));}
+function confirmedAmount(p){if(['replaced','awaiting_correction'].includes(p.status))return 0;return p.confirmations?sum(p.confirmations.map(c=>c.amount)):p.status==='confirmed'?p.amount:p.kind==='cash'?(p.deposited_amount||0):0;}
+function balance(s,o){const ps=payments(s,o),confirmed=sum(ps.map(confirmedAmount)),pending=sum(ps.filter(p=>p.status==='pending').map(p=>p.amount-confirmedAmount(p))),total=o.billing?.total??null;return {...Debt.metrics(s,o),allow_credit:Debt.allows(s.customers[o.customer_id]),total,confirmed,pending,reported:sum(ps.filter(p=>!['rejected','replaced','awaiting_correction'].includes(p.status)).map(p=>p.amount)),remaining:total===null?null:Math.max(0,total-confirmed),collectable:total===null?null:Math.max(0,total-confirmed-pending),held:sum(ps.map(held)),status:total===null?'unpriced':confirmed>=total?'paid':confirmed?'partial':'unpaid',fund_status:Object.values(s.deposits||{}).some(d=>d.status==='pending'&&d.allocations.some(a=>a.order_id===o.id))?'pending_deposit':ps.some(p=>held(p)>0)?'with_technician':ps.some(p=>p.kind==='cash'&&p.status!=='replaced')?'in_fund':'no_cash'};}
+function billing(o,p,actor,at,fee=false,allowGoodsOverride=false){
+ if(p.customer_agreed!==true)fail('PRICE_CONSENT_REQUIRED');
+ if(p.billing_mode&&!['paid','free'].includes(p.billing_mode))fail('INVALID_PRICES');
+ let goods=[],lines=[];
+ if(fee){
+  const value=amount(p.fee_amount);if(value>200000)fail('FEE_LIMIT');
+  if(value===0&&p.free_of_charge!==true)fail('FREE_CONFIRMATION_REQUIRED');
+  lines=[{kind:'labor',name:value?'Phí kiểm tra / đi lại':'Miễn phí kiểm tra / đi lại',amount:value,reason:text(p.reason)}];
+ }else{
+  if(p.goods_prices?.length&&!allowGoodsOverride)fail('FORBIDDEN');
+  if(p.goods_prices!==undefined&&(!Array.isArray(p.goods_prices)||new Set(p.goods_prices.map(x=>x?.request_id)).size!==p.goods_prices.length||p.goods_prices.some(x=>!x||!o.parts_requests.some(r=>r.flow==='delivery'&&r.id===x.request_id&&(r.delivered_qty||0)>0))))fail('INVALID_PRICES');
+  const charges=p.charge_lines??(p.billing_mode==='free'?[]:null);
+  if(!Array.isArray(charges)||charges.length>50)fail('PRICES_REQUIRED');
+  lines=charges.map(l=>{
+   if(!l||!['labor','material'].includes(l.kind))fail('PRICES_REQUIRED');
+   const value=amount(l.amount);
+   if((p.billing_mode==='free'||l.free===true)&&value>0)fail('INVALID_FREE_AMOUNT');
+   if(p.billing_mode==='paid'&&value===0)fail('PAID_TOTAL_REQUIRED');
+   if(value===0&&l.free!==true)fail('FREE_CONFIRMATION_REQUIRED');
+   const reason=l.reason||p.free_reason||p.reason;
+   if(l.free===true&&!(typeof reason==='string'&&reason.trim()))fail('FREE_REASON_REQUIRED');
+   return {name:text(l.name),kind:l.kind,amount:value,free:l.free===true,...(l.free===true?{reason:text(reason)}:{})};
+  });
+  goods=o.parts_requests.filter(r=>r.flow==='delivery'&&!r.cancelled&&(r.delivered_qty||0)>0).map(r=>{
+   const override=p.goods_prices?.find(x=>x.request_id===r.id),price=amount(override?override.unit_price:r.unit_price);
+   return {request_id:r.id,item:r.item,qty:r.delivered_qty,unit_price:price,amount:amount(price*r.delivered_qty)};
+  });
+  if(p.billing_mode==='free'){
+   if(!['warranty','contract','other'].includes(p.free_category)||!(typeof p.free_reason==='string'&&p.free_reason.trim()))fail('FREE_REASON_REQUIRED');
+   if(goods.some(g=>g.amount>0))fail('INVALID_FREE_AMOUNT');
+   lines=[{kind:'labor',name:'Miễn phí',amount:0,free:true,reason:text(p.free_reason),category:p.free_category}];
+  }
+  if(!goods.length&&!lines.length)fail('PRICES_REQUIRED');
+  if(p.billing_mode==='paid'&&sum([...goods,...lines].map(l=>l.amount))===0)fail('PAID_TOTAL_REQUIRED');
+ }
+ const goods_total=sum(goods.map(r=>r.amount)),labor_total=sum(lines.filter(l=>l.kind==='labor').map(l=>l.amount)),materials_total=sum(lines.filter(l=>l.kind==='material').map(l=>l.amount));
+ return {goods,lines,goods_total,labor_total,materials_total,total:sum([goods_total,labor_total,materials_total]),source:'Báo giá riêng',customer_agreed:true,actor_id:actor.id,at,revision:(o.billing?.revision||0)+1};
+}
+const roles={...Debt.roles,...Corrections.roles,set_delivery_prices:['dispatcher','director'],save_payment_method:['director'],save_company_account:['director'],configure_prices:['director'],propose_prices:['technician'],approve_prices:['director'],revise_prices:['dispatcher','director'],report_payment:['technician'],confirm_payment:['finance','director'],reject_payment:['finance','director'],create_deposit:['technician'],confirm_deposit:['finance','director'],close_dossier:['finance','dispatcher','director']};
+function closure(s,o){const b=balance(s,o),issues=[];if(Corrections.pending(s,o.id).length)issues.push('CASH_CORRECTION_OPEN');if(!['accepted_work','unable'].includes(o.status))issues.push('WORK_NOT_ACCEPTED');if(!o.billing)issues.push('PRICES_REQUIRED');if(o.price_quote?.status==='pending')issues.push('PRICE_APPROVAL_REQUIRED');if(o.parts_requests.some(r=>!['resolved','rejected'].includes(r.status))||(o.collected_machines||[]).some(m=>m.status!=='in_warehouse'))issues.push('OPEN_MATERIALS');if(b.pending||b.credit_pending)issues.push('PENDING_PAYMENTS');if(b.total===null||b.uncovered>0)issues.push('BALANCE_DUE');if(b.held)issues.push('CASH_NOT_DEPOSITED');return issues;}
+function apply(s,c,{actor,at,fresh,number,cat}){
+ if(Object.hasOwn(Debt.roles,c.type))return Debt.apply(s,c,{actor,at,fresh,number,cat});
+ if(Object.hasOwn(Corrections.roles,c.type))return Corrections.apply(s,c,{actor,at,fresh,number});
+ const p=c.payload||{},is=r=>actor.roles.includes(r),bump=o=>{o.version++;o.updated_at=at;},order=id=>{const o=s.orders[id];if(!o)fail('UNKNOWN_ORDER');if(o.dossier_status==='closed'&&!(c.type==='report_payment'&&balance(s,o).outstanding>0))fail('DOSSIER_CLOSED');return o;},version=entity=>{if(c.expected_version!==entity.version)fail('VERSION_CONFLICT');},financial=is('finance')||is('director');
+ s.payments=s.payments||{};s.deposits=s.deposits||{};let entity,o,details;
+ if(c.type==='save_payment_method'||c.type==='save_company_account'){
+  const account=c.type==='save_company_account',key=account?'company_accounts':'payment_methods';s[key]=account?s[key]||{}:methods(s);const old=p.id?s[key][p.id]:null;if(p.id&&!old)fail('UNKNOWN_PAYMENT_METHOD');if(!account&&['vcb','other_bank'].includes(p.id)&&p.active!==false)fail('UNKNOWN_PAYMENT_METHOD');if(old)version(old);entity={...(old||{}),id:old?.id||fresh(),name:text(p.name),active:p.active!==false,version:(old?.version||0)+1};
+  if(account){if(p.id&&Object.values(methods(s)).some(m=>m.account_id===p.id))fail('BANK_CONFIGURATION_REQUIRED');entity.bank=text(p.bank);entity.account_number=text(p.account_number);entity.account_owner=text(p.account_owner);}else {if(!['cash','transfer','pos','other'].includes(p.kind))fail('INVALID_PAYMENT_KIND');if(old&&old.kind!==p.kind&&payments(s).some(x=>x.method_id===old.id))fail('PAYMENT_KIND_LOCKED');entity.kind=p.kind;
+   if(entity.kind==='transfer'&&entity.active){
+    if(!cat?.verified_copy)fail('INTEGRATION_COPY_REQUIRED');
+    const target=(cat.accounts||[]).find(a=>a.id===(p.finance_account_id??old?.finance_account_id)&&a.active!==false&&String(a.type||'').startsWith('NGAN_HANG'));
+    if(!target)fail('BANK_CONFIGURATION_REQUIRED');
+    const prior=s.company_accounts?.[old?.account_id],accountNumber=text(p.account_number??prior?.account_number),owner=text(p.account_owner??prior?.account_owner);
+    // Versioned bindings keep pending receipts and historical customer bank details immutable.
+    entity.account_id='bank:'+entity.id+':'+entity.version;entity.finance_account_id=target.id;
+    s.company_accounts=s.company_accounts||{};s.company_accounts[entity.account_id]={id:entity.account_id,name:target.name,bank:target.name,finance_account_id:target.id,account_number:accountNumber,account_owner:owner,active:true,version:1};
+    const i=require('./integration/domain.cjs').init(s);i.mappings.methods[entity.id]=target.id;i.mapping_revision++;i.version++;
+   }else if(entity.kind!=='transfer'){delete entity.account_id;delete entity.finance_account_id;}
+  }
+  s[key][entity.id]=entity;details={before:old,after:entity};
+ }else if(c.type==='configure_prices'){entity={id:'price_policy',version:(s.price_policy?.version||0)+1,enabled:p.enabled===true,threshold:amount(p.threshold)};if(s.price_policy&&c.expected_version!==s.price_policy.version)fail('VERSION_CONFLICT');s.price_policy=entity;}
+ else if(c.type==='create_deposit'){
+  if(p.cash_handed!==true)fail('CASH_HANDOVER_REQUIRED');if(!Array.isArray(p.payment_ids)||!p.payment_ids.length||p.payment_ids.length>200||new Set(p.payment_ids).size!==p.payment_ids.length)fail('INVALID_ALLOCATION');
+  const allocations=p.payment_ids.map(id=>{const r=s.payments[id];if(!r||r.actor_id!==actor.id||r.kind!=='cash')fail('FORBIDDEN');const n=available(s,r);if(Corrections.syncing(s,r.order_id))fail('CASH_CORRECTION_SYNCING');if(n<=0)fail('DEPOSIT_RESERVED');return {payment_id:r.id,order_id:r.order_id,amount:n};});entity={id:fresh(),deposit_no:number(s,'NQ',at),actor_id:actor.id,at,status:'pending',version:1,allocations,total:sum(allocations.map(a=>a.amount)),cash_handed:true};s.deposits[entity.id]=entity;
+ }else if(c.type==='confirm_deposit'){
+  entity=s.deposits[p.deposit_id];if(!entity)fail('UNKNOWN_DEPOSIT');version(entity);if(entity.status!=='pending')fail('INVALID_TRANSITION');if(!financial||entity.actor_id===actor.id||entity.allocations.some(a=>s.payments[a.payment_id].actor_id===actor.id))fail('SELF_CONFIRMATION');const actual=amount(p.actual_amount);if(actual!==entity.total)text(p.note);let left=Math.min(actual,entity.total);const allocated=[];
+  for(const a of entity.allocations){const r=s.payments[a.payment_id],n=Math.min(left,a.amount);left-=n;const confirmedBefore=confirmedAmount(r);r.confirmations=r.confirmations||(confirmedBefore>0?[{at:r.confirmed_at||r.at,actor_id:r.confirmed_by||actor.id,amount:confirmedBefore}]:[]);const confirmedNow=Math.min(n,r.amount-confirmedBefore);if(confirmedNow>0)r.confirmations.push({at,actor_id:actor.id,amount:confirmedNow,deposit_id:entity.id});r.deposited_amount=(r.deposited_amount||0)+n;if(r.deposited_amount===r.amount){r.status='confirmed';r.confirmed_at=at;r.confirmed_by=actor.id;}r.version++;allocated.push({...a,received:n});order(a.order_id);}
+  for(const sourceId of new Set(entity.allocations.map(a=>a.order_id)))bump(s.orders[sourceId]);Object.assign(entity,{version:entity.version+1,status:actual===entity.total?'reconciled':'discrepancy',actual_amount:actual,shortage:Math.max(0,entity.total-actual),excess:Math.max(0,actual-entity.total),note:p.note||'',confirmed_by:actor.id,confirmed_at:at,allocations:allocated});details={allocations:clone(allocated),actual_amount:actual};
+ }else if(['confirm_payment','reject_payment'].includes(c.type)){
+  entity=s.payments[p.payment_id];if(!entity)fail('UNKNOWN_PAYMENT');version(entity);o=order(entity.order_id);if(!financial||entity.actor_id===actor.id)fail('SELF_CONFIRMATION');if(entity.status!=='pending')fail('INVALID_TRANSITION');if(c.type==='reject_payment'&&entity.kind==='cash')fail('CASH_REQUIRES_RECONCILIATION');if(c.type==='confirm_payment'){if(entity.kind==='transfer'&&!entity.finance_account)fail('BANK_RECEIPT_UNBOUND');const delta=entity.amount-confirmedAmount(entity);entity.confirmations=entity.confirmations||[];if(delta>0)entity.confirmations.push({at,actor_id:actor.id,amount:delta});}Object.assign(entity,{status:c.type==='confirm_payment'?'confirmed':'rejected',version:entity.version+1,confirmed_at:at,confirmed_by:actor.id,reason:c.type==='reject_payment'?text(p.reason):p.reason||''});bump(o);
+ }else {
+  o=order(p.order_id);version(o);
+  if(['report_payment','propose_prices'].includes(c.type)&&o.technician_id!==actor.id)fail('FORBIDDEN');
+  switch(c.type){
+   case 'set_delivery_prices':{if(['accepted_work','cancelled'].includes(o.status))fail('INVALID_TRANSITION');text(p.reason);if(!Array.isArray(p.goods_prices)||!p.goods_prices.length||new Set(p.goods_prices.map(x=>x?.request_id)).size!==p.goods_prices.length)fail('INVALID_PRICES');const before=clone(o.parts_requests);for(const price of p.goods_prices){const r=o.parts_requests.find(r=>r.flow==='delivery'&&r.id===price?.request_id&&!r.cancelled);if(!r)fail('INVALID_PRICES');r.unit_price=amount(price.unit_price);}details={before,after:clone(o.parts_requests),reason:p.reason};break;}
+   case 'propose_prices':{if(o.status!=='working')fail('INVALID_TRANSITION');const draft=clone(o);if(p.part_usages!==undefined){if(!Array.isArray(p.part_usages))fail('INVALID_USAGE_SET');for(const u of p.part_usages){const r=draft.parts_requests.find(r=>r.id===u.request_id);if(!r||r.status!=='received'||!Number.isSafeInteger(u.used_qty)||u.used_qty<0||u.used_qty>r.issued_qty)fail('INVALID_USAGE_SET');if(r.flow==='delivery')r.delivered_qty=u.used_qty;}}const quote=billing(draft,p,actor,at);o.price_quote={...quote,status:'pending'};break;}
+   case 'approve_prices':{if(!o.price_quote||o.price_quote.status!=='pending')fail('INVALID_TRANSITION');if(o.price_quote.actor_id===actor.id)fail('SELF_CONFIRMATION');o.price_quote.status='approved';o.price_quote.approved_by=actor.id;o.price_quote.approved_at=at;break;}
+   case 'revise_prices':{if(s.integration&&Object.values(s.integration.outbox).some(j=>j.target==='finance'&&j.order_ids.includes(o.id)))fail('SYNC_FINANCE_PRICE_LOCKED');if(!['accepted_work','unable'].includes(o.status))fail('INVALID_TRANSITION');text(p.reason);const revised=billing(o,p,actor,at,o.status==='unable',true);const b=balance(s,o);if(revised.total<b.confirmed+b.pending+b.available)fail('REFUND_REQUIRED');if(s.price_policy?.enabled&&revised.total>s.price_policy.threshold&&!is('director'))fail('PRICE_APPROVAL_REQUIRED');o.billing_history=o.billing_history||[];if(o.billing)o.billing_history.push(clone(o.billing));details={before:o.billing||null,after:revised,reason:p.reason};o.billing=revised;break;}
+   case 'report_payment':{if(Corrections.syncing(s,o.id))fail('CASH_CORRECTION_SYNCING');if(!['accepted_work','unable'].includes(o.status)||!o.billing)fail('PRICES_REQUIRED');const n=amount(p.amount,false),b=balance(s,o);if(n>b.collectable)fail('OVER_COLLECTION');const method=methods(s)[p.method_id];if(!method||method.active===false)fail('UNKNOWN_PAYMENT_METHOD');let account;if(method.kind==='transfer'){account=s.company_accounts?.[method.account_id];if(!account||account.active===false||!method.finance_account_id||account.finance_account_id!==method.finance_account_id||s.integration?.mappings.methods[method.id]!==method.finance_account_id)fail('BANK_CONFIGURATION_REQUIRED');if(p.account_id!==undefined&&p.account_id!==method.account_id)fail('PAYMENT_ACCOUNT_MISMATCH');}const external=typeof p.external_reference==='string'?p.external_reference.trim():'';if(external&&payments(s).some(r=>r.kind===method.kind&&(r.account?.finance_account_id||r.account?.id||r.method_id)===(account?.finance_account_id||account?.id||method.id)&&r.external_reference===external))fail('DUPLICATE_TRANSACTION');entity={id:fresh(),receipt_no:number(s,'PT',at),order_id:o.id,order_no:o.order_no,actor_id:actor.id,at,version:1,method_id:method.id,method_name:method.name,kind:method.kind,...(account?{account:clone(account),finance_account:{id:method.finance_account_id,name:account.name},bank_binding_revision:s.integration.mapping_revision}:{}),amount:n,status:'pending',external_reference:external,transfer_content:o.order_no,deposited_amount:0,debt_allocations:Debt.allocate(s,o,n)};s.payments[entity.id]=entity;if(o.dossier_status==='closed'){o.closure_history=o.closure_history||[];o.closure_history.push({closed_at:o.closed_at,closed_by:o.closed_by,credit_remaining_at_close:o.credit_remaining_at_close,reopened_at:at,reason:'Khách trả bù công nợ',actor_id:actor.id});o.dossier_status='awaiting_reconciliation';}details={receipt_no:entity.receipt_no,amount:n,method_name:method.name};break;}
+   case 'close_dossier':{const issues=[...closure(s,o),...require('./integration/domain.cjs').closure(s,o)];if(issues.length)fail(issues[0]);o.dossier_status='closed';o.closed_at=at;o.closed_by=actor.id;o.credit_remaining_at_close=balance(s,o).outstanding;break;}
+  }
+  bump(o);entity=entity||o;
+ }
+ return {entity,order:o,details};
+}
+function acceptBilling(s,o,p,actor,at,fee=false){
+ // Historical accepted orders may be unpriced; new acceptance cannot bypass pricing via API.
+ if(!fee&&p.charge_lines===undefined)fail('PRICES_REQUIRED');
+ const b=billing(o,p,actor,at,fee);if(s.price_policy?.enabled&&b.total>s.price_policy.threshold){const q=o.price_quote;if(!q||q.status!=='approved'||JSON.stringify([q.goods,q.lines,q.total])!==JSON.stringify([b.goods,b.lines,b.total]))fail('PRICE_APPROVAL_REQUIRED');}if(balance(s,o).reported>b.total)fail('REFUND_REQUIRED');if(o.billing){o.billing_history=o.billing_history||[];o.billing_history.push(clone(o.billing));}o.billing=b;
+}
+function projection(s,actor,directory,at){
+ const full=actor.roles.some(r=>['finance','director','dispatcher'].includes(r)),own=actor.roles.includes('technician'),ps=payments(s).filter(p=>full||own&&p.actor_id===actor.id),ds=Object.values(s.deposits||{}).filter(d=>full||own&&d.actor_id===actor.id),report=[];
+ if(full){const groups=new Map();for(const o of Object.values(s.orders).filter(o=>o.status==='accepted_work'&&o.billing)){const key=day(o.accepted_at)+':'+o.technician_id;let row=groups.get(key);if(!row){row={date:day(o.accepted_at),technician_id:o.technician_id,name:directory[o.technician_id]?.name||o.technician_id,goods:0,labor:0,materials:0,total:0,remaining:0};groups.set(key,row);}row.goods+=o.billing.goods_total;row.labor+=o.billing.labor_total;row.materials+=o.billing.materials_total;row.total+=o.billing.total;row.remaining+=balance(s,o).remaining;}report.push(...groups.values());}
+ const fundDays=new Map(),ledgerDays=new Map();
+ const fundRow=(date,p)=>{const key=date+':'+p.method_id;let row=fundDays.get(key);if(!row){row={date,method_id:p.method_id,name:p.method_name,reported:0,confirmed:0,in_fund:0};fundDays.set(key,row);}return row;};
+ const ledgerRow=(date,p)=>{const key=date+':'+p.actor_id+':'+p.method_id;let row=ledgerDays.get(key);if(!row){row={date,technician_id:p.actor_id,name:directory[p.actor_id]?.name||p.actor_id,method_name:p.method_name,reported:0,confirmed:0,in_fund:0};ledgerDays.set(key,row);}return row;};
+ for(const p of ps.filter(p=>!['replaced','awaiting_correction'].includes(p.status))){fundRow(day(p.at),p).reported+=p.amount;ledgerRow(day(p.at),p).reported+=p.amount;for(const confirmation of p.confirmations||(p.status==='confirmed'?[{at:p.confirmed_at,amount:p.amount}]:[])){fundRow(day(confirmation.at),p).confirmed+=confirmation.amount;ledgerRow(day(confirmation.at),p).confirmed+=confirmation.amount;}if(p.status==='confirmed'&&p.kind!=='cash'){fundRow(day(p.confirmed_at),p).in_fund+=p.amount;ledgerRow(day(p.confirmed_at),p).in_fund+=p.amount;}}
+ for(const d of ds.filter(d=>['reconciled','discrepancy'].includes(d.status)))for(const a of d.allocations){const p=ps.find(p=>p.id===a.payment_id);if(!p)continue;fundRow(day(d.confirmed_at),p).in_fund+=a.received||0;ledgerRow(day(d.confirmed_at),p).in_fund+=a.received||0;}
+ const holders=Object.values(directory).filter(person=>person.roles.includes('technician')&&(full||person.id===actor.id)).map(person=>({technician_id:person.id,name:person.name,held:sum(ps.filter(p=>p.actor_id===person.id).map(held))}));
+
+ const corrections=Object.values(s.cash_corrections||{}).filter(c=>full||own&&c.holder_id===actor.id&&s.orders[c.order_id]?.technician_id===actor.id);
+ return {debts:clone(Object.values(s.orders).filter(o=>full||own&&o.technician_id===actor.id).flatMap(o=>Debt.entries(s,o))),corrections:clone(corrections),methods:clone(Object.values(methods(s))),accounts:clone(Object.values(s.company_accounts||{})),price_policy:clone(s.price_policy||{id:'price_policy',version:0,enabled:false,threshold:0}),payments:clone(ps).map(p=>({...p,held:held(p),available:available(s,p),held_overdue:Date.parse(at)-Date.parse(p.at)>86400000,held_days:Math.max(0,Math.floor((Date.parse(at)-Date.parse(p.at))/86400000)),holder_name:directory[p.actor_id]?.name||p.actor_id})),deposits:clone(ds),report,fund_days:[...fundDays.values()],ledger_days:[...ledgerDays.values()],holders,unallocated_excess:ds.filter(d=>d.excess>0).map(d=>({deposit_no:d.deposit_no,date:day(d.confirmed_at),amount:d.excess,note:d.note}))};
+}
+module.exports={methods,roles,apply,balance,billing,acceptBilling,closure,projection,held,amount,confirmedAmount};

@@ -1,0 +1,7 @@
+{
+  "http_status": 200,
+  "client_payload_matches": true,
+  "payload_sha256": "a2d2fb40e3a9979d5f1fb7a735689475b204062e2bf948fc1cbdd9a35b7d39f2",
+  "deployment_version": 65,
+  "verification": "Exact client base64 compared after unescaping HtmlService wrapper; public login shell only, no authenticated UAT"
+}

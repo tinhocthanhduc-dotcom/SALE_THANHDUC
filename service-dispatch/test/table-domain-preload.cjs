@@ -1,0 +1,8 @@
+'use strict';
+// Run the unchanged business test suites against a scoped table load as well as the original domain.
+const assert=require('node:assert/strict'),crypto=require('node:crypto'),D=require('../domain.cjs'),{TableRepository,TABLES,flatten}=require('../table-repository.cjs'),{MemoryTableDriver}=require('../table-driver.cjs');
+const execute=D.execute,stable=require('../../customer-directory/core.cjs').stable;
+D.execute=function(state,command,context){const calls=[],times=[];let expected,error;try{expected=execute(state,command,{...context,id:()=>{const value=context.id();calls.push(value);return value;},now:()=>{const value=context.now();times.push(value);return value;}});}catch(e){error=e;}
+const driver=new MemoryTableDriver();driver.initialize(TABLES);for(const [t,rows] of Object.entries(flatten(state)))for(const [id,v] of Object.entries(rows))driver.put(t,id,v,0);driver.put('DP_META','repository',{schema_version:1,revision:0,ready:true,active_journal:null},0);const repo=new TableRepository({driver,withLock:fn=>fn(),hash:s=>crypto.createHash('sha256').update(s).digest('hex'),id:()=>crypto.randomUUID(),domain:{...D,execute}});let shadow,shadowError;try{shadow=repo.submit(command,{...context,id:()=>calls.shift(),now:()=>times.shift(),onCommitted:undefined,onSnapshotRead:undefined});}catch(e){shadowError=e;}
+if(error){assert.equal(shadowError?.message,error.message,'table scoped validation differs for '+command.type);throw error;}
+assert.ifError(shadowError);assert.equal(stable(shadow),stable(expected.result),'table receipt differs: '+command.type);assert.equal(stable(flatten(repo.snapshot({all:true}).state)),stable(flatten(JSON.parse(JSON.stringify(expected.state)))),'table state differs: '+command.type);return expected;};

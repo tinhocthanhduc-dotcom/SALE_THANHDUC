@@ -1,0 +1,16 @@
+{
+  "pass": true,
+  "scenarios": [
+    "default cash ACB TCB, VCB unavailable",
+    "director selects real ID, no free-text/default/creation",
+    "category mapping uses Finance category ID",
+    "copy-only explicit integration enable",
+    "TD select fills authoritative name; cached stock warning does not block",
+    "warehouse145 selection saves TD/unit snapshot, no OUT at intake",
+    "sync board shows warehouse145 and missing category mapping",
+    "mapping then resend uses same key and no duplicate",
+    "warehouse sees only warehouse outbox and cannot edit Finance mappings",
+    "other technician cannot see sync board or peer documents"
+  ],
+  "page_errors": []
+}

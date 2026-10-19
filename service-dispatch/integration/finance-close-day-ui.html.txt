@@ -1,0 +1,6 @@
+<section class="view" id="view-closings">
+ <div class="card"><h2>Chốt sổ & mở khóa ngày</h2><p>Chỉ những lần chốt mới sau khi bật lại mới khóa ngày. Các dòng cũ được giữ để đối chiếu, không tự khóa lại.</p>
+ <button type="button" class="admin-only" onclick="enableClosingGuardUi()">Bật lại chốt sổ (giữ các ngày cũ mở)</button>
+ <form onsubmit="submitClosing(event)"><label>Ngày chốt<input id="closingDate" type="date" required></label><label>Tiền mặt đếm thực tế<input id="actualCash" inputmode="numeric" required></label><label>Ghi chú<input id="closingNote"></label><button type="submit" class="btn btn-primary">Chốt sổ ngày</button></form>
+ <button type="button" onclick="renderFinanceClosings()">Tải lại danh sách ngày</button><div id="financeClosingRows"></div></div>
+</section>

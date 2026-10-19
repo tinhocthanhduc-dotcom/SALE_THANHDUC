@@ -1,0 +1,201 @@
+# Thành Đức – Điều phối dịch vụ: mốc đầu tiên
+
+Ngày 13/10/2026. Mã thử nghiệm riêng theo SPEC_V1_1.md. Không triển khai hoặc ghi vào 5 app legacy.
+
+## Đã chạy được với dữ liệu mẫu
+
+- Đăng nhập tài khoản/mật khẩu thật ở máy chủ, PBKDF2-SHA256 600.000 vòng, salt riêng. Không có nút chọn vai trò client. Local dùng cookie HttpOnly; GAS bridge dùng token trong sessionStorage và máy chủ kiểm mọi lời gọi.
+- Phiên 8 giờ, 5 lần sai khóa 15 phút là cấu hình thử nghiệm, chưa phải chính sách vận hành. Logout, hết phiên, ngừng tài khoản hoặc đổi version tài khoản làm mất quyền phiên. Token chỉ lưu hash phía máy chủ.
+- Tạo khách và hồ sơ máy, nhận đơn với số TD theo ngày Việt Nam. Giữ quy tắc ERP đã chốt; DV riêng app vẫn là lựa chọn cần chốt, chưa tự đổi mã.
+- Giao → thợ nhận → hẹn → bắt đầu → tải ảnh sau và biên bản → nghiệm thu. Ảnh được máy chủ lưu riêng và kiểm quyền khi tải. Chỉ dùng ảnh/dữ liệu giả trong runner.
+- Thợ đề nghị chuyển; điều phối duyệt với kế hoạch bàn giao; thợ mới phải nhận/hẹn lại. Người cũ không truy vấn/sửa đơn sau chuyển. Trách nhiệm vật tư/tiền không được chuyển tự động.
+- Không làm được có lý do, đề xuất/chờ linh kiện trên cùng đơn, lịch/lần đến và sự kiện được giữ. Kho/Giám đốc xác nhận xuất và thợ xác nhận nhận hàng riêng; chỉ tiếp tục khi tất cả đề xuất đã được xử lý.
+- Optimistic version, idempotency, file journal/recovery local; GAS tái sử dụng repository Sheets staging với domain riêng. App và snapshot ERP không được dùng chung một workbook staging.
+
+## Chạy trên máy phát triển
+
+Từ repository:
+
+```bash
+npm ci --prefix service-dispatch
+node --test service-dispatch/test/*.test.cjs
+node service-dispatch/server.cjs
+```
+
+Runner chỉ nghe loopback, không phải web app production. Mở trình duyệt máy phát triển ở cổng 8787. Đổi DISPATCH_PORT hoặc DISPATCH_FIXTURE_DIR nếu cần; thư mục dữ liệu phải là đường dẫn tuyệt đối ngoài checkout. Dữ liệu mặc định lưu thư mục thanhduc-dispatch-fixture trong thư mục tạm của hệ điều hành, không bảo đảm tồn tại sau khi máy bị thay.
+
+Tài khoản MẪU local: dispatch, tech1, tech2, director, warehouse. Tất cả dùng mật khẩu mẫu `DemoThanhDuc2026!`. Đây là fixture công khai để dùng thử, không tài khoản vận hành; tuyệt đối không cấp các tài khoản/mật khẩu này trên GAS thật. Mỗi tài khoản vẫn được băm với salt riêng. Nếu quên tài khoản mẫu, dừng runner và chọn thư mục fixture mới; không reset production.
+
+## Build gói Apps Script
+
+```bash
+node service-dispatch/build-gas.cjs /tmp/thanhduc-dispatch-gas
+```
+
+Build tạo Code.gs, Index.html, appsscript.json và README ở thư mục độc lập. Không copy vào 5 app legacy, không chạy clasp push/deploy ở checkout Sale. Gói không chứa tài khoản, mật khẩu, marker hoặc spreadsheet ID thực tế. Workflow CI cung cấp ZIP SERVICE_DISPATCH_STAGING để tải.
+
+## Khởi tạo staging riêng – chưa thực hiện trên Google
+
+1. Tạo Apps Script, Sheets và thư mục ảnh Drive MỚI chỉ dành cho thử nghiệm; không dùng project/file legacy hoặc workbook của ERP prototype. Chỉ quản trị staging có quyền sửa file/code. Kiểm tra thư mục Drive không chia sẻ công khai.
+2. Spreadsheet cần 3 tab preallocated: ERP_META A1:B2 là `environment | token` và `STAGING | marker ngẫu nhiên`; ERP_STATE, ERP_JOURNAL có header `attempt_id | kind | chunk_index | chunk_count | checksum | payload`. Chừa số hàng phù hợp; adapter không tự thêm tab, không mở rộng khi đầy.
+3. Script Properties: DISPATCH_ENV=STAGING; DISPATCH_ENABLE_WRITES=true; DISPATCH_SCRIPT_ID bằng chính project mới; DISPATCH_SHEET_ID bằng file mới; DISPATCH_MARKER_TOKEN khớp marker; DISPATCH_IMAGE_FOLDER_ID bằng thư mục mới. Đây không phải hướng dẫn thay setting production.
+4. Cấp tài khoản qua helper editor-only provisionDispatchUser: nhập DISPATCH_PROVISION_USER là JSON metadata `{ "id": "employee-id", "username": "login-name", "name": "Tên nhân viên", "roles": ["dispatcher"] }`; nhập mật khẩu thử nghiệm riêng ở DISPATCH_PROVISION_PASSWORD trong Script Properties. Không nhập mật khẩu vào code, GitHub, chat, URL hoặc logs. Helper xóa hai property tạm kể cả khi lỗi. Mật khẩu tối thiểu 12 ký tự. Không dùng mật khẩu thật của app Finance/Care. Cho phép nhiều vai trò; hỗ trợ dispatcher/technician/director/warehouse/finance; finance có trang Quỹ, chỉ đối soát tiền, không sửa công việc hay kho.
+5. Chạy helper từ editor với quyền quản trị; không có API công khai tạo tài khoản. Tài khoản lưu theo DISPATCH_USER_<id> chứa hash/salt, không plaintext. Đổi active=false hoặc tăng version để thu hồi phiên; chưa có giao diện quản trị/đổi mật khẩu/khôi phục tài khoản. Không tự sửa hash bằng tay nếu chưa có kế hoạch đổi mật khẩu.
+6. Deploy phiên thử nghiệm chỉ trong project mới, execute as owner và cho phép mở không đăng nhập Google (`ANYONE_ANONYMOUS`); vẫn bắt buộc đăng nhập tài khoản/mật khẩu nhân viên để đọc đơn hoặc thao tác. Giữ quyền sửa script/file của quản trị. Link đơn là ID, không chứa token. Phải kiểm Google runtime, thời gian PBKDF2 và hành vi HtmlService trước khi mở pilot.
+7. Thử auth, quyền đơn/ảnh, đồng thời, recovery/visibility/quota, upload mất sóng và backup restore bằng fixture. Người dùng đã UAT luồng chính; chức năng bổ sung cần UAT lại trên staging. Node VM build test không chứng minh Google runtime.
+
+## Giới hạn mốc này
+
+Chưa có giá dịch vụ/phí 0–200k, dòng công/giá vật tư, chữ ký vẽ trực tiếp, định mức kho thợ, vật tư hỏng và duyệt hỏng, xuất/nhận từng phần, đồng bộ tồn kho với app Kho, thu/nộp tiền, hóa đơn, đóng hồ sơ tài chính, bảng giá, cấu hình SLA/nhắc việc, tìm/gộp/import khách, giao diện quản trị tài khoản, backup định kỳ và pilot. Nghiệm thu mốc này chỉ ghi kết quả công việc và ảnh, giữ hồ sơ Chờ đối soát; không kết luận đã quyết toán hoặc thu đủ.
+
+Hồ sơ snapshot và property auth chỉ phù hợp thử nghiệm nhỏ; cần normalized tables, dung lượng phiên và benchmarks trước vận hành. Upload thất bại sau file được tạo có thể còn file mồ côi khi process hard-crash; cần reconciliation theo file metadata trước pilot. Cả local và GAS dùng cùng PBKDF2, để kiểm tính tương thích hash; hiệu năng GAS chưa đo. Chỉ chống ghi lặp khi client giữ cùng command key; không suy đoán hai key khác nhau là cùng giao dịch.
+
+Không gọi môi trường ready hoặc app vận hành thật khi chưa có staging IDs, tài khoản thử nghiệm, quyền Google và kiểm thử thực tế. Mốc tiếp theo: chỉnh giá/phí và dòng công theo đặc tả, quản trị tài khoản, luồng vật tư, rồi đối soát tiền.
+
+## Khởi tạo nhanh ở project mới được workflow tạo
+
+Workflow create-service-staging dùng CLASPRC_JSON đã có để tạo một project riêng và triển khai web app. ID/link được lưu trong artifact SERVICE_DISPATCH_PROJECT_20261013_01 và SERVICE_DISPATCH_DEPLOYMENT_20261013_01; không chứa credential. Registry phải được giữ để lần chạy lại tái sử dụng project/deployment; nếu registry hết hạn cần khôi phục ID, không tự tạo trùng.
+
+Ở project MỚI này: mở Project Settings → Script Properties, thêm DISPATCH_INITIAL_PASSWORD là mật khẩu riêng tối thiểu 12 ký tự. Chọn hàm setupDispatchStaging ở editor rồi Run và cấp quyền Google theo lời nhắc. Hàm tạo Sheets staging, marker/tabs, thư mục ảnh private và tài khoản admin (director + dispatcher), tự lưu cấu hình. Mật khẩu tạm được xóa sau chạy, chỉ giữ hash/salt. Không gửi mật khẩu vào chat. Hàm chặn 5 project/file legacy và không khởi tạo lên workbook chưa được helper tạo. Chạy lại sẽ giữ tài khoản và các tài nguyên đã tạo; không xóa dữ liệu. Nếu Google tạo file thành công nhưng chưa lưu được ID do lỗi, kiểm tra tài nguyên đã tạo trước retry để tránh file mồ côi.
+
+Mở web app trực tiếp (không cần đăng nhập Google), rồi đăng nhập admin bằng mật khẩu vừa chọn. Đây vẫn là staging; chưa nghiệm thu đầy đủ Google runtime để vận hành chính thức. Cấp thợ qua provisionDispatchUser theo mục trên. Không cần dán mật khẩu hoặc cấu hình app Finance/Care.
+
+## Tiếp nhận đơn
+Tìm khách theo tên/điện thoại hoặc bấm Tạo khách mới; khi lưu, app trở lại đơn đang nhập và chọn khách vừa tạo. Không cần chọn hoặc tạo hồ sơ máy: ghi model và thông tin máy trong Lỗi / yêu cầu. Hồ sơ máy cũ vẫn giữ nguyên; tab Khách hàng vẫn cho phép quản lý hồ sơ máy riêng.
+
+Ngày đơn lấy từ thời gian máy chủ theo Việt Nam. Có thể để trống giờ, chọn Buổi sáng / Buổi chiều / Cả ngày, hoặc chọn khoảng giờ tùy chỉnh bằng hai ô giờ không có ngày. Nếu chọn giờ phải có đủ từ và đến, giờ đến sau giờ từ. Giao / giao lại thợ dùng Ghi chú tùy chọn; đề nghị chuyển thợ vẫn cần lý do.
+
+## Cập nhật sau UAT
+
+Tạo tài khoản thợ trong editor: Project Settings → Script Properties, thêm DISPATCH_PROVISION_USER (JSON ví dụ `{ "id": "tho-01", "username": "tho01", "name": "Thợ 01", "roles": ["technician"] }`) và DISPATCH_PROVISION_PASSWORD (mật khẩu riêng tối thiểu 12 ký tự). Chọn **provisionDispatchUser** → Run bằng tài khoản chủ project. Hai property tạm sẽ được xóa; tải lại app để thấy thợ trong danh sách giao việc. Không chạy lại setup để cập nhật mã.
+
+Đo thời gian băm thực tế: chủ project chọn **benchmarkDispatchPassword** → Run, xem `hash_ms` trong Nhật ký thực thi. Phép đo dùng chuỗi tổng hợp, không đọc mật khẩu hoặc thay đổi tài khoản. Chưa có số đo runtime GAS trong lần sửa này; giữ PBKDF2-SHA256 600.000 vòng và định dạng hash cũ. Login băm ngoài ScriptLock, sau đó đọc lại phiên bản/hash/trạng thái khóa trước khi ghi phiên hoặc số lần thất bại. Chỉ cân nhắc đổi thuật toán/tham số khi có số đo GAS và kế hoạch tương thích tài khoản cũ.
+
+Nhận đơn có thể bỏ trống cả hai giờ hẹn; nếu nhập phải nhập đủ khoảng hợp lệ. Thợ chọn Chốt giờ và bắt đầu, có thể dùng giờ đã có hoặc đổi khung giờ; đơn chưa hẹn chọn Chốt giờ và bắt đầu. Khu vực khách không bắt buộc. Điện thoại được kiểm tra ngay trong form; chi tiết đơn có liên kết gọi và Google Maps, lịch sử tiếng Việt và giờ không có giây. Thợ dùng tab Việc của tôi; mở đơn sẽ đưa chi tiết vào tầm nhìn.
+
+## Hàng mang theo và máy thu về
+
+Với đơn đang Chờ linh kiện, không tạo lại đơn. Dùng admin (vai trò director) hoặc tài khoản warehouse: mở đơn → **Kho xác nhận xuất hàng**, chọn đề xuất, ghi serial nếu có và ghi chú bàn giao thực tế. Phiếu PX được tạo tự động; bản này xuất đủ số lượng đề xuất, chưa hỗ trợ xuất từng phần. Phong KT/thợ được giao mở cùng đơn → **Xác nhận đã nhận hàng**. Sau khi mọi đề xuất đã được nhận hoặc từ chối, thợ chọn **Tiếp tục công việc**, hoặc **Hẹn lại sau khi có linh kiện** nếu phải quay lại ngày khác.
+
+Thợ có thể ghi số thực dùng ngay trong **Nghiệm thu công việc**, hoặc dùng form **Ghi vật tư / hàng thực dùng** riêng (đối với máy giao khách: số lượng đã giao). Phần dư được giữ ở thợ đến khi Kho/Giám đốc chọn **Kho xác nhận nhận hàng dư**, tạo phiếu PN. Số thực dùng không vượt số xuất; vật tư hỏng cần quy trình riêng chưa có trong bản này.
+
+Nếu thu máy cũ, thợ chọn **Nhận máy về xử lý**, ghi model/serial, tình trạng/phụ kiện, mục đích đổi máy hoặc mang về sửa và xác nhận của khách. Biên nhận BN tự tạo. Kho/Giám đốc chọn **Kho nhận máy cũ**, ghi vị trí và tình trạng kiểm nhận, tạo phiếu NK. Ghi nhận này là bàn giao tài sản theo đơn, không tự kết luận quyền sở hữu, giá mua hoặc tạo đơn sửa riêng.
+
+Chuyển thợ bị chặn khi còn hàng/máy đang giữ: ghi thực dùng, trả phần dư và bàn giao máy về kho trước khi duyệt chuyển trong bản này. Đơn từng xuất hàng phải Giám đốc duyệt hủy; hủy không tự xóa hàng hoặc xác nhận đã trả. Kho vẫn nhận lại hàng/máy của đơn hủy.
+
+Các phiếu nằm trong Sheets staging của Điều phối; **chưa trừ/cộng tồn kho của QL_KHO_THANH_DUC**. Đơn cũ không cần migration/setup lại, đề xuất cũ status requested tiếp tục dùng được. Cấp tài khoản kho bằng provisionDispatchUser với roles `["warehouse"]`; admin hiện tại đã có quyền director để kiểm tra luồng ngay.
+
+## Chẩn đoán màn hình trắng sau đăng nhập
+
+Nút đăng nhập dùng type=button và form chặn điều hướng mặc định; Enter vẫn đăng nhập một lần. Nút chỉ bật sau khi gắn handler. Giao diện giữ form đến khi query và render thành công, hiển thị lỗi khi callback/query trả null hoặc dữ liệu không hợp lệ (`BAD_SERVER_RESPONSE`). Bootstrap độc lập hiển thị `UI_RUNTIME_ERROR` / `UI_ASYNC_ERROR` nếu script gặp lỗi, thay vì để form gửi mặc định và mất giao diện. Không log username/password/token.
+
+Kiểm thử `node service-dispatch/test/gas-ui-browser.cjs` chạy gói Index.html đã build trong iframe sandbox với giao thức callback google.script.run giả lập và auth/repository thật local. Kiểm tra này bổ sung cho runner HTTP; không có phiên Google để xác định nguyên nhân lỗi trong trình duyệt người dùng. Sau cập nhật cần UAT đăng nhập trên Google, và gửi mã lỗi hiển thị nếu còn lỗi.
+
+Gói GAS chuẩn hóa frontend bằng esbuild ES2017/ASCII, lưu nguồn thành payload base64 tĩnh và dùng loader nhỏ gắn script.text vào DOM (kế thừa nonce). Cách này tách mã ứng dụng/chuỗi HTML lồng nhau khỏi HTML được Google đưa qua document.write; không dùng eval hoặc nguồn mã từ dữ liệu người dùng. Bộ gas-ui-browser kiểm qua document.write và CSP nonce, thay vì chỉ nạp HTML trực tiếp.
+
+## Chọn và đánh dấu thay nhập xác nhận nhiều lần
+
+Nghiệm thu: chọn kết quả đã thực hiện, đánh dấu khách đã nghiệm thu; số thực dùng/giao khách hiện ngay từ phiếu xuất, sửa nếu còn dư và đánh dấu xác nhận lượng. Không cần nhập “1 máy” vào mô tả hoặc mở form ghi dùng riêng. Ghi chú bổ sung không bắt buộc. Lưu nghiệm thu ghi lượng và kết quả cùng một lần; nếu ảnh/kiểm tra thất bại thì không ghi lượng trước, retry cùng command không ghi trùng. Ảnh sau làm và biên bản của đúng lần thực hiện vẫn bắt buộc.
+
+Xuất/nhận/trả hàng, chốt giờ, tiếp tục và bàn giao máy dùng checkbox xác nhận thay textarea; ghi chú dùng cho ngoại lệ. Checkbox không được tích sẵn. Form ghi dùng riêng tự điền số theo hàng đang chọn, có dropdown nội dung và chặn vượt số xuất. Với phần dư, Kho xác nhận lượng dư, không phải lượng đã xuất ban đầu.
+
+Chọn “Chưa sử dụng – trả kho” tự đưa số dùng về 0. Đổi hàng hoặc sửa số lượng sẽ bỏ dấu xác nhận lượng cũ; cần đánh dấu lại trước khi lưu.
+
+
+## Đề xuất nhiều linh kiện và ảnh tự tải
+
+Trong Đề xuất thêm / chờ linh kiện, dùng **+ Thêm loại linh kiện** để nhập nhiều dòng tên/mã và số lượng, chọn nhu cầu chung rồi lưu một lần. Một phiếu DX tự cấp cho toàn bộ dòng; kho xuất cả phiếu bằng một mã PX và thợ xác nhận nhận cả phiếu. Vẫn hỗ trợ đề xuất một dòng và dữ liệu cũ. Chưa hỗ trợ xuất từng phần; vật tư dư được kho kiểm nhận từng dòng. Tên vật tư có gợi ý từ lịch sử đơn được cấp quyền, chưa phải danh mục tồn kho của app Kho.
+
+Chọn loại ảnh trước rồi chọn/chụp ảnh: app tự nén và tải lên, hiển thị tiến trình và xác nhận đã lưu. Không cần bấm Tải ảnh lên. Nếu mất phản hồi mạng, dùng **Thử tải lại ảnh**; cùng mã yêu cầu tránh tạo ảnh trùng. Ảnh chờ thử lại chỉ giữ trong phiên trang hiện tại, không đóng/tải lại trang trước khi có thông báo đã lưu.
+
+
+## Thao tác sau UAT ngày 14/10/2026
+
+Thợ dùng **Chốt giờ và bắt đầu**: chọn sáng/chiều/cả ngày hoặc hai ô giờ, xác nhận đã liên hệ khách và lưu một lần để vào Đang làm. Ngày lấy theo hôm nay tại Việt Nam; giờ có sẵn được điền để chọn lại nhanh. Lý do đổi hẹn vẫn cần khi đơn đã có lịch xác nhận. Không còn hai nút chốt hẹn và bắt đầu riêng trên UI; API cũ tương thích.
+
+**Ghi vật tư / hàng thực dùng** hiển thị nhiều món: chọn những món cần ghi, bấm Dùng hết/Trả hết cho từng món hoặc tất cả, hoặc sửa lượng thực dùng. Chỉ món đã chọn được lưu; lượng trả = đã nhận − thực dùng. Trong nghiệm thu cũng có nút dùng/trả nhanh, nhưng cần quyết toán đủ mọi món đã nhận. Kho chọn từng món dư hoặc Chọn tất cả món trả, xác nhận đã kiểm nhận và lưu một phiếu PN chung. Thợ ghi trả không tự xác nhận hàng đã về kho.
+
+Đơn nghiệm thu chuyển sang tab **Đã kết thúc**, rời danh sách việc mở. Kho vẫn thấy đơn có hàng/máy để bàn giao. Ghi chú phân công mới nhất hiển thị trên thẻ và đầu chi tiết; giao lần 2 trở đi ghi rõ số lần giao, không phải tìm trong lịch sử.
+
+
+Tab **Đã kết thúc** gom đơn Đã nghiệm thu và Đã hủy, lọc Tất cả hoặc từng trạng thái kèm số lượng. Đơn thuộc hai trạng thái này không nằm trong Bảng điều phối/Việc của tôi. Bộ lọc giữ khi tải dữ liệu lại trong phiên trang, bỏ khi đăng xuất. Kho vẫn thấy bàn giao chưa xử lý; các thao tác và quyền đọc không đổi. Đơn Không làm được vẫn cần xử lý/giao lại, không tự coi là kết thúc. Trạng thái Hoàn thành hồ sơ sau đối soát chưa có trong bản hiện tại.
+
+
+## Ngày hẹn, máy và báo cáo (cập nhật 14/10/2026)
+
+Thay hướng dẫn gộp bước ở bản v15: **Hẹn giờ** chỉ lưu lịch và chuyển Đã hẹn; **Bắt đầu công việc** một chạm khi đã có lịch. Chốt giờ và bắt đầu còn dành cho đến ngay khi chưa có lịch. Ngày chọn Hôm nay / Ngày mai / Chọn ngày, mặc định hôm nay theo máy chủ Việt Nam; vẫn chọn khung sáng/chiều/cả ngày hoặc giờ tùy chỉnh. Máy chủ chặn ngày quá khứ và ngày không tồn tại, cả với API giờ ISO cũ. Không sửa ngày hẹn đã lưu của đơn cũ khi cập nhật mã.
+
+Nhận đơn chỉ chọn máy đang sử dụng trong hồ sơ của đúng khách, hoặc để Chưa chọn máy. Model/serial mới được nhập trong Tạo khách hoặc Khách / máy, không nhập ở Tiếp nhận đơn. Khách chỉ có một máy đang sử dụng sẽ được chọn sẵn. Giữ machine_id và snapshot để theo dõi lịch sử theo máy; API tạo nhanh cũ vẫn tương thích.
+
+Đầu Bảng điều phối có **Đơn quá hạn**, kèm loại hạn và thời điểm: giao thợ khẩn 15 phút / gấp 30 phút / thường 2 giờ từ tiếp nhận; thợ nhận 15 phút từ lần giao hiện tại; chốt lịch khẩn 30 phút từ tiếp nhận, thường hết ngày Việt Nam. Mức gấp chưa có hạn hẹn riêng trong yêu cầu nên dùng hết ngày như thường. Lịch khách nhập khi tiếp nhận là requested; thợ xác nhận mới đạt hạn chốt lịch. Cảnh báo tính khi tải/tải lại dữ liệu, chưa có gửi thông báo tự động hoặc cron nhắc việc.
+
+**Báo cáo thợ / ngày** dành cho điều phối/giám đốc: ngày nhận đơn theo Việt Nam, thợ hiện phụ trách, số đơn/nghiệm thu/hủy. Thời gian trung bình từ lần thợ hiện tại nhận đến nghiệm thu, chỉ đơn có đủ hai mốc; hiện số mẫu. Tỷ lệ trễ tính trên đơn có lịch và lần đến của thợ hiện tại; đến sau giờ kết thúc khung hẹn là trễ, mỗi đơn tính một lần kể cả nhiều lần đến. Thiếu dữ liệu hiển thị Chưa có dữ liệu. Đây là báo cáo trạng thái hiện tại theo ngày nhận đơn, chưa phải lịch sử phân bổ công cho tất cả thợ từng tham gia.
+
+**Trước pilot:** đăng nhập anonymous còn có nguy cơ người ngoài khóa tài khoản bằng 5 lần sai, tiêu tốn quota băm PBKDF2 600.000 vòng. Cần chống lạm dụng/rate limit và đo thời gian GAS thực tế trước khi dùng thật. Vật tư tên tự do chưa có mã TD, chưa trừ tồn app Kho; bước tiếp theo là đồng bộ danh mục mã và giao dịch xuất/nhận/hoàn trả có đối soát, không suy ra tồn từ tên nhập tay.
+
+
+## Tự cập nhật giữa điều phối và thợ
+
+Action changes xác thực phiên rồi đọc phiên bản chung từ CacheService/Script Properties, không mở Sheets/Drive hoặc đọc snapshot. Phiên bản lấy từ revision đã ghi của repository; mọi command/upload mới công bố phiên bản trong khóa ghi, replay không tăng lần nữa. Dấu pending được ghi trước thao tác; query/ghi tiếp phục hồi journal rồi công bố revision và xóa dấu, tránh bỏ sót ghi bị gián đoạn. Cache hỏng hoặc bị loại bỏ vẫn có Properties làm nguồn bền vững. Query trả change_version đọc trước snapshot để thay đổi đồng thời không bị đánh dấu nhầm đã đọc.
+
+Trang hiển thị hỏi mỗi 20 giây; visibilitychange/focus hỏi ngay khi quay lại, ẩn trang thì dừng. Khi có thay đổi, giữ đơn đang mở và vị trí cuộn; nếu đang mở form/đang tải hoặc chờ thử lại ảnh thì không query/vẽ lại, hiện dải Có cập nhật mới và thông tin trong dialog. Lưu/đóng form hoặc hoàn tất ảnh rồi bấm dải để xem. Đơn mới/đổi phiên bản được tô 6 giây, thợ có giao mới hoặc giao lại thấy thông báo và số đơn chưa xem trên tiêu đề; mở/thao tác đơn bỏ số chưa xem tương ứng. Đơn bị thu hồi quyền đọc rời chi tiết sau refresh.
+
+Lỗi polling im lặng, chu kỳ 20/40/80/120 giây; phiên hết hạn đóng dialog và về login. Điện thoại tắt màn hình/ẩn trình duyệt không nhận cập nhật cho đến mở lại. Zalo OA/Telegram để báo khi màn hình tắt chưa triển khai.
+
+Đo trên GAS: chủ project chọn **benchmarkDispatchChanges** trong editor → Run. Hàm tạo phiên benchmark tạm, gọi changes 5 lần và xóa phiên/người dùng tạm trong finally, log samples_ms/average_ms; không dùng mật khẩu nhân viên hoặc mở Sheets. Workflow thử cùng hàm qua Execution API; nếu API chưa cho phép thì artifact changes-benchmark-status.json ghi chưa đo, không coi số đo local/VM là GAS thật.
+
+## Ảnh tải nền và đo thời gian
+
+Chọn loại ảnh, chọn một hoặc nhiều ảnh/chụp tiếp: xem preview với Đang tải, Đã lưu hoặc Lỗi - thử lại; không cần chờ để chụp ảnh tiếp. Nghiệm thu bật khi ảnh sau và biên bản/chữ ký đã lưu. Nếu lỗi, thử lại ngay trong trang để giữ nguyên mã chống trùng; chưa có queue offline lưu qua đóng/tải lại trang. Danh sách tải ảnh nhỏ 320px, bấm ảnh mới tải bản đầy đủ qua kiểm quyền.
+
+[Báo cáo đo local trước/sau, cách đọc log GAS và bước trước pilot](docs/photo-performance-20261014/README.md). Console chỉ log số thời gian/kích thước; upload không gọi query toàn bộ. Persistence cần chuyển sang normalized tables trước pilot.
+
+## Đơn kèm giao hàng
+
+Khi tiếp nhận, thêm Hàng giao kèm nếu cần: nhiều dòng mã/tên, số lượng, kho 58/145; máy đánh dấu Máy, mỗi máy một dòng SL 1, serial nếu đã biết. Lưu đơn tạo luôn một PX, không cần thợ đề xuất lại. Người tạo PX/kho/giám đốc sửa hoặc hủy có lý do trước lần lấy đầu; lịch sử sửa nằm trong chi tiết đơn.
+
+Kho mở Cần soạn hàng, xem PX theo giờ hẹn và có thể báo Đã soạn. Thợ nhận/hẹn đơn, mở Xác nhận lấy hàng → Đã lấy đủ, bỏ tích hàng thiếu hoặc sửa số thực lấy, nhập/chọn serial máy và xác nhận. Lấy thiếu ghi nhận số đã lấy nhưng chưa bật Bắt đầu công việc; lần sau chỉ lấy phần còn lại. Sau lần lấy đầu PX bị khóa sửa; giao lại/chuyển thợ khi còn hàng đang giữ bị chặn.
+
+Nghiệm thu ghi Đã giao khách cho hàng giao kèm; chọn Mang về nếu khách không nhận. Kho nhận phần mang về bằng PN ở luồng trả hàng hiện có. Vật tư tiêu hao vẫn ghi Đã dùng, và đề xuất phát sinh của thợ vẫn theo DX → kho xuất → thợ nhận.
+
+Bản staging này chỉ ghi PX/PN trong Điều phối, chưa trừ tồn app Kho. Cần nối mã TD và tự ghi phiếu sang QL_KHO_THANH_DUC trước dùng thật để không nhập hai lần.
+
+## Hồ sơ khách và máy
+
+Tiếp nhận đơn chỉ chọn máy đang sử dụng của đúng khách, hoặc Chưa chọn máy; không nhập model/serial mới ở đây. Khách có đúng một máy đang sử dụng được chọn sẵn; nếu cần vẫn có thể chọn trống.
+
+Tạo khách mới có các dòng Máy của khách: model, serial, vị trí/phòng ban (không bắt buộc thêm máy). Lưu khách và tất cả máy trong một lần. Tạo khách ngay từ Tiếp nhận đơn sẽ quay lại đơn, chọn khách mới/máy duy nhất và giữ nội dung, giờ hẹn, địa chỉ riêng, hàng giao kèm đã nhập.
+
+Ở Khách / máy, mở khách để sửa thông tin, thêm máy, sửa model/serial/vị trí và chọn Ngừng sử dụng. Không xóa máy hoặc sửa snapshot của đơn cũ. Lịch sử đơn theo máy gồm cả đơn đã kết thúc. Serial trùng trong cùng khách có cảnh báo, không tự gộp/xóa hồ sơ; cả máy ngừng sử dụng được tính khi cảnh báo.
+
+Đơn chưa chọn máy có nút Gắn máy cho đơn: điều phối/giám đốc có thể gắn sau; thợ được giao chỉ gắn khi Đang làm. Danh sách chỉ có máy đang sử dụng thuộc khách của đơn; thao tác lưu lịch sử, không đổi máy của đơn đã gắn. API create_order cũ với machine_model/machine_serial vẫn hoạt động để giữ tương thích.
+
+
+## Thu tiền và nộp quỹ (14/10/2026)
+
+1. Giám đốc mở **Thanh toán / cấu hình**: quản lý hình thức (tiền mặt, CK, POS, khác), tài khoản nhận của công ty và ngưỡng duyệt giá. Ba hình thức mẫu không chứa số tài khoản ngân hàng giả; thêm tài khoản công ty trước khi báo CK. Ngừng dùng giữ chứng từ cũ, không xóa. Ngưỡng giá mặc định tắt; bật lên thì thợ Xin duyệt giá, giám đốc Duyệt giá trước nghiệm thu.
+2. Tiếp nhận hàng giao kèm nhập đơn giá từng dòng. Kho sửa lượng không được thay giá; thợ không sửa giá giao hàng. Điều phối có Chốt / sửa giá hàng giao với lý do để bổ sung giá cho PX cũ. Lúc nghiệm thu thợ nhập công/vật tư tính tiền, xác nhận Khách đã đồng ý giá, ghi số thực giao/dùng. Không tự điền công bằng 0; khoản miễn phí phải nhập 0 và tích Miễn phí. Không làm được ghi phí tổng 0–200.000đ, lý do và đồng ý của khách.
+3. Sau nghiệm thu mở **Thu tiền**: báo từng phần, nhiều hình thức. Ô tiền trống, **Thu đủ** chỉ điền khi bấm. Số còn được báo thu đã trừ cả khoản chờ; không thu trực tiếp khách công nợ. PT tự cấp. Tiền mặt vào phần thợ giữ ngay; CK/POS/Khác chờ đối soát. Có thể chọn/chụp ảnh biên lai tùy chọn ngay trên khoản thu; tự tải qua queue private như ảnh nghiệm thu.
+4. Thợ mở **Tài khoản → Tiền tôi đang giữ**, chọn khoản hoặc Chọn tất cả → Lập phiếu nộp quỹ, xác nhận đã giao tiền. Một NQ nhiều đơn. Chờ kế toán không làm giảm tiền đang giữ, không lập lại cùng phần tiền.
+5. Kế toán (finance), hoặc giám đốc, mở **Quỹ**: xác nhận/từ chối CK/POS/Khác; từ chối cần lý do. Nhận NQ nhập số thực nhận, chênh lệch cần ghi chú. Thiếu còn ở thợ, có thể lập NQ bổ sung. Thừa ghi riêng là chưa phân bổ, không tự tăng thu của khách; cần kế toán xử lý. Không tự xác nhận nguồn thu/phiếu nộp của mình.
+6. Đóng hồ sơ khi đủ giá/nghiệm thu, không còn vật tư/máy mở, mọi khoản báo thu xử lý, thu ngay đủ xác nhận và tiền mặt về quỹ. Công nợ lưu nguyên số còn nợ. Tab **Đã đóng** riêng; sau đóng cấm sửa trực tiếp. Điều chỉnh giá trước đóng chỉ điều phối/giám đốc, cần lý do/đồng ý khách, giữ snapshot trước. Giá thấp hơn số đã báo thu cần xử lý hoàn tiền riêng, hiện chặn.
+
+Đơn cũ chưa có snapshot giá hiện **Chưa chốt tiền**, không suy ra miễn phí. Đơn đã nghiệm thu từ bản cũ cần chốt tiền bằng Điều chỉnh giá trước thu/đóng. Nghiệm thu mới luôn yêu cầu giá và khách đồng ý trên cả UI lẫn API; không bỏ qua bằng cách thiếu charge_lines. Vai trò kế toán cấp bằng helper provisionDispatchUser như các vai trò khác; local có tài khoản tổng hợp `finance`, cùng mật khẩu fixture được ghi ở phần runner (không đưa fixture vào Google).
+
+Báo cáo phân biệt ngày nghiệm thu (doanh thu hàng/công/vật tư), ngày báo thu, ngày xác nhận và ngày quỹ nhận. Tiền mặt báo thu không phải tiền về quỹ. Kho không nhận giá/sổ tiền qua query hoặc lịch sử, thợ chỉ nhận sổ thu/nộp của mình.
+
+Kiểm thử: `node service-dispatch/test/money-browser.cjs` (Playwright), `npm test --prefix service-dispatch` bao gồm kiểm thử tiền và bridge GAS/Sheets journal. Chưa đồng bộ FINANCE_THANHDUC: cần ghi PT/NQ đã xác nhận sang Finance với idempotency/đối soát trước dùng thật. QR, hoàn tiền, công nợ theo kỳ để sau.
+
+
+## Nối Kho và Finance trên bản sao — 14/10/2026
+
+Mã đã có catalogue TD, hàng chờ ký/đối soát, bảng gán ID Finance và consumer native dành riêng bản sao. Mặc định đồng bộ tắt, phương thức mới là Tiền mặt / Chuyển khoản ACB / Chuyển khoản TCB; VCB ngừng dùng và lịch sử giữ nguyên. Không tạo tài khoản Finance mới, không ghi sheet Kho/Finance từ Điều phối.
+
+Cấu hình ngân hàng ở **Thanh toán / cấu hình → sửa hình thức ACB/TCB**: chọn tài khoản Finance có sẵn, điền số tài khoản và chủ tài khoản, Lưu một lần. Thợ chọn hình thức sẽ tự hiện tài khoản nhận; API chặn account_id khác tài khoản đã gắn. Bảng Gán Finance còn dùng cho tiền mặt, quỹ nhận NQ, danh mục, nhân viên và khách công nợ. Mapping chuyển khoản đã có được chọn sẵn theo đúng ID khi sửa, nhưng vẫn cần bổ sung số/chủ tài khoản; không đoán tài khoản theo tên. Khoản thu mới lưu snapshot tài khoản, cấu hình đổi sau đó không chuyển khoản đang chờ sang ngân hàng khác. Khoản chuyển khoản cũ chưa có snapshot bị chặn xác nhận: đối chiếu sao kê, từ chối có lý do rồi báo lại đúng tài khoản; khoản đã xác nhận/đã ghi giữ nguyên, sai phải xử lý bằng quy trình điều chỉnh riêng.
+
+Trước pilot cần [luồng điều chỉnh tiền mặt báo nhầm](docs/integration-20261015/CASH_CORRECTIONS_PROPOSAL.md), hiện mới là đề xuất, chưa có chức năng đảo/âm. [Vá chốt ngày Finance thật](docs/integration-20261015/FINANCE_CLOSE_DAY_PROPOSAL.md) là mục duyệt riêng, không nằm trong quyền triển khai bản nối.
+
+Xem [hướng dẫn bản sao, kiểm thử và điều kiện bật](docs/integration-20261014/README.md), [audit mọi đường ghi AI_KHO 145 và đề xuất chuyển](docs/integration-20261014/AI_KHO_145_REVIEW.md). Chưa chạy UAT Google copies, chưa deploy Kho/Finance/AI_KHO thật; các mục lịch sử trước đây ghi vật tư tên tự do chưa nối là trạng thái tại thời điểm cũ. Trước pilot vẫn cần chuyển tables/index, kiểm partial-write recovery và bảo vệ đăng nhập/quota.
+
+
+Nối mã khách chung KTD trên staging/COPY: xem [OWNER_SETUP Danh bạ](docs/customer-directory/OWNER_SETUP.md). Chỉ bật sau check HMAC/actor/OAuth đạt; không tự ghép khách cũ.

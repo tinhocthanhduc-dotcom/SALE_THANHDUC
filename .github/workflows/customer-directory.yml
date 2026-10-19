@@ -1,0 +1,192 @@
+name: Customer directory COPY (steps 1 and 2)
+on:
+  pull_request:
+    paths:
+      - 'customer-directory/**'
+      - '.github/workflows/customer-directory.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: customer-directory-copy-20261015-01
+  cancel-in-progress: false
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix customer-directory --ignore-scripts
+      - run: node --test customer-directory/test/*.test.cjs
+      - run: npm ci --prefix erp-prototype --ignore-scripts
+      - run: erp-prototype/node_modules/.bin/playwright install --with-deps chromium
+      - run: node customer-directory/test/browser.cjs
+      - run: node customer-directory/build-gas.cjs "${{ runner.temp }}/customer-directory-gas"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_COPY_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-gas/
+          retention-days: 14
+      - run: node customer-directory/build-api-gas.cjs "${{ runner.temp }}/customer-directory-api"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_API_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-api/
+          retention-days: 14
+      - id: request
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$BEFORE_SHA" ]; then
+            BEFORE_SHA="$(git rev-parse "$HEAD_SHA^" 2>/dev/null || true)"
+          fi
+          if [ -z "$BEFORE_SHA" ] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            if git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- customer-directory/DEPLOY_REQUEST.json; then
+              echo 'changed=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+    outputs:
+      requested: ${{ steps.request.outputs.changed }}
+  deploy:
+    needs: tests
+    if: github.event.pull_request.head.repo.full_name == github.repository && needs.tests.outputs.requested == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Use existing Google authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLASPRC_JSON"
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          npm install --prefix "$RUNNER_TEMP/customer-clasp" @google/clasp@3.4.1 --no-audit --no-fund
+          echo "$RUNNER_TEMP/customer-clasp/node_modules/.bin" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_COPY_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-gas/
+      - uses: actions/download-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_API_PACKAGE
+          path: ${{ runner.temp }}/customer-directory-api/
+      - name: Restore or create ONLY the separate directory project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/customer-registry"
+          if [ -f customer-directory/project.copy.json ]; then
+            cp customer-directory/project.copy.json "$RUNNER_TEMP/customer-registry/project.json"
+          else
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts" --jq '.artifacts[] | select(.name == "CUSTOMER_DIRECTORY_COPY_PROJECT_V1") | [.workflow_run.id,.expired] | @tsv' > "$RUNNER_TEMP/customer-candidates.tsv"
+            if [ -s "$RUNNER_TEMP/customer-candidates.tsv" ]; then
+              read -r registry_run expired < "$RUNNER_TEMP/customer-candidates.tsv"
+              test "$expired" = 'false'
+              gh run download "$registry_run" --name CUSTOMER_DIRECTORY_COPY_PROJECT_V1 --dir "$RUNNER_TEMP/customer-registry"
+            else
+              mkdir -p "$RUNNER_TEMP/customer-bootstrap"
+              cd "$RUNNER_TEMP/customer-bootstrap"
+              clasp --json create-script --type standalone --title THANH_DUC_CUSTOMER_DIRECTORY_COPY --rootDir . > "$RUNNER_TEMP/customer-create.json"
+              node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),root=process.env.RUNNER_TEMP;
+          const id=JSON.parse(fs.readFileSync('.clasp.json','utf8')).scriptId;
+          if(!id)throw Error('PROJECT_CREATION_UNCONFIRMED');
+          fs.writeFileSync(path.join(root,'customer-registry/project.json'),JSON.stringify({request_id:'customer-directory-copy-20261015-01',script_id:id,editor_url:'https://script.google.com/d/'+id+'/edit',created_at:new Date().toISOString()},null,2));
+          JS
+            fi
+          fi
+      - name: Persist project identity before first push
+        uses: actions/upload-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_COPY_PROJECT_V1
+          path: ${{ runner.temp }}/customer-registry/
+          retention-days: 90
+      - name: Validate isolation and deploy only the directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),root=process.env.RUNNER_TEMP,p=JSON.parse(fs.readFileSync(path.join(root,'customer-registry/project.json'),'utf8'));
+          const old=JSON.parse(fs.readFileSync('ops/service-staging-20261013-01.project.json','utf8')),entry=fs.readFileSync('customer-directory/gas-entry.gs.txt','utf8');
+          if(p.request_id!=='customer-directory-copy-20261015-01'||!p.script_id||p.script_id===old.script_id||entry.includes(p.script_id))throw Error('SEPARATE_DIRECTORY_PROJECT_REQUIRED');
+          const manifest=JSON.parse(fs.readFileSync(path.join(root,'customer-directory-gas/appsscript.json'),'utf8'));
+          if(manifest.webapp.access!=='ANYONE'||manifest.webapp.executeAs!=='USER_DEPLOYING')throw Error('GOOGLE_LOGIN_REQUIRED');
+          fs.writeFileSync(path.join(root,'customer-directory-gas/.clasp.json'),JSON.stringify({scriptId:p.script_id,rootDir:'.'}));
+          JS
+          cd "$RUNNER_TEMP/customer-directory-gas"
+          if node -e 'process.exit(require(process.argv[1]).deploy_api_only===true||require(process.argv[1]).deploy_security_pair===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            extra=()
+            if node -e 'process.exit(require(process.argv[1]).deploy_security_pair===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then extra=(--update-private-ui); fi
+            node "$GITHUB_WORKSPACE/customer-directory/deploy-api.cjs" "$RUNNER_TEMP/customer-registry/project.json" "$RUNNER_TEMP/customer-directory-gas" "$RUNNER_TEMP/customer-directory-api" "$RUNNER_TEMP/customer-registry/api-deployment.json" "${extra[@]}"
+            exit 0
+          fi
+          clasp push --force
+          clasp --json list-deployments > "$RUNNER_TEMP/customer-deployments.json"
+          node "$GITHUB_WORKSPACE/customer-directory/deploy.cjs" "$RUNNER_TEMP/customer-registry/project.json" "$RUNNER_TEMP/customer-deployments.json" "$RUNNER_TEMP/customer-registry/deployment.json"
+      - name: Try owner setup/UAT only when explicitly requested
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/customer-directory-gas"
+          if ! node -e 'process.exit(require(process.argv[1]).run_setup===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            node -e 'require("node:fs").writeFileSync(process.argv[1],JSON.stringify({confirmed:false,skipped:true,reason:"Owner setup/UAT not requested; preserve existing COPY data and configuration."}))' "$RUNNER_TEMP/customer-registry/setup-status.json"
+            exit 0
+          fi
+          timeout 45s clasp --json run setupCustomerDirectory > "$RUNNER_TEMP/customer-setup-private.json" 2> "$RUNNER_TEMP/customer-setup-private.err" || true
+          node "$GITHUB_WORKSPACE/customer-directory/execution-status.cjs" setup "$RUNNER_TEMP/customer-setup-private.json" "$RUNNER_TEMP/customer-registry/setup-status.json"
+          if node -e 'process.exit(require(process.argv[1]).confirmed?0:1)' "$RUNNER_TEMP/customer-registry/setup-status.json"; then
+            timeout 240s clasp --json run runCustomerDirectoryCopyUat > "$RUNNER_TEMP/customer-uat-private.json" 2> "$RUNNER_TEMP/customer-uat-private.err" || true
+            node "$GITHUB_WORKSPACE/customer-directory/execution-status.cjs" uat "$RUNNER_TEMP/customer-uat-private.json" "$RUNNER_TEMP/customer-registry/uat-status.json"
+          fi
+      - name: Try read-only Google search timing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/customer-directory-gas"
+          timeout 45s clasp --json run benchmarkCustomerDirectorySearch > "$RUNNER_TEMP/customer-search-private.json" 2> "$RUNNER_TEMP/customer-search-private.err" || true
+          node "$GITHUB_WORKSPACE/customer-directory/search-timing-status.cjs" "$RUNNER_TEMP/customer-search-private.json" "$RUNNER_TEMP/customer-registry/search-timing.json"
+      - name: Benchmark TEST_ create only on approved Directory COPY
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_create_benchmark===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            cd "$RUNNER_TEMP/customer-directory-gas"
+            timeout 90s clasp --json run benchmarkCustomerDirectoryCreate > "$RUNNER_TEMP/create-benchmark-raw.json" 2> "$RUNNER_TEMP/create-benchmark-error.txt" || true
+            node "$GITHUB_WORKSPACE/customer-directory/create-timing-status.cjs" "$RUNNER_TEMP/create-benchmark-raw.json" "$RUNNER_TEMP/create-benchmark-error.txt" "$RUNNER_TEMP/customer-registry/create-timing.json"
+          fi
+      - name: Try authorized source-number rescan on the configured COPY
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e 'process.exit(require(process.argv[1]).run_source_zero_rescan===true?0:1)' "$GITHUB_WORKSPACE/customer-directory/DEPLOY_REQUEST.json"; then
+            cd "$RUNNER_TEMP/customer-directory-gas"
+            timeout 55s clasp --json run normalizeCustomerDirectorySourceNumbers > "$RUNNER_TEMP/customer-zeros-private.json" 2> "$RUNNER_TEMP/customer-zeros-private.err" || true
+            node "$GITHUB_WORKSPACE/customer-directory/source-zero-status.cjs" "$RUNNER_TEMP/customer-zeros-private.json" "$RUNNER_TEMP/customer-registry/source-zero-rescan.json"
+          fi
+      - name: Persist directory links only, never source rows or keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CUSTOMER_DIRECTORY_COPY_LINKS_V1
+          path: ${{ runner.temp }}/customer-registry/
+          retention-days: 90

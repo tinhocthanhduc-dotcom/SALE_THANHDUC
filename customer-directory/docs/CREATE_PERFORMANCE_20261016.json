@@ -1,0 +1,96 @@
+{
+  "environment": "local_sheetDriver_only",
+  "dataset": {
+    "customers": 200,
+    "NGUON": 1770,
+    "DUYET_TRUNG": 824,
+    "CHI_MUC": 800
+  },
+  "before": {
+    "dataset": {
+      "customers": 200,
+      "sources": 1770,
+      "reviews": 824
+    },
+    "reads": 30,
+    "cells": 72759,
+    "tables": {
+      "CD_META": 7,
+      "CD_JOURNAL": 3,
+      "CD_RECEIPTS": 3,
+      "KHACH": 4,
+      "NGUON": 3,
+      "DUYET_TRUNG": 3,
+      "ANH_XA": 3,
+      "LICH_SU": 3,
+      "CHI_MUC": 1
+    },
+    "elapsed_local_ms": 22
+  },
+  "after": {
+    "dataset": {
+      "customers": 200,
+      "sources": 1770,
+      "reviews": 824
+    },
+    "reads": 7,
+    "cells": 7870,
+    "tables": {
+      "CD_META": 1,
+      "CD_JOURNAL": 3,
+      "CD_RECEIPTS": 1,
+      "KHACH": 1,
+      "CHI_MUC": 1
+    },
+    "elapsed_local_ms": 6
+  },
+  "node_tests": {
+    "directory": 108,
+    "dispatch": 196
+  },
+  "google_timing_measured": false,
+  "deployment": {
+    "code_commit": "ea3db8b151ac84e1a8dfad0808a2c702e4681731",
+    "directory_api_version": 12,
+    "directory_private_ui_version": 13,
+    "dispatch_staging_version": 69,
+    "directory_workflow": 38868072604,
+    "dispatch_workflow": 38868072610,
+    "both_deployments": "success"
+  },
+  "google_benchmark": {
+    "directory": {
+      "measured": false,
+      "environment": "COPY_ONLY",
+      "target_ms": 5000,
+      "reason": "NO_VERIFIED_GOOGLE_TIMING",
+      "live_apps_changed": false
+    },
+    "dispatch": {
+      "measured": false,
+      "environment": "COPY_ONLY",
+      "target_ms": 5000,
+      "reason": "NO_VERIFIED_GOOGLE_TIMING",
+      "live_apps_changed": false
+    },
+    "note": "Execution API attempt returned no verified timing. Owner editor runs required; do not infer the 5000ms target from deployment success or local JS timings."
+  },
+  "native_read_only_probe": {
+    "directory_http": 200,
+    "directory_unsigned_requires_hmac": true,
+    "dispatch_http": 200,
+    "dispatch_app_shell": true,
+    "signed_create_timing_measured": false
+  },
+  "regression": {
+    "erp_node": 84,
+    "dispatch_node": 196,
+    "directory_node": 108,
+    "scoped_table_domain_tests": 118,
+    "simulation_orders": 9000,
+    "browser_ci_run": 38868072673,
+    "browser_ci_status": "success",
+    "dispatch_browser_suites": 28,
+    "directory_browser_scenarios": 11
+  }
+}

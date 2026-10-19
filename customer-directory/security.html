@@ -1,0 +1,13 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bảo mật Danh bạ</title>
+<style>body{font:16px system-ui;max-width:600px;margin:24px auto;padding:16px}button,textarea{font:inherit;padding:12px;min-height:44px}textarea{width:100%;box-sizing:border-box}button{margin:8px 8px 8px 0}dialog{max-width:540px;width:85%;border:1px solid #bbb;border-radius:12px}#status{white-space:pre-wrap}</style>
+<h1>Đổi khóa kết nối Điều phối</h1><p>Khóa mới chỉ hiện một lần. Giữ hộp thoại mở cho đến khi đã dán sang Điều phối và kiểm tra thành công. Khóa cũ còn hiệu lực 30 phút.</p>
+<button id="rotate">Tạo khóa mới</button><button id="revoke">Tắt khóa cũ ngay</button><p id="status" role="status"></p>
+<dialog id="result"><h2>Khóa mới — sao chép ngay</h2><textarea id="secret" readonly aria-label="Khóa kết nối mới" autocomplete="off" spellcheck="false"></textarea><p id="expiry"></p><button id="copy">Sao chép</button><button id="close">Đóng và xóa khỏi màn hình</button></dialog>
+<script>
+'use strict';let ticket=__TICKET__;const $=id=>document.getElementById(id),status=text=>$('status').textContent=text;
+$('rotate').onclick=()=>{if(!ticket)return;const once=ticket;ticket=null;$('rotate').disabled=true;google.script.run.withSuccessHandler(r=>{$('secret').value=r.secret;$('expiry').textContent='Khóa cũ hết hạn: '+new Date(r.previous_expires_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});$('result').showModal();status('Đã đổi khóa. Sau khi đóng không có nút xem lại; tải lại trang chỉ cho tạo lượt đổi mới khi lượt hiện tại đã hết.');}).withFailureHandler(()=>status('Không đổi được khóa hoặc đang có lượt đổi trong 30 phút. Tải lại trang bảo mật và kiểm tra; không gửi khóa vào chat.')).rotateDispatchDirectorySecret(once);};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('secret').value);}catch(e){$('secret').focus();$('secret').select();status('Đã chọn khóa. Bấm Sao chép của trình duyệt.');}};
+function clear(){ $('secret').value='';$('result').close(); }
+$('close').onclick=clear;$('result').addEventListener('close',()=>{$('secret').value='';});window.addEventListener('pagehide',()=>{$('secret').value='';});
+$('revoke').onclick=()=>{google.script.run.withSuccessHandler(()=>status('Đã tắt khóa cũ. Chỉ khóa mới có hiệu lực.')).withFailureHandler(()=>status('Không thực hiện được. Kiểm tra quyền chủ project.')).revokeOldDispatchSecret();};
+</script></html>

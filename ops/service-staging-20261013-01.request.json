@@ -1,0 +1,10 @@
+{
+  "request_id": "20261013-01",
+  "purpose": "Create a NEW isolated Apps Script web app for service dispatch, as explicitly requested by the user.",
+  "title": "THANH_DUC_DIEU_PHOI_STAGING_20261013_01",
+  "production_apps": "Do not update, redeploy or write any of the five existing apps.",
+  "initial_account": "Owner chooses a private password in the new project's settings; no demo credentials are deployed.",
+  "revision": 45,
+  "update": "Deploy customer-directory transport response budget to SAME Dispatch staging. Preserve data/users/sessions/storage mode/integration copies/all secrets. Run owner-only benchmarkDispatchDirectoryCreate (TEST_ customer through the approved signed COPY API) if Execution API permits; no setup/reset/migration/rotation/revoke or live apps.",
+  "run_directory_create_benchmark": true
+}

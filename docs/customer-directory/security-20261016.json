@@ -1,0 +1,52 @@
+{
+  "code_commits": [
+    "775543b",
+    "0b1ab62"
+  ],
+  "node_tests": {
+    "passed": 371,
+    "failed": 0
+  },
+  "dispatch_browser_regression_suites": 27,
+  "security_browser_cases": 4,
+  "directory_browser_cases": 11,
+  "session_browser_rerun_passed": true,
+  "dispatch_deployment": {
+    "version": 68,
+    "workflow_run": 38847683096
+  },
+  "directory_deployment": {
+    "api_version": 10,
+    "private_ui_version": 11,
+    "workflow_run": 38847683131
+  },
+  "http_checks": {
+    "dispatch_login": {
+      "http_status": 200,
+      "client_matches": true
+    },
+    "dispatch_security_anonymous": {
+      "http_status": 200,
+      "secret_form_absent": true,
+      "owner_error_or_google_login": true
+    },
+    "directory_security_anonymous": {
+      "http_status": 200,
+      "secret_form_absent": true,
+      "owner_error_or_google_login": true
+    },
+    "directory_api": {
+      "http_status": 200,
+      "hmac_required": true
+    }
+  },
+  "hash_benchmark": {
+    "measured": false,
+    "error": "We're sorry, a server error occurred while reading from storage. Error code NOT_FOUND.",
+    "policy_changed": false,
+    "reason": "Execution API unavailable; owner can run benchmarkDispatchPasswordHash in editor. Default 600000 retained."
+  },
+  "real_secret_rotated": false,
+  "owner_dialog_native_roundtrip_tested": false,
+  "policy_changed": false
+}

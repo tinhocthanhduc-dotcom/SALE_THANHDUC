@@ -1,0 +1,51 @@
+{
+  "pass": true,
+  "environment": "in-memory sheet copies, actual native writer functions; NOT Google copy UAT",
+  "results": [
+    {
+      "name": "native warehouse regression",
+      "passed": 98,
+      "total": 98
+    },
+    {
+      "name": "native OUT/replay warehouse 58",
+      "pass": true
+    },
+    {
+      "name": "native IN and negative-stock prevention 58",
+      "pass": true
+    },
+    {
+      "name": "native OUT/replay warehouse 145",
+      "pass": true
+    },
+    {
+      "name": "native IN and negative-stock prevention 145",
+      "pass": true
+    },
+    {
+      "name": "native Finance THU categories and replay",
+      "pass": true
+    },
+    {
+      "name": "native NQ actual amount, held balance and replay",
+      "pass": true
+    },
+    {
+      "name": "native locked date blocked without date shift",
+      "pass": true
+    },
+    {
+      "name": "native customer debt mapping/reference/replay",
+      "pass": true
+    },
+    {
+      "name": "native confirmed bank THU mapped ACB/replay",
+      "pass": true
+    },
+    {
+      "name": "native partial group failure retry preserves first THU without duplication",
+      "pass": true
+    }
+  ]
+}

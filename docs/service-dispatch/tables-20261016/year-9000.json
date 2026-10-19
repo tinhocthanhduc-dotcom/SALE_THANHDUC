@@ -1,0 +1,37 @@
+{
+  "orders": 9000,
+  "model": "30 orders/day, 25 working days/month, 12 months",
+  "columns": 15,
+  "rows": {
+    "DP_ORDERS": 9000,
+    "DP_CUSTOMERS": 900,
+    "DP_MACHINES": 0,
+    "DP_PAYMENTS": 9000,
+    "DP_DEPOSITS": 9000,
+    "DP_DEBTS": 0,
+    "DP_CASH_CORRECTIONS": 0,
+    "DP_SEQUENCES": 1200,
+    "DP_COMMANDS": 99900,
+    "DP_OUTBOX": 0,
+    "DP_EVENTS": 117900,
+    "DP_META": 1,
+    "DP_JOURNAL": 200876,
+    "DP_ARCHIVE_ORDERS": 8070
+  },
+  "used_cells": 6837915,
+  "google_cell_limit": 10000000,
+  "largest_table_rows": 200876,
+  "elapsed_local_ms": 23167.625146,
+  "samples": [
+    {
+      "orders": 1000,
+      "last_order_lifecycle_local_ms": 2.0200119999999515
+    },
+    {
+      "orders": 9000,
+      "last_order_lifecycle_local_ms": 2.064267000001564
+    }
+  ],
+  "native_google_measured": false,
+  "estimated_allocated_dp_cells": 6914310
+}

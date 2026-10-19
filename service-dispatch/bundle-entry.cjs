@@ -1,0 +1,10 @@
+const {Auth,createUser,passwordHash,digest}=require('./auth.cjs');
+const Domain=require('./domain.cjs');
+const {createService}=require('./service.cjs');
+const {SheetsRepository}=require('../erp-prototype/sheets-repository.cjs');
+const IntegrationCatalogue=require('./integration/catalogue.cjs');
+const CustomerDirectory=require('./customer-directory.cjs');
+const Tables=require('./table-repository.cjs');
+const TableDriver=require('./table-driver.cjs');
+const TableMigration=require('./table-migration.cjs');
+module.exports={Tables,TableDriver,TableMigration,CustomerDirectory,IntegrationCatalogue,Auth,createUser,passwordHash,digest,Domain,createService,SheetsRepository};

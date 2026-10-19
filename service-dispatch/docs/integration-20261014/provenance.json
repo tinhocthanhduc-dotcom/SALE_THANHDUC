@@ -1,0 +1,21 @@
+{
+  "source_checkouts": {
+    "QL_KHO_THANH_DUC": {
+      "commit": "bb2585541164d74fb06457508db3dbbf0a452826",
+      "working_tree_clean": true,
+      "code_sha256": "826eae5d354ef090c130fdf9cb7b8d4db7b210125bfc18cbbbbac06bdb670eb1"
+    },
+    "FINANCE_THANHDUC": {
+      "commit": "d3c460700bb8823272374e16aea5d762c2cf10f5",
+      "working_tree_clean": true,
+      "code_sha256": "4136cff5c02d181c09740f9916bcccc4523540ad8e930847b9f58c7940b7a6b3"
+    },
+    "AI_KHO_THANH_DUC": {
+      "commit": "d77e5be2caf3052c9fb73c2235bb7f89beb39f33",
+      "working_tree_clean": true,
+      "code_sha256": "f050acaf5c0c6cbb013ad08a32b4e73a1964c63c87a6664ae7a67812f8d3f7c4"
+    }
+  },
+  "google_copy_uat": false,
+  "production_deployed": false
+}

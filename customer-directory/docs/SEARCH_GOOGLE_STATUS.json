@@ -1,0 +1,32 @@
+{
+  "code_commit": "be0a2891cbb77ff64afa369bf2d62b6544d7b3d9",
+  "ci_run": 38751130392,
+  "ci_tests": "success",
+  "ci_deploy": "success",
+  "node_tests": 72,
+  "browser_groups": 10,
+  "fixture_customers": 201,
+  "sheets_calls_including_constructor": {
+    "before_20_results": 99,
+    "after_20_results": 6,
+    "before_1_result": 42,
+    "after_1_result": 6
+  },
+  "deployment": {
+    "script_id": "1L65AaP41TWcRK52PlOjHUdWj82NaEHh5CKgQ9nYyJ998CMjR-rMxkXTW",
+    "deployment_id": "AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2",
+    "version": 4,
+    "web_app_url": "https://script.google.com/macros/s/AKfycbw8nUjBrRpt1iae-g272wA6Lg0Gd9JTvpKdcOVIr51xbMvSg8xSgoNbNtYZpspTusV2/exec",
+    "google_login_required": true,
+    "owner_setup_required": true,
+    "existing_apps_modified": false
+  },
+  "google_search_timing": {
+    "confirmed": false,
+    "environment": "Google_COPY",
+    "target_ms": 1500,
+    "reason": "Execution API did not return timing samples. Owner must run benchmarkCustomerDirectorySearch in the separate directory project."
+  },
+  "google_before_timing_available": false,
+  "google_1500ms_target_confirmed": false
+}
