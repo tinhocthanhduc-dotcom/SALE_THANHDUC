@@ -1,15 +1,23 @@
 {
   "source_commit": "6aba57630347e2c6e14130b01d620da52b089f9c",
   "branch": "main",
-  "deploy_status": "blocked_before_job_start",
+  "deploy_status": "success",
   "run_id": 39473744173,
   "run_url": "https://github.com/tinhocthanhduc-dotcom/SALE_THANHDUC/actions/runs/39473744173",
-  "reason": "GitHub Actions: recent account payments have failed or spending limit needs to be increased",
-  "app_updated": false,
+  "app_updated": true,
   "local_apps_script_auth": "unavailable; configured ADC rejected by google-auth (DefaultCredentialsError)",
   "ui_browser_tests": {
     "passed": 3,
     "failed": 0
   },
-  "resume": "Resolve GitHub Billing & plans, then rerun deploy-apps-script.yml run 39473744173. Verify deployed version before claiming success."
+  "run_attempt": 2,
+  "previous_attempt_failure": "GitHub Actions: recent account payments have failed or spending limit needs to be increased",
+  "version": 66,
+  "deployment_id": "AKfycbyNT-outokhNSw6pJ6h0o35sphKGrFrYUaIx6u4KNox1lI0XhMapZyFjlZNZwj_IIcR",
+  "url": "https://script.google.com/macros/s/AKfycbyNT-outokhNSw6pJ6h0o35sphKGrFrYUaIx6u4KNox1lI0XhMapZyFjlZNZwj_IIcR/exec",
+  "live_read_only_check": {
+    "quick_filters": true,
+    "conditions_beneath_cart_marker": true,
+    "row_keyboard_handler": true
+  }
 }

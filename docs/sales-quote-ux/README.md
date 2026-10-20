@@ -10,8 +10,12 @@
 
 Bộ hồi quy Đơn bán có sẵn: `CHROMIUM_PATH=/usr/bin/chromium node --test test/don-ban/*.test.cjs test/don-ban/browser.cjs test/don-ban/collection-browser.cjs`: **38/53 đạt, 15 lỗi** (10 unit, 5 browser). Không sửa các test/hàm thu tiền trong việc này. Các unit lỗi không phụ thuộc Index.html; code.js/DonBan.js/DonBan.html không đổi. Đã chạy lại riêng browser test “money format/caret/paste...” bằng **Index.html từ HEAD trước sửa**, vẫn lỗi `false !== true` như bản sau sửa. Bộ test cũ còn kỳ vọng luồng chờ Finance trong khi commit hiện tại 01b0e8c đã đổi sang thu tiền trực tiếp; không tuyên bố toàn bộ hồi quy đạt.
 
-Chưa deploy hoặc kiểm tra trên Google thật. Không thay đổi server, báo giá/PDF/hợp đồng, hoặc dữ liệu thật.
+Kết quả test trên là trước deploy; trạng thái triển khai cập nhật ở dưới. Không thay đổi server, báo giá/PDF/hợp đồng, hoặc dữ liệu thật.
 
 ## Thử deploy sau khi chủ cho phép
 
 Source `6aba576` đã push main, kích hoạt [run 39473744173](https://github.com/tinhocthanhduc-dotcom/SALE_THANHDUC/actions/runs/39473744173). GitHub chặn trước khi runner bắt đầu vì lỗi thanh toán/hạn mức Actions; không có bước push Apps Script nào chạy, app Google chưa được cập nhật. Máy này cũng không có credential Apps Script dùng được để deploy trực tiếp. Cần chủ xử lý Billing & plans rồi chạy lại run trên; không cần sửa lại code hoặc gửi khóa vào chat. Xem deployment-attempt.json.
+
+## Chạy lại thành công — Sales v66
+
+Run 39473744173 attempt 2 thành công; Google nhận 5 file và cập nhật deployment hiện có từ v65 lên **v66**, source `6aba576`. URL không đổi. Đã GET chỉ đọc HTML từ web app thật, xác nhận có quoteQuickFilters, quote-conditions và pickerRowKey. Không chạy tạo/lưu báo giá trên dữ liệu thật để kiểm thử. Lỗi billing ở lần đầu đã được vượt qua khi chủ yêu cầu chạy lại.
