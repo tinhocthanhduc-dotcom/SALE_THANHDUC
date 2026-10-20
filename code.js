@@ -5516,7 +5516,6 @@ function buildQuoteA4Html_(
     'html,body{color:#161a22;}',
     '.preview-toolbar button{background:#2263a8;}',
     '.preview-toolbar .secondary{background:#f0f1f3;color:#161a22;}',
-    '.sheet::before{content:\'\';display:block;height:1.4mm;margin-bottom:5mm;background:linear-gradient(90deg,#bb2a2c 50%,#2263a8 50%);}',
     '.company-header{border-bottom:.3mm solid #d3d8df;}',
     '.company-name{color:#bb2a2c;letter-spacing:.2px;}',
     '.company-line{color:#343b47;}.company-line strong{color:#161a22;}',
