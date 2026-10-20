@@ -1,7 +1,7 @@
 # Cải tiến màn Báo giá Sales
 
 - Click dòng sản phẩm, Enter/Space trên dòng, hoặc Enter trong ô tìm để thêm kết quả đầu. Nút Thêm vẫn hoạt động, không cộng hai lần do sự kiện nổi bọt; giữ xác nhận giá 0 và khóa nguồn SALE/KHO cũ.
-- Chuyển nguyên khối ngày báo giá, hiệu lực, VAT và giảm giá xuống dưới hàng hóa; giữ ID, callback, payload và cách tính. Cột phải chỉ có tổng tiền và nút Lưu cao 56px.
+- Theo yêu cầu mới của chủ, đưa nguyên khối Điều kiện & Thanh toán về cột phải, phía trên tổng tiền như bố cục cũ; giữ ID, callback, payload và cách tính. Giữ nút Lưu cao 56px.
 - Lọc nhanh Tất cả / Hộp mực / Linh kiện / Dịch vụ sửa chữa; giao với từ khóa và dropdown nguồn/nhóm hiện có. Ưu tiên nhóm đã gán; hàng chưa có nhóm dùng tiền tố tên để lọc hiển thị. Không cập nhật phân loại sản phẩm trên server. Nhóm không khớp vẫn xem được ở Tất cả.
 
 ## Kiểm tra
@@ -19,3 +19,7 @@ Source `6aba576` đã push main, kích hoạt [run 39473744173](https://github.c
 ## Chạy lại thành công — Sales v66
 
 Run 39473744173 attempt 2 thành công; Google nhận 5 file và cập nhật deployment hiện có từ v65 lên **v66**, source `6aba576`. URL không đổi. Đã GET chỉ đọc HTML từ web app thật, xác nhận có quoteQuickFilters, quote-conditions và pickerRowKey. Không chạy tạo/lưu báo giá trên dữ liệu thật để kiểm thử. Lỗi billing ở lần đầu đã được vượt qua khi chủ yêu cầu chạy lại.
+
+## Khôi phục vị trí Điều kiện & Thanh toán
+
+Chủ yêu cầu đưa khối về vị trí cũ: cột phải, trên tổng tiền. Chỉ đổi vị trí DOM, giữ tên khối, lọc nhanh, thêm bằng click/Enter và nút Lưu lớn. Cập nhật test và ảnh theo bố cục này.

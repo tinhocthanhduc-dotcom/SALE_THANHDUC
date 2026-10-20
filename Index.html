@@ -419,6 +419,9 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
       <div class="cart" id="quoteCart"></div>
       <div class="cart-note field"><label>Ghi chú báo giá</label><textarea id="quoteNote" placeholder="Điều kiện giao hàng, bảo hành, thanh toán..."></textarea></div>
     </div>
+  </div>
+
+  <div class="quote-col quote-rail">
     <div class="card quote-conditions">
       <div class="head"><b>Điều kiện &amp; Thanh toán</b></div>
       <div class="body"><div class="form">
@@ -438,9 +441,6 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
         <div class="field wide"><label>Giảm giá toàn đơn (₫)</label><input id="quoteDiscount" type="number" value="0" min="0" placeholder="0" oninput="renderQuoteCart()"></div>
       </div></div>
     </div>
-  </div>
-
-  <div class="quote-col quote-rail">
     <div class="card summary-card">
       <div class="summary">
         <div class="sumrow" id="grossSummaryRow"><span id="grossSummaryLabel">Cộng tiền hàng</span><b id="grossAmount">0 ₫</b></div>
