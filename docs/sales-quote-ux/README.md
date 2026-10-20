@@ -23,3 +23,5 @@ Run 39473744173 attempt 2 thành công; Google nhận 5 file và cập nhật de
 ## Khôi phục vị trí Điều kiện & Thanh toán
 
 Chủ yêu cầu đưa khối về vị trí cũ: cột phải, trên tổng tiền. Chỉ đổi vị trí DOM, giữ tên khối, lọc nhanh, thêm bằng click/Enter và nút Lưu lớn. Cập nhật test và ảnh theo bố cục này.
+
+Đã deploy bản khôi phục vị trí thành **v67**, source `df7fa00`, run 39475427200 thành công. GET HTML Google xác nhận thứ tự cột phải → điều kiện → tổng tiền; quick filters và Enter vẫn có. Test giao diện 3/3 đạt.
