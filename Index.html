@@ -149,6 +149,11 @@ td.right,.amount{font-variant-numeric:tabular-nums}
 #productPicker td:nth-child(5) button:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
 #productPicker td[colspan]{grid-column:1/-1;padding:30px 0;text-align:center;color:var(--faint)}
 
+.quote-quick-filters{display:flex;flex-wrap:wrap;gap:6px}
+.quote-quick-filters button{min-height:36px;padding:0 10px;font-size:12px}
+.quote-quick-filters button.active{background:var(--brand-t);border-color:var(--brand);color:var(--brand-d)}
+#productPicker tr[tabindex]{cursor:pointer}
+#productPicker tr[tabindex]:focus-visible{outline:2px solid var(--brand);outline-offset:-2px;background:var(--brand-t)}
 .cust-card .body{padding:16px}
 .cart-box{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden}
 .cart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
@@ -184,7 +189,7 @@ td.right,.amount{font-variant-numeric:tabular-nums}
 .sumrow.grand span{font-size:11px;font-weight:700;letter-spacing:.6px}
 .sumrow.grand b{font-size:26px;font-weight:800;letter-spacing:-.3px}
 .action-row{display:flex;flex-direction:column;gap:8px}
-.action-row #quoteSaveButton{min-height:44px;font-size:14px;font-weight:700;border-radius:10px}
+.action-row #quoteSaveButton{min-height:56px;font-size:16px;font-weight:700;border-radius:10px}
 .quote-edit-banner{display:none;margin-bottom:16px;padding:10px 14px;border:1px solid var(--warn-b);background:var(--warn-t);border-radius:10px;color:#7a3a00}
 .quote-edit-banner.show{display:flex;align-items:center;justify-content:space-between;gap:10px}
 
@@ -384,7 +389,13 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
     <div class="head"><b>Tra giá sản phẩm</b></div>
     <div class="body">
       <div class="quote-toolbar-grid">
-        <input id="productSearch" placeholder="Tìm mã hoặc tên..." oninput="renderProductPicker()">
+        <input id="productSearch" placeholder="Tìm mã hoặc tên... · Enter để thêm kết quả đầu" oninput="renderProductPicker()" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();if(quotePickerItems.length)addPickerItem(0);}">
+        <div id="quoteQuickFilters" class="quote-quick-filters" role="group" aria-label="Lọc nhanh sản phẩm">
+          <button type="button" class="light active" data-category="" aria-pressed="true" onclick="setQuoteCategory('')">Tất cả</button>
+          <button type="button" class="light" data-category="cartridge" aria-pressed="false" onclick="setQuoteCategory('cartridge')">Hộp mực</button>
+          <button type="button" class="light" data-category="parts" aria-pressed="false" onclick="setQuoteCategory('parts')">Linh kiện</button>
+          <button type="button" class="light" data-category="service" aria-pressed="false" onclick="setQuoteCategory('service')">Dịch vụ sửa chữa</button>
+        </div>
         <select id="quoteGroupFilter" title="Lọc theo nguồn hoặc nhóm hàng" onchange="renderProductPicker()">
           <option value="">Tất cả nhóm hàng</option>
         </select>
@@ -408,11 +419,8 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
       <div class="cart" id="quoteCart"></div>
       <div class="cart-note field"><label>Ghi chú báo giá</label><textarea id="quoteNote" placeholder="Điều kiện giao hàng, bảo hành, thanh toán..."></textarea></div>
     </div>
-  </div>
-
-  <div class="quote-col quote-rail">
-    <div class="card">
-      <div class="head"><b>Điều kiện</b></div>
+    <div class="card quote-conditions">
+      <div class="head"><b>Điều kiện &amp; Thanh toán</b></div>
       <div class="body"><div class="form">
         <div class="field"><label>Ngày báo giá <span class="required">*</span></label><input id="quoteDate" type="date"></div>
         <div class="field"><label>Hiệu lực đến <span class="required">*</span></label><input id="quoteValid" type="date"></div>
@@ -430,6 +438,9 @@ button.ghost:hover:not(:disabled){background:var(--soft);color:var(--txt)}
         <div class="field wide"><label>Giảm giá toàn đơn (₫)</label><input id="quoteDiscount" type="number" value="0" min="0" placeholder="0" oninput="renderQuoteCart()"></div>
       </div></div>
     </div>
+  </div>
+
+  <div class="quote-col quote-rail">
     <div class="card summary-card">
       <div class="summary">
         <div class="sumrow" id="grossSummaryRow"><span id="grossSummaryLabel">Cộng tiền hàng</span><b id="grossAmount">0 ₫</b></div>
@@ -715,6 +726,7 @@ let historyLoaded=false;
 let historyLoading=false;
 let quoteItems=[];
 let quotePickerItems=[];
+let quoteCategory='';
 let editingQuoteNo='';
 let editingQuoteStatus='';
 let pendingContractRequest=null;
@@ -1179,6 +1191,32 @@ function confirmDeleteGroup(groupId){
   });
 }
 
+// Quick categories are a view filter only; never change the stored product group.
+function quoteProductCategory(product){
+  const group=norm(product.group).trim();
+  if(group.includes('dich vu'))return 'service';
+  if(group.includes('hop muc'))return 'cartridge';
+  if(group.includes('linh kien'))return 'parts';
+  if(group)return '';
+  const name=norm(product.name).trim();
+  if(/^(dich vu|cong sua|phi |sua chua|ve sinh|nap muc)/.test(name))return 'service';
+  if(/^(hop muc|cartridge|toner cartridge)\b/.test(name))return 'cartridge';
+  if(/^(linh kien|chip |trong |drum |bao lua|gat |truc |lo say|cum say|banh rang)/.test(name))return 'parts';
+  return '';
+}
+function setQuoteCategory(category){
+  quoteCategory=category;
+  document.querySelectorAll('#quoteQuickFilters button').forEach(button=>{
+    const active=button.dataset.category===category;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+  renderProductPicker();
+}
+function pickerRowKey(event,index){
+  if(event.target!==event.currentTarget||event.isComposing)return;
+  if(event.key==='Enter'||event.key===' '){event.preventDefault();addPickerItem(index);}
+}
 function renderProductPicker(){
   const keyword=norm(
     document.getElementById('productSearch').value
@@ -1195,7 +1233,7 @@ function renderProductPicker(){
           product.code+' '+product.name+' '+(product.warehouseName||'')+' '+(product.source||'')
         ).includes(keyword);
 
-      if(!matchesKeyword) return false;
+      if(!matchesKeyword||quoteCategory&&quoteProductCategory(product)!==quoteCategory) return false;
 
       if(group==='__SOURCE_KHO__'){
         return product.source==='KHO';
@@ -1218,7 +1256,7 @@ function renderProductPicker(){
 
   document.getElementById('productPicker').innerHTML=
     quotePickerItems
-      .map((product,index)=>`<tr>
+      .map((product,index)=>`<tr tabindex="0" role="button" aria-label="Thêm ${esc(product.name)}" onclick="if(!event.target.closest('button'))addPickerItem(${index})" onkeydown="pickerRowKey(event,${index})">
         <td>
           <b>${esc(product.code)}</b>
           <br><small class="source-badge ${product.source==='KHO'?'source-kho':'source-sale'}">
@@ -1241,7 +1279,7 @@ function renderProductPicker(){
             :'<span class="price-missing">Chưa có giá</span>'}
         </td>
         <td>
-          <button type="button" onclick="addPickerItem(${index})">
+          <button type="button" onclick="event.stopPropagation();addPickerItem(${index})">
             Thêm
           </button>
         </td>
