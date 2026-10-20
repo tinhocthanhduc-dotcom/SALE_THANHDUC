@@ -4741,7 +4741,6 @@ function buildWarehouseIssueHtml_(data, previewMode) {
     '.preview-toolbar{background:#161a22;}',
     '.preview-toolbar button{background:#2263a8;}',
     '.preview-toolbar .secondary{background:#fff;color:#161a22;}',
-    '.sheet::before{content:\'\';display:block;height:1.4mm;margin:0 -6mm 4mm;background:linear-gradient(90deg,#bb2a2c 50%,#2263a8 50%);}',
     '.company-name{color:#bb2a2c;}',
     '.company-line{color:#343b47;}',
     '.title{border-top:.3mm solid #d3d8df;}',
